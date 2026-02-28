@@ -1,7 +1,3 @@
-import fs from "fs";
-import path from "path";
-
-const DATA_PATH = path.join(process.cwd(), "data", "users.json");
 const TRIAL_DAYS = 7;
 
 interface UserRecord {
@@ -10,28 +6,12 @@ interface UserRecord {
   subscriptionStatus?: "active" | "canceled";
 }
 
-type UserStore = Record<string, UserRecord>;
-
-function readStore(): UserStore {
-  try {
-    if (!fs.existsSync(DATA_PATH)) return {};
-    return JSON.parse(fs.readFileSync(DATA_PATH, "utf-8")) as UserStore;
-  } catch {
-    return {};
-  }
-}
-
-function writeStore(store: UserStore): void {
-  const dir = path.dirname(DATA_PATH);
-  if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
-  fs.writeFileSync(DATA_PATH, JSON.stringify(store, null, 2), "utf-8");
-}
+// In-memory store (resets on cold start — fine for prototype)
+const store: Record<string, UserRecord> = {};
 
 export function initUser(deviceId: string): void {
-  const store = readStore();
   if (!(deviceId in store)) {
     store[deviceId] = { trialStartedAt: new Date().toISOString() };
-    writeStore(store);
   }
 }
 
@@ -40,7 +20,6 @@ export function getTrialStatus(deviceId: string): {
   daysLeft: number;
   subscribed: boolean;
 } {
-  const store = readStore();
   const record = store[deviceId];
 
   if (!record) {
@@ -70,17 +49,14 @@ export function setSubscription(
   subscriptionId: string,
   status: "active" | "canceled"
 ): void {
-  const store = readStore();
   if (!(deviceId in store)) {
     store[deviceId] = { trialStartedAt: new Date().toISOString() };
   }
   store[deviceId].subscriptionId = subscriptionId;
   store[deviceId].subscriptionStatus = status;
-  writeStore(store);
 }
 
 export function getDeviceBySubscriptionId(subscriptionId: string): string | null {
-  const store = readStore();
   for (const [deviceId, record] of Object.entries(store)) {
     if (record.subscriptionId === subscriptionId) return deviceId;
   }
