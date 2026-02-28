@@ -1,0 +1,692 @@
+"use client";
+
+import { useState, useEffect, useRef, Suspense } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+
+// ─── Types ───────────────────────────────────────────────────────
+type TabKey = "schedule" | "recipe" | "shopping";
+interface ParsedOutput { schedule: string; recipe: string; shopping: string; }
+
+// ─── Constants ───────────────────────────────────────────────────
+const INGREDIENT_CHIPS = [
+  "鶏肉", "豚肉", "牛肉", "卵", "豆腐", "鮭", "玉ねぎ", "にんじん",
+  "じゃがいも", "キャベツ", "ほうれん草", "きのこ", "トマト", "なす",
+];
+const STYLE_OPTIONS = [
+  { value: "和食", label: "🍜 和食" },
+  { value: "洋食", label: "🍝 洋食" },
+  { value: "中華", label: "🥟 中華" },
+  { value: "何でも", label: "🌍 何でも" },
+];
+const DAYS_OPTIONS = [
+  { value: "today", label: "今夜だけ" },
+  { value: "3",     label: "3日分" },
+  { value: "7",     label: "1週間分" },
+];
+const TABS: { key: TabKey; label: string; icon: string }[] = [
+  { key: "schedule", label: "献立表", icon: "📅" },
+  { key: "recipe",   label: "レシピ", icon: "🍳" },
+  { key: "shopping", label: "買い物リスト", icon: "🛒" },
+];
+
+// ─── Helpers ─────────────────────────────────────────────────────
+function getOrCreateDeviceId(): string {
+  try {
+    let id = localStorage.getItem("meshilist_device_id");
+    if (!id) { id = crypto.randomUUID(); localStorage.setItem("meshilist_device_id", id); }
+    return id;
+  } catch { return "unknown"; }
+}
+
+function parseOutput(text: string): ParsedOutput {
+  const s: ParsedOutput = { schedule: "", recipe: "", shopping: "" };
+  const scheduleMatch = text.match(/###\s*📅[^\n]*\n([\s\S]*?)(?=###\s*🍳|###\s*🛒|$)/);
+  const recipeMatch   = text.match(/###\s*🍳[^\n]*\n([\s\S]*?)(?=###\s*📅|###\s*🛒|$)/);
+  const shopMatch     = text.match(/###\s*🛒[^\n]*\n([\s\S]*?)(?=###\s*📅|###\s*🍳|$)/);
+  if (scheduleMatch) s.schedule = scheduleMatch[1].trim();
+  if (recipeMatch)   s.recipe   = recipeMatch[1].trim();
+  if (shopMatch)     s.shopping = shopMatch[1].trim();
+  return s;
+}
+
+// ─── Sub-renderers ───────────────────────────────────────────────
+
+function MarkdownTable({ lines }: { lines: string[] }) {
+  const headers = lines[0].split("|").filter(Boolean).map(h => h.trim());
+  const rows = lines.slice(2)
+    .map(l => l.split("|").filter(Boolean).map(c => c.trim()))
+    .filter(r => r.length > 0);
+  return (
+    <div style={{ overflowX: "auto", borderRadius: 12, border: "1px solid var(--border)" }}>
+      <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
+        <thead>
+          <tr>
+            {headers.map((h, i) => (
+              <th key={i} style={{ padding: "10px 14px", background: "#deecd6", color: "#2f5228", fontFamily: "var(--font-heading)", fontWeight: 700, textAlign: "left", whiteSpace: "nowrap", borderBottom: "2px solid #4a7840" }}>
+                {h}
+              </th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          {rows.map((row, i) => (
+            <tr key={i} style={{ background: i % 2 === 0 ? "#fff" : "var(--bg-subtle)", borderBottom: "1px solid var(--border)" }}>
+              {row.map((cell, j) => (
+                <td key={j} style={{ padding: "10px 14px", color: "var(--text-primary)", verticalAlign: "top", lineHeight: 1.6 }}>
+                  {cell}
+                </td>
+              ))}
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
+function ScheduleSection({ text }: { text: string }) {
+  const lines = text.split("\n");
+  const blocks: { type: "table" | "text"; content: string[] }[] = [];
+  let i = 0;
+  while (i < lines.length) {
+    if (lines[i].trim().startsWith("|")) {
+      const tbl: string[] = [];
+      while (i < lines.length && lines[i].trim().startsWith("|")) { tbl.push(lines[i]); i++; }
+      blocks.push({ type: "table", content: tbl });
+    } else {
+      const last = blocks[blocks.length - 1];
+      if (!last || last.type !== "text") blocks.push({ type: "text", content: [] });
+      blocks[blocks.length - 1].content.push(lines[i]);
+      i++;
+    }
+  }
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+      {blocks.map((b, idx) => {
+        if (b.type === "table") return <MarkdownTable key={idx} lines={b.content} />;
+        const txt = b.content.filter(l => l.trim()).join("\n");
+        if (!txt) return null;
+        return <p key={idx} style={{ fontSize: 13, color: "var(--text-secondary)", lineHeight: 1.8, margin: 0 }}>{txt}</p>;
+      })}
+    </div>
+  );
+}
+
+function RecipeSection({ text }: { text: string }) {
+  const lines = text.split("\n");
+  const blocks: { title: string; body: string[] }[] = [];
+  let cur: { title: string; body: string[] } | null = null;
+
+  for (const line of lines) {
+    const t = line.trim();
+    const isBoldTitle = t.startsWith("**") && t.endsWith("**") && t.length > 4;
+    if (isBoldTitle) {
+      if (cur) blocks.push(cur);
+      cur = { title: t.slice(2, -2), body: [] };
+    } else if (cur) {
+      cur.body.push(line);
+    }
+  }
+  if (cur) blocks.push(cur);
+
+  if (blocks.length === 0) {
+    return <div style={{ fontSize: 13, lineHeight: 1.9, color: "var(--text-secondary)", whiteSpace: "pre-wrap" }}>{text}</div>;
+  }
+
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+      {blocks.map((b, i) => (
+        <div key={i} style={{ background: "var(--bg-subtle)", borderRadius: 14, padding: "20px 22px" }}>
+          <h3 style={{ fontFamily: "var(--font-heading)", fontWeight: 700, fontSize: 15, color: "var(--text-primary)", marginBottom: 12, paddingBottom: 10, borderBottom: "1px solid var(--border)" }}>
+            🍽️ {b.title}
+          </h3>
+          <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+            {b.body.map((line, j) => {
+              const t = line.trim();
+              if (!t) return <div key={j} style={{ height: 6 }} />;
+              if (t === "材料:" || t === "手順:" || t.startsWith("材料") || t.startsWith("手順")) {
+                return <div key={j} style={{ fontFamily: "var(--font-heading)", fontWeight: 700, fontSize: 12, color: "var(--accent-dark)", marginTop: 8, letterSpacing: "0.04em", textTransform: "uppercase" }}>{t}</div>;
+              }
+              if (/^\d+\./.test(t)) {
+                return <div key={j} style={{ fontSize: 13, color: "var(--text-secondary)", lineHeight: 1.7, paddingLeft: 4, display: "flex", gap: 6 }}>
+                  <span style={{ color: "var(--accent)", fontWeight: 700, flexShrink: 0 }}>{t.match(/^\d+/)?.[0]}.</span>
+                  <span>{t.replace(/^\d+\.\s*/, "")}</span>
+                </div>;
+              }
+              return <div key={j} style={{ fontSize: 13, color: "var(--text-secondary)", lineHeight: 1.7 }}>{t}</div>;
+            })}
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function ShoppingList({ text, checked, onToggle }: {
+  text: string;
+  checked: Set<string>;
+  onToggle: (item: string) => void;
+}) {
+  const lines = text.split("\n");
+  const checkedCount = [...checked].filter(k => text.includes(k)).length;
+  const totalItems = lines.filter(l => l.trim().startsWith("-")).length;
+
+  return (
+    <div>
+      {/* Progress bar */}
+      {totalItems > 0 && (
+        <div style={{ marginBottom: 16 }}>
+          <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 6 }}>
+            <span style={{ fontSize: 12, color: "var(--text-muted)", fontFamily: "var(--font-heading)", fontWeight: 600 }}>購入済み</span>
+            <span style={{ fontSize: 12, color: "var(--accent)", fontFamily: "var(--font-heading)", fontWeight: 700 }}>{checkedCount} / {totalItems}</span>
+          </div>
+          <div style={{ height: 4, background: "var(--border)", borderRadius: 4, overflow: "hidden" }}>
+            <div style={{ height: "100%", background: "#4a7840", borderRadius: 4, width: `${totalItems > 0 ? (checkedCount / totalItems) * 100 : 0}%`, transition: "width 0.3s" }} />
+          </div>
+        </div>
+      )}
+
+      <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
+        {lines.map((line, i) => {
+          const t = line.trim();
+          if (!t) return null;
+          // Category header: 【野菜】 or **【野菜】**
+          if (t.startsWith("【") || t.startsWith("**【")) {
+            const cat = t.replace(/\*\*/g, "");
+            return (
+              <div key={i} style={{ fontFamily: "var(--font-heading)", fontWeight: 700, fontSize: 11, color: "#2f5228", background: "#deecd6", borderRadius: 6, padding: "4px 10px", marginTop: i === 0 ? 0 : 14, display: "inline-flex", letterSpacing: "0.04em" }}>
+                {cat}
+              </div>
+            );
+          }
+          if (t.startsWith("-")) {
+            const itemText = t.replace(/^-\s*/, "");
+            const isChecked = checked.has(itemText);
+            return (
+              <label key={i} style={{ display: "flex", alignItems: "center", gap: 10, padding: "9px 10px", borderRadius: 10, cursor: "pointer", transition: "background 0.15s", background: isChecked ? "var(--bg-subtle)" : "transparent" }}
+                onMouseEnter={e => { if (!isChecked) e.currentTarget.style.background = "var(--bg-subtle)"; }}
+                onMouseLeave={e => { if (!isChecked) e.currentTarget.style.background = "transparent"; }}
+              >
+                <input
+                  type="checkbox"
+                  checked={isChecked}
+                  onChange={() => onToggle(itemText)}
+                  style={{ width: 17, height: 17, accentColor: "#4a7840", cursor: "pointer", flexShrink: 0 }}
+                />
+                <span style={{ fontSize: 13, color: isChecked ? "var(--text-muted)" : "var(--text-primary)", textDecoration: isChecked ? "line-through" : "none", transition: "all 0.2s" }}>
+                  {itemText}
+                </span>
+              </label>
+            );
+          }
+          return <div key={i} style={{ fontSize: 13, color: "var(--text-secondary)", lineHeight: 1.7, paddingLeft: 4 }}>{t}</div>;
+        }).filter(Boolean)}
+      </div>
+
+      {checkedCount > 0 && (
+        <button
+          onClick={() => {
+            lines.filter(l => l.trim().startsWith("-")).forEach(l => onToggle(l.trim().replace(/^-\s*/, "")));
+          }}
+          style={{ marginTop: 16, fontSize: 12, color: "var(--text-muted)", background: "none", border: "none", cursor: "pointer", textDecoration: "underline", padding: 0 }}
+        >
+          チェックをすべてリセット
+        </button>
+      )}
+    </div>
+  );
+}
+
+// ─── Main App ────────────────────────────────────────────────────
+function AppContent() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const checkoutSuccess = searchParams.get("checkout") === "success";
+
+  const [ready, setReady] = useState(false);
+  const [deviceId, setDeviceId] = useState("");
+  const [trialStatus, setTrialStatus] = useState<{ trialActive: boolean; daysLeft: number; subscribed: boolean } | null>(null);
+
+  // Input state
+  const [ingredients, setIngredients] = useState("");
+  const [selectedChips, setSelectedChips] = useState<string[]>([]);
+  const [familySize, setFamilySize] = useState("4");
+  const [disliked, setDisliked] = useState("");
+  const [style, setStyle] = useState("何でも");
+  const [days, setDays] = useState("7");
+
+  // Output state
+  const [rawOutput, setRawOutput] = useState("");
+  const [generating, setGenerating] = useState(false);
+  const [parsedOutput, setParsedOutput] = useState<ParsedOutput | null>(null);
+  const [activeTab, setActiveTab] = useState<TabKey>("schedule");
+
+  // Shopping list checkboxes
+  const [checkedItems, setCheckedItems] = useState<Set<string>>(new Set());
+
+  // UI
+  const [showSubscribeModal, setShowSubscribeModal] = useState(false);
+  const [copied, setCopied] = useState(false);
+  const [showTip, setShowTip] = useState(false);
+
+  const abortRef = useRef<AbortController | null>(null);
+  const outputRef = useRef<HTMLDivElement>(null);
+
+  // Initialize from localStorage
+  useEffect(() => {
+    const id = getOrCreateDeviceId();
+    setDeviceId(id);
+
+    try {
+      const saved = localStorage.getItem("meshilist_inputs");
+      if (saved) {
+        const p = JSON.parse(saved);
+        if (p.ingredients !== undefined) setIngredients(p.ingredients);
+        if (p.selectedChips)            setSelectedChips(p.selectedChips);
+        if (p.familySize)               setFamilySize(p.familySize);
+        if (p.disliked !== undefined)   setDisliked(p.disliked);
+        if (p.style)                    setStyle(p.style);
+        if (p.days)                     setDays(p.days);
+      }
+      const savedChecked = localStorage.getItem("meshilist_checked");
+      if (savedChecked) setCheckedItems(new Set(JSON.parse(savedChecked)));
+    } catch {}
+
+    const hasVisited = localStorage.getItem("meshilist_visited");
+    if (!hasVisited) { setShowTip(true); localStorage.setItem("meshilist_visited", "1"); }
+
+    setReady(true);
+
+    fetch("/api/trial", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ deviceId: id }),
+    }).then(r => r.json()).then(setTrialStatus).catch(() => {});
+  }, []);
+
+  // Persist inputs
+  useEffect(() => {
+    if (!ready) return;
+    localStorage.setItem("meshilist_inputs", JSON.stringify({ ingredients, selectedChips, familySize, disliked, style, days }));
+  }, [ready, ingredients, selectedChips, familySize, disliked, style, days]);
+
+  // Parse output when generation finishes
+  useEffect(() => {
+    if (!generating && rawOutput) {
+      setParsedOutput(parseOutput(rawOutput));
+    } else if (!rawOutput) {
+      setParsedOutput(null);
+    }
+  }, [generating, rawOutput]);
+
+  const toggleCheckedItem = (item: string) => {
+    setCheckedItems(prev => {
+      const next = new Set(prev);
+      if (next.has(item)) next.delete(item); else next.add(item);
+      localStorage.setItem("meshilist_checked", JSON.stringify([...next]));
+      return next;
+    });
+  };
+
+  const allIngredients = [
+    ...selectedChips,
+    ...ingredients.split(/[,、，\s]+/).filter(Boolean),
+  ].filter((v, i, a) => a.indexOf(v) === i).join("、");
+
+  const handleGenerate = async () => {
+    if (!trialStatus) return;
+    if (!trialStatus.trialActive && !trialStatus.subscribed) { setShowSubscribeModal(true); return; }
+    if (!allIngredients.trim()) { alert("食材を入力してください"); return; }
+
+    setGenerating(true);
+    setRawOutput("");
+    setParsedOutput(null);
+    setActiveTab("schedule");
+    abortRef.current = new AbortController();
+
+    try {
+      const res = await fetch("/api/generate", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ingredients: allIngredients, familySize, disliked, style, days, deviceId }),
+        signal: abortRef.current.signal,
+      });
+      if (res.status === 402) { setShowSubscribeModal(true); return; }
+      if (!res.ok || !res.body) throw new Error("failed");
+
+      const reader = res.body.getReader();
+      const decoder = new TextDecoder();
+      let done = false;
+      while (!done) {
+        const { value, done: d } = await reader.read();
+        done = d;
+        if (value) setRawOutput(prev => prev + decoder.decode(value, { stream: true }));
+      }
+    } catch (e: unknown) {
+      if (e instanceof Error && e.name !== "AbortError") alert("エラーが発生しました。もう一度お試しください。");
+    } finally {
+      setGenerating(false);
+      setTimeout(() => outputRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }), 100);
+    }
+  };
+
+  const handleStop = () => { abortRef.current?.abort(); setGenerating(false); };
+
+  const handleCopy = async () => {
+    const text = parsedOutput
+      ? [parsedOutput.schedule, parsedOutput.recipe, parsedOutput.shopping].filter(Boolean).join("\n\n")
+      : rawOutput;
+    await navigator.clipboard.writeText(text);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
+  const handleSubscribe = async () => {
+    try {
+      const res = await fetch("/api/checkout", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ deviceId }),
+      });
+      const { url } = await res.json();
+      if (url) window.location.href = url;
+    } catch { alert("エラーが発生しました。"); }
+  };
+
+  const tabHasContent = (key: TabKey) => {
+    if (!parsedOutput) return false;
+    return parsedOutput[key].length > 0;
+  };
+
+  return (
+    <div style={{ minHeight: "100vh", background: "var(--bg)" }}>
+
+      {/* Nav */}
+      <nav style={{ position: "sticky", top: 0, zIndex: 50, background: "rgba(245,243,238,0.92)", backdropFilter: "blur(12px)", borderBottom: "1px solid var(--border)", padding: "0 20px" }}>
+        <div style={{ maxWidth: 820, margin: "0 auto", height: 56, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+          <a href="/" style={{ display: "flex", alignItems: "center", gap: 7, textDecoration: "none" }}>
+            <div style={{ width: 28, height: 28, borderRadius: 8, background: "var(--accent)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 14 }}>🍽️</div>
+            <span style={{ fontFamily: "var(--font-heading)", fontWeight: 800, fontSize: 15, color: "var(--text-primary)", letterSpacing: "-0.03em" }}>
+              メシ<span style={{ color: "var(--accent)" }}>リスト</span>
+            </span>
+          </a>
+          {trialStatus && (
+            trialStatus.subscribed ? (
+              <div style={{ background: "#deecd6", borderRadius: 8, padding: "4px 12px", fontSize: 12, color: "#2f5228", fontFamily: "var(--font-heading)", fontWeight: 700 }}>✓ サブスク中</div>
+            ) : trialStatus.trialActive ? (
+              <div style={{ background: "var(--bg-subtle)", borderRadius: 8, padding: "5px 12px", fontSize: 12, color: "var(--text-secondary)", fontFamily: "var(--font-heading)", fontWeight: 600, border: "1px solid var(--border)" }}>
+                無料期間 残<span style={{ color: "var(--accent)", fontSize: 14 }}>{trialStatus.daysLeft}</span>日
+              </div>
+            ) : (
+              <button onClick={() => setShowSubscribeModal(true)} style={{ background: "var(--accent)", color: "#fff", border: "none", borderRadius: 8, padding: "6px 14px", fontSize: 12, fontFamily: "var(--font-heading)", fontWeight: 700, cursor: "pointer" }}>
+                プランに登録
+              </button>
+            )
+          )}
+        </div>
+      </nav>
+
+      {/* Checkout success banner */}
+      {checkoutSuccess && (
+        <div style={{ background: "var(--accent)", color: "#fff", textAlign: "center", padding: "12px", fontSize: 14, fontFamily: "var(--font-heading)", fontWeight: 600 }}>
+          ご登録ありがとうございます！サブスクリプションが有効になりました 🎉
+        </div>
+      )}
+
+      <div style={{ maxWidth: 820, margin: "0 auto", padding: "28px 20px 60px" }}>
+
+        {/* First-time tip */}
+        {showTip && (
+          <div style={{ background: "#deecd6", borderRadius: 14, padding: "16px 20px", marginBottom: 24, display: "flex", alignItems: "flex-start", gap: 12, border: "1px solid rgba(74,120,64,0.2)" }}>
+            <span style={{ fontSize: 20, flexShrink: 0 }}>🌿</span>
+            <div style={{ flex: 1 }}>
+              <div style={{ fontFamily: "var(--font-heading)", fontWeight: 700, fontSize: 13, color: "#2f5228", marginBottom: 4 }}>はじめての方へ</div>
+              <div style={{ fontSize: 13, color: "#2f5228", lineHeight: 1.7 }}>
+                冷蔵庫にある食材を選んで「献立を生成する」を押すだけ。献立・レシピ・買い物リストがまとめて出てきます。
+              </div>
+            </div>
+            <button onClick={() => setShowTip(false)} style={{ background: "none", border: "none", color: "var(--accent-dark)", fontSize: 18, cursor: "pointer", flexShrink: 0, opacity: 0.6, lineHeight: 1 }}>×</button>
+          </div>
+        )}
+
+        {/* Header */}
+        <div style={{ marginBottom: 24 }}>
+          <h1 style={{ fontFamily: "var(--font-heading)", fontWeight: 800, fontSize: "clamp(20px, 4vw, 28px)", letterSpacing: "-0.03em", color: "var(--text-primary)", marginBottom: 4 }}>
+            今週の献立を生成する
+          </h1>
+          <p style={{ fontSize: 13, color: "var(--text-secondary)" }}>食材と条件を入力して、献立・レシピ・買い物リストを一括生成。</p>
+        </div>
+
+        {/* Input panel */}
+        <div style={{ background: "#fff", borderRadius: 20, padding: "28px", border: "1px solid var(--border)", marginBottom: 24 }}>
+          <div style={{ display: "flex", flexDirection: "column", gap: 22 }}>
+
+            {/* Ingredients */}
+            <div>
+              <label style={{ display: "block", fontFamily: "var(--font-heading)", fontWeight: 700, fontSize: 13, color: "var(--text-primary)", marginBottom: 10 }}>
+                冷蔵庫にある食材
+                <span style={{ fontFamily: "var(--font-body)", fontWeight: 400, color: "var(--text-muted)", fontSize: 12, marginLeft: 8 }}>チップをタップ or テキスト入力</span>
+              </label>
+              <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 10 }}>
+                {INGREDIENT_CHIPS.map(chip => {
+                  const selected = selectedChips.includes(chip);
+                  return (
+                    <button key={chip} onClick={() => setSelectedChips(prev => selected ? prev.filter(c => c !== chip) : [...prev, chip])}
+                      style={{ padding: "6px 13px", borderRadius: 20, border: `1px solid ${selected ? "var(--accent)" : "var(--border)"}`, background: selected ? "var(--accent-light)" : "var(--bg-subtle)", color: selected ? "var(--accent-dark)" : "var(--text-secondary)", fontSize: 12, cursor: "pointer", fontFamily: "var(--font-body)", transition: "all 0.15s", fontWeight: selected ? 600 : 400 }}>
+                      {chip}
+                    </button>
+                  );
+                })}
+              </div>
+              <input
+                className="field"
+                style={{ borderRadius: 10 }}
+                placeholder="上記以外の食材を追加（例: ニラ、しらす、油揚げ）"
+                value={ingredients}
+                onChange={e => setIngredients(e.target.value)}
+              />
+              {allIngredients && (
+                <div style={{ marginTop: 8, fontSize: 12, color: "var(--text-muted)" }}>
+                  選択中: <span style={{ color: "var(--accent-dark)", fontWeight: 600 }}>{allIngredients}</span>
+                </div>
+              )}
+            </div>
+
+            {/* Family size + disliked */}
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
+              <div>
+                <label style={{ display: "block", fontFamily: "var(--font-heading)", fontWeight: 700, fontSize: 13, color: "var(--text-primary)", marginBottom: 8 }}>家族人数</label>
+                <select className="field" style={{ borderRadius: 10 }} value={familySize} onChange={e => setFamilySize(e.target.value)}>
+                  {["1", "2", "3", "4", "5以上"].map(n => <option key={n} value={n}>{n}人</option>)}
+                </select>
+              </div>
+              <div>
+                <label style={{ display: "block", fontFamily: "var(--font-heading)", fontWeight: 700, fontSize: 13, color: "var(--text-primary)", marginBottom: 8 }}>
+                  苦手食材
+                  <span style={{ fontFamily: "var(--font-body)", fontWeight: 400, color: "var(--text-muted)", fontSize: 12, marginLeft: 6 }}>任意</span>
+                </label>
+                <input className="field" style={{ borderRadius: 10 }} placeholder="例: 納豆、セロリ" value={disliked} onChange={e => setDisliked(e.target.value)} />
+              </div>
+            </div>
+
+            {/* Style */}
+            <div>
+              <label style={{ display: "block", fontFamily: "var(--font-heading)", fontWeight: 700, fontSize: 13, color: "var(--text-primary)", marginBottom: 10 }}>料理スタイル</label>
+              <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+                {STYLE_OPTIONS.map(opt => (
+                  <button key={opt.value} onClick={() => setStyle(opt.value)}
+                    style={{ padding: "9px 20px", borderRadius: 10, border: `1px solid ${style === opt.value ? "var(--accent)" : "var(--border)"}`, background: style === opt.value ? "var(--accent-light)" : "var(--bg-subtle)", color: style === opt.value ? "var(--accent-dark)" : "var(--text-secondary)", fontFamily: "var(--font-body)", fontSize: 13, cursor: "pointer", transition: "all 0.15s", fontWeight: style === opt.value ? 700 : 400 }}>
+                    {opt.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Days */}
+            <div>
+              <label style={{ display: "block", fontFamily: "var(--font-heading)", fontWeight: 700, fontSize: 13, color: "var(--text-primary)", marginBottom: 10 }}>日数</label>
+              <div style={{ display: "flex", gap: 8 }}>
+                {DAYS_OPTIONS.map(opt => (
+                  <button key={opt.value} onClick={() => setDays(opt.value)}
+                    style={{ flex: 1, padding: "11px", borderRadius: 10, border: `1px solid ${days === opt.value ? "var(--accent)" : "var(--border)"}`, background: days === opt.value ? "var(--accent-light)" : "var(--bg-subtle)", color: days === opt.value ? "var(--accent-dark)" : "var(--text-secondary)", fontFamily: "var(--font-heading)", fontWeight: 700, fontSize: 14, cursor: "pointer", transition: "all 0.15s" }}>
+                    {opt.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Generate button */}
+            {generating ? (
+              <button onClick={handleStop}
+                style={{ width: "100%", padding: "16px", borderRadius: 12, border: "none", background: "#1a1a1a", color: "#fff", fontFamily: "var(--font-heading)", fontWeight: 700, fontSize: 15, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 10 }}>
+                <span className="animate-spin-sm" style={{ width: 16, height: 16, borderRadius: "50%", border: "2px solid rgba(255,255,255,0.3)", borderTopColor: "#fff", display: "inline-block" }} />
+                生成中... （タップで停止）
+              </button>
+            ) : (
+              <button onClick={handleGenerate}
+                style={{ width: "100%", padding: "16px", borderRadius: 12, border: "none", background: "var(--accent)", color: "#fff", fontFamily: "var(--font-heading)", fontWeight: 700, fontSize: 15, cursor: "pointer", boxShadow: "0 4px 16px rgba(230,149,26,0.3)", transition: "transform 0.15s" }}
+                onMouseEnter={e => e.currentTarget.style.transform = "translateY(-1px)"}
+                onMouseLeave={e => e.currentTarget.style.transform = ""}>
+                献立を生成する ✨
+              </button>
+            )}
+          </div>
+        </div>
+
+        {/* ── Output Panel ── */}
+        {(rawOutput || generating) && (
+          <div ref={outputRef} style={{ background: "#fff", borderRadius: 20, border: "1px solid var(--border)", overflow: "hidden" }}>
+
+            {/* Header */}
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "16px 20px", borderBottom: "1px solid var(--border)" }}>
+              <span style={{ fontFamily: "var(--font-heading)", fontWeight: 700, fontSize: 14, color: "var(--text-primary)", display: "flex", alignItems: "center", gap: 8 }}>
+                {generating
+                  ? <><span className="animate-blink" style={{ color: "var(--accent)", fontSize: 10 }}>●</span> 生成中…</>
+                  : "✓ 生成完了"}
+              </span>
+              {!generating && rawOutput && (
+                <div style={{ display: "flex", gap: 8 }}>
+                  <button onClick={handleGenerate}
+                    style={{ padding: "6px 12px", borderRadius: 8, border: "1px solid var(--border)", background: "var(--bg-subtle)", color: "var(--text-secondary)", fontFamily: "var(--font-heading)", fontWeight: 600, fontSize: 12, cursor: "pointer" }}>
+                    再生成
+                  </button>
+                  <button onClick={handleCopy}
+                    style={{ padding: "6px 14px", borderRadius: 8, border: "1px solid var(--border)", background: copied ? "var(--accent-light)" : "var(--bg-subtle)", color: copied ? "var(--accent-dark)" : "var(--text-secondary)", fontFamily: "var(--font-heading)", fontWeight: 600, fontSize: 12, cursor: "pointer", transition: "all 0.15s" }}>
+                    {copied ? "コピー済 ✓" : "全コピー"}
+                  </button>
+                </div>
+              )}
+            </div>
+
+            {/* Streaming: show raw */}
+            {generating && (
+              <div style={{ padding: "20px", maxHeight: "50vh", overflowY: "auto" }}>
+                <pre style={{ fontFamily: "var(--font-body)", fontSize: 13, lineHeight: 1.9, color: "var(--text-primary)", whiteSpace: "pre-wrap", wordBreak: "break-word", margin: 0 }}>
+                  {rawOutput}
+                  <span className="animate-blink" style={{ color: "var(--accent)" }}>▍</span>
+                </pre>
+              </div>
+            )}
+
+            {/* Done: show tabs */}
+            {!generating && parsedOutput && (
+              <>
+                {/* Tab bar */}
+                <div style={{ display: "flex", borderBottom: "1px solid var(--border)", padding: "0 20px" }}>
+                  {TABS.map(tab => (
+                    <button key={tab.key} onClick={() => setActiveTab(tab.key)}
+                      style={{ padding: "12px 16px", border: "none", borderBottom: `2px solid ${activeTab === tab.key ? "#4a7840" : "transparent"}`, background: "none", color: activeTab === tab.key ? "#4a7840" : "var(--text-muted)", fontFamily: "var(--font-heading)", fontWeight: 700, fontSize: 13, cursor: "pointer", transition: "color 0.15s", display: "flex", alignItems: "center", gap: 6, opacity: tabHasContent(tab.key) ? 1 : 0.4 }}>
+                      {tab.icon} {tab.label}
+                      {tab.key === "shopping" && checkedItems.size > 0 && (
+                        <span style={{ background: "#4a7840", color: "#fff", borderRadius: 10, padding: "1px 6px", fontSize: 10, fontWeight: 700 }}>
+                          {checkedItems.size}
+                        </span>
+                      )}
+                    </button>
+                  ))}
+                </div>
+
+                {/* Tab content */}
+                <div style={{ padding: "24px", maxHeight: "65vh", overflowY: "auto" }}>
+                  {activeTab === "schedule" && parsedOutput.schedule && (
+                    <ScheduleSection text={parsedOutput.schedule} />
+                  )}
+                  {activeTab === "recipe" && parsedOutput.recipe && (
+                    <RecipeSection text={parsedOutput.recipe} />
+                  )}
+                  {activeTab === "shopping" && parsedOutput.shopping && (
+                    <ShoppingList
+                      text={parsedOutput.shopping}
+                      checked={checkedItems}
+                      onToggle={toggleCheckedItem}
+                    />
+                  )}
+                  {/* Fallback: nothing parsed */}
+                  {!parsedOutput[activeTab] && (
+                    <p style={{ fontSize: 13, color: "var(--text-muted)", textAlign: "center", padding: "32px 0" }}>
+                      このセクションは生成されませんでした。
+                    </p>
+                  )}
+                </div>
+              </>
+            )}
+          </div>
+        )}
+
+        {/* Trial expired banner */}
+        {trialStatus && !trialStatus.trialActive && !trialStatus.subscribed && !showSubscribeModal && !rawOutput && (
+          <div style={{ background: "#fff", borderRadius: 16, padding: "20px 24px", border: "1px solid var(--border)", display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 12 }}>
+            <div>
+              <div style={{ fontFamily: "var(--font-heading)", fontWeight: 700, fontSize: 14, color: "var(--text-primary)", marginBottom: 4 }}>無料トライアル期間が終了しました</div>
+              <div style={{ fontSize: 12, color: "var(--text-secondary)" }}>¥480/月で献立生成を無制限に使い続けられます</div>
+            </div>
+            <button onClick={() => setShowSubscribeModal(true)}
+              style={{ padding: "10px 20px", borderRadius: 10, border: "none", background: "var(--accent)", color: "#fff", fontFamily: "var(--font-heading)", fontWeight: 700, fontSize: 13, cursor: "pointer", whiteSpace: "nowrap" }}>
+              プランに登録する →
+            </button>
+          </div>
+        )}
+      </div>
+
+      {/* Subscribe Modal */}
+      {showSubscribeModal && (
+        <div onClick={() => setShowSubscribeModal(false)}
+          style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.5)", zIndex: 100, display: "flex", alignItems: "center", justifyContent: "center", padding: 24 }}>
+          <div onClick={e => e.stopPropagation()}
+            style={{ background: "#fff", borderRadius: 24, padding: "40px 36px", maxWidth: 440, width: "100%", boxShadow: "0 16px 64px rgba(0,0,0,0.16)" }}>
+            <div style={{ textAlign: "center", marginBottom: 28 }}>
+              <div style={{ fontSize: 40, marginBottom: 12 }}>🍽️</div>
+              <h2 style={{ fontFamily: "var(--font-heading)", fontWeight: 800, fontSize: 22, color: "var(--text-primary)", letterSpacing: "-0.03em", marginBottom: 8 }}>
+                メシリストを続ける
+              </h2>
+              <p style={{ fontSize: 13, color: "var(--text-secondary)", lineHeight: 1.7 }}>
+                無料トライアルが終了しました。サブスクに登録すると献立生成が無制限で使えます。
+              </p>
+            </div>
+            <div style={{ background: "var(--bg-subtle)", borderRadius: 14, padding: "20px", marginBottom: 24 }}>
+              <div style={{ fontFamily: "var(--font-heading)", fontWeight: 800, fontSize: 36, color: "var(--text-primary)", textAlign: "center", marginBottom: 4 }}>
+                ¥480<span style={{ fontSize: 14, fontWeight: 400, color: "var(--text-muted)" }}>/月</span>
+              </div>
+              <ul style={{ listStyle: "none", margin: "12px 0 0", padding: 0, display: "flex", flexDirection: "column", gap: 8 }}>
+                {["献立生成 無制限", "1週間分まとめてプランニング", "買い物リスト（チェック機能つき）", "いつでも解約OK"].map(f => (
+                  <li key={f} style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 13, color: "var(--text-secondary)" }}>
+                    <span style={{ color: "var(--accent)", fontWeight: 700 }}>✓</span>{f}
+                  </li>
+                ))}
+              </ul>
+            </div>
+            <button onClick={handleSubscribe}
+              style={{ width: "100%", padding: "14px", borderRadius: 12, border: "none", background: "var(--accent)", color: "#fff", fontFamily: "var(--font-heading)", fontWeight: 700, fontSize: 15, cursor: "pointer", marginBottom: 10 }}>
+              ¥480/月で登録する →
+            </button>
+            <button onClick={() => setShowSubscribeModal(false)}
+              style={{ width: "100%", padding: "12px", borderRadius: 12, border: "1px solid var(--border)", background: "none", color: "var(--text-muted)", fontFamily: "var(--font-heading)", fontWeight: 600, fontSize: 13, cursor: "pointer" }}>
+              閉じる
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+export default function AppPage() {
+  return <Suspense><AppContent /></Suspense>;
+}

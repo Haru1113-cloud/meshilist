@@ -1,0 +1,124 @@
+@import "tailwindcss";
+
+:root {
+  --font-heading: var(--font-montserrat), 'Montserrat', sans-serif;
+  --font-body:    var(--font-noto-sans-jp), 'Noto Sans JP', sans-serif;
+
+  /* ── kooca palette ── */
+  --accent:             #e6951a;   /* warm golden orange (丼) */
+  --accent-dark:        #b56b0a;   /* deep orange */
+  --accent-light:       #fdf0d8;   /* soft orange tint */
+  --accent-green:       #4a7840;   /* forest green (箸) */
+  --accent-green-dark:  #2f5228;   /* deep green */
+  --accent-green-light: #deecd6;   /* soft green tint */
+
+  /* ── surface ── */
+  --bg:           #f5f3ee;   /* soft beige-white (unchanged) */
+  --bg-card:      #ffffff;
+  --bg-subtle:    #f0ede7;
+
+  /* ── borders ── */
+  --border:       rgba(0,0,0,0.08);
+  --border-hover: rgba(0,0,0,0.15);
+
+  /* ── text (warm-toned) ── */
+  --text-primary:   #1e1208;
+  --text-secondary: #5a4a35;
+  --text-muted:     #9a887a;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  background: var(--bg);
+  color: var(--text-primary);
+  font-family: var(--font-body);
+  font-size: 15px;
+  line-height: 1.7;
+  -webkit-font-smoothing: antialiased;
+}
+
+h1, h2, h3, h4,
+.font-heading {
+  font-family: var(--font-heading);
+  letter-spacing: -0.02em;
+}
+
+/* ── Animations ── */
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+@keyframes blink {
+  0%,100% { opacity:1; }
+  50%      { opacity:0.25; }
+}
+@keyframes marquee {
+  0%   { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+@keyframes pulse-soft {
+  0%,100% { opacity: 1; }
+  50%     { opacity: 0.6; }
+}
+
+.marquee-track {
+  display: flex;
+  flex-wrap: nowrap;
+  width: max-content;
+  will-change: transform;
+  animation: marquee 40s linear infinite;
+}
+.marquee-track:hover { animation-play-state: paused; }
+
+.animate-fade-up    { animation: fadeUp 0.45s cubic-bezier(.22,1,.36,1) both; }
+.animate-spin-sm    { animation: spin 0.9s linear infinite; }
+.animate-blink      { animation: blink 1.4s ease-in-out infinite; }
+.animate-pulse-soft { animation: pulse-soft 2s ease-in-out infinite; }
+.delay-1 { animation-delay: 0.08s; }
+.delay-2 { animation-delay: 0.16s; }
+.delay-3 { animation-delay: 0.24s; }
+.delay-4 { animation-delay: 0.32s; }
+
+/* ── Typography ── */
+.label {
+  font-family: var(--font-heading);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+/* ── Input / Select base ── */
+.field {
+  width: 100%;
+  padding: 12px 16px;
+  background: var(--bg-subtle);
+  border: 1px solid var(--border);
+  color: var(--text-primary);
+  font-family: var(--font-body);
+  font-size: 14px;
+  outline: none;
+  transition: border-color 0.25s ease, box-shadow 0.25s ease;
+  appearance: none;
+}
+.field:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(230,149,26,0.14);
+}
+.field::placeholder { color: var(--text-muted); }
+
+/* ── Card ── */
+.card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+}
+
+/* ── Scrollbar ── */
+::-webkit-scrollbar { width: 5px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #c8c0b4; border-radius: 4px; }
