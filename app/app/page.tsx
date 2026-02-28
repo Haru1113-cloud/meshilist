@@ -3,14 +3,21 @@
 import { useState, useEffect, useRef, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 
+// ─── Brand image components ───────────────────────────────────────
+function KoocaBowlIcon({ size = 28 }: { size?: number }) {
+  // eslint-disable-next-line @next/next/no-img-element
+  return <img src="/kooca-bowl-transparent.png" alt="kooca" width={size} style={{ display: "block" }} />;
+}
+
 // ─── Types ───────────────────────────────────────────────────────
 type TabKey = "schedule" | "recipe" | "shopping";
 interface ParsedOutput { schedule: string; recipe: string; shopping: string; }
 
 // ─── Constants ───────────────────────────────────────────────────
 const INGREDIENT_CHIPS = [
-  "鶏肉", "豚肉", "牛肉", "卵", "豆腐", "鮭", "玉ねぎ", "にんじん",
-  "じゃがいも", "キャベツ", "ほうれん草", "きのこ", "トマト", "なす",
+  { category: "肉・魚", items: ["鶏肉", "豚肉", "牛肉", "鮭", "ツナ缶", "サバ缶", "ちくわ", "ウインナー"] },
+  { category: "卵・大豆", items: ["卵", "豆腐", "厚揚げ", "油揚げ", "納豆"] },
+  { category: "野菜", items: ["玉ねぎ", "にんじん", "じゃがいも", "キャベツ", "ほうれん草", "ブロッコリー", "もやし", "ピーマン", "なす", "トマト", "きのこ", "白菜", "ねぎ", "大根"] },
 ];
 const STYLE_OPTIONS = [
   { value: "和食", label: "🍜 和食" },
@@ -112,6 +119,161 @@ function ScheduleSection({ text }: { text: string }) {
   );
 }
 
+// 1日の目安量（成人女性）
+const DAILY_REF = { protein: 50, fat: 55, carbs: 250, salt: 6.5 };
+const NUTRIENT_DEFS = [
+  { key: "protein" as const, label: "たんぱく質", color: "#3b82f6", ref: DAILY_REF.protein },
+  { key: "fat"     as const, label: "脂質",       color: "#f97316", ref: DAILY_REF.fat },
+  { key: "carbs"   as const, label: "炭水化物",   color: "#eab308", ref: DAILY_REF.carbs },
+  { key: "salt"    as const, label: "食塩相当量", color: "#ef4444", ref: DAILY_REF.salt },
+];
+
+function RecipeNutritionPanel({ line }: { line: string }) {
+  // 📊 290kcal / P:14g / F:10g / C:36g / 塩:2.2g
+  const m = line.match(/📊\s*(\d+)kcal\s*\/\s*P:([\d.]+)g\s*\/\s*F:([\d.]+)g\s*\/\s*C:([\d.]+)g\s*\/\s*塩:([\d.]+)g/);
+  if (!m) return null;
+  const [, kcal, protein, fat, carbs, salt] = m;
+  const vals = { protein: +protein, fat: +fat, carbs: +carbs, salt: +salt };
+
+  return (
+    <div style={{ background: "#f8f6f2", borderRadius: 12, padding: "14px 16px", marginBottom: 12 }}>
+      {/* Calorie */}
+      <div style={{ display: "flex", alignItems: "baseline", gap: 4, marginBottom: 12, justifyContent: "center" }}>
+        <span style={{ fontSize: 12 }}>🔥</span>
+        <span style={{ fontFamily: "var(--font-heading)", fontWeight: 900, fontSize: 32, color: "var(--text-primary)", lineHeight: 1 }}>{kcal}</span>
+        <span style={{ fontSize: 12, color: "var(--text-muted)", fontFamily: "var(--font-heading)", fontWeight: 600 }}>kcal</span>
+        <span style={{ fontSize: 10, color: "var(--text-muted)", marginLeft: 2 }}>/ 1人分</span>
+      </div>
+      {/* Bars */}
+      <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+        {NUTRIENT_DEFS.map(n => {
+          const pct = Math.min(Math.round((vals[n.key] / n.ref) * 100), 100);
+          return (
+            <div key={n.key}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 3 }}>
+                <span style={{ fontSize: 11, color: "var(--text-secondary)", fontFamily: "var(--font-heading)", fontWeight: 600 }}>{n.label}</span>
+                <div style={{ display: "flex", alignItems: "baseline", gap: 5 }}>
+                  <span style={{ fontFamily: "var(--font-heading)", fontWeight: 800, fontSize: 13, color: "var(--text-primary)" }}>{vals[n.key]}g</span>
+                  <span style={{
+                    fontSize: 9, fontFamily: "var(--font-heading)", fontWeight: 700,
+                    color: pct >= 60 ? "#c0392b" : "var(--text-muted)",
+                    background: pct >= 60 ? "#fdf0ee" : "#ece9e4",
+                    borderRadius: 4, padding: "1px 5px",
+                  }}>{pct}%</span>
+                </div>
+              </div>
+              <div style={{ height: 5, background: "#e8e4de", borderRadius: 3, overflow: "hidden" }}>
+                <div style={{ height: "100%", width: `${pct}%`, background: n.color, borderRadius: 3 }} />
+              </div>
+            </div>
+          );
+        })}
+      </div>
+      <p style={{ fontSize: 9, color: "var(--text-muted)", textAlign: "right", marginTop: 8, marginBottom: 0 }}>
+        ※ 成人女性1日の目安量に対する割合
+      </p>
+    </div>
+  );
+}
+
+type StepGuide = { dish: string; totalTime: string; steps: { num: number; emoji: string; title: string; action: string; tip?: string }[] };
+
+function RecipeBlock({ title, body }: { title: string; body: string[] }) {
+  const [guide, setGuide] = useState<StepGuide | null>(null);
+  const [loadingDiagram, setLoadingDiagram] = useState(false);
+  const [showDiagram, setShowDiagram] = useState(false);
+
+  const handleDiagram = async () => {
+    if (guide) { setShowDiagram(v => !v); return; }
+    setLoadingDiagram(true);
+    // Extract steps from body
+    const steps = body.map(l => l.trim()).filter(l => /^\d+\./.test(l)).map(l => l.replace(/^\d+\.\s*/, ""));
+    const ingredients = body.map(l => l.trim()).filter(l => l.startsWith("材料:"))[0]?.replace("材料:", "").trim() || "";
+    try {
+      const res = await fetch("/api/generate-steps", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ dish: title, ingredients, steps }),
+      });
+      const data: StepGuide = await res.json();
+      setGuide(data);
+      setShowDiagram(true);
+    } catch { /* noop */ }
+    finally { setLoadingDiagram(false); }
+  };
+
+  return (
+    <div style={{ background: "var(--bg-subtle)", borderRadius: 14, padding: "20px 22px" }}>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12, paddingBottom: 10, borderBottom: "1px solid var(--border)" }}>
+        <h3 style={{ fontFamily: "var(--font-heading)", fontWeight: 700, fontSize: 15, color: "var(--text-primary)", margin: 0 }}>
+          🍽️ {title}
+        </h3>
+        <button
+          onClick={handleDiagram}
+          disabled={loadingDiagram}
+          style={{
+            padding: "5px 12px", borderRadius: 20, border: "1px solid var(--accent)",
+            background: showDiagram ? "var(--accent)" : "#fff",
+            color: showDiagram ? "#fff" : "var(--accent)",
+            fontSize: 11, fontFamily: "var(--font-heading)", fontWeight: 700,
+            cursor: loadingDiagram ? "wait" : "pointer",
+            display: "flex", alignItems: "center", gap: 5, flexShrink: 0,
+          }}
+        >
+          {loadingDiagram
+            ? <><span className="animate-spin-sm" style={{ width: 10, height: 10, borderRadius: "50%", border: "2px solid rgba(230,149,26,0.3)", borderTopColor: "var(--accent)", display: "inline-block" }} />生成中</>
+            : showDiagram ? "📝 テキスト" : "✏️ 図解を見る"}
+        </button>
+      </div>
+
+      {showDiagram && guide ? (
+        /* ── Diagram view ── */
+        <div>
+          <p style={{ fontSize: 11, color: "var(--text-muted)", textAlign: "right", marginBottom: 10 }}>
+            合計時間: <strong style={{ color: "var(--text-primary)" }}>{guide.totalTime}</strong>
+          </p>
+          <div style={{ display: "grid", gridTemplateColumns: `repeat(${Math.min(guide.steps.length, 3)}, 1fr)`, gap: 8 }}>
+            {guide.steps.map(step => (
+              <div key={step.num} style={{ background: "var(--accent-light)", borderRadius: 12, padding: "12px 8px", display: "flex", flexDirection: "column", alignItems: "center", gap: 5, textAlign: "center", border: "1px solid rgba(230,149,26,0.15)", position: "relative" }}>
+                <div style={{ position: "absolute", top: 7, left: 7, width: 18, height: 18, borderRadius: "50%", background: "var(--accent)", color: "#fff", fontSize: 9, fontFamily: "var(--font-heading)", fontWeight: 800, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                  {step.num}
+                </div>
+                <span style={{ fontSize: 26, lineHeight: 1, marginTop: 8 }}>{step.emoji}</span>
+                <div style={{ fontFamily: "var(--font-heading)", fontWeight: 800, fontSize: 11, color: "var(--accent-dark)" }}>{step.title}</div>
+                <div style={{ fontSize: 11, color: "var(--text-secondary)", lineHeight: 1.6 }}>{step.action}</div>
+                {step.tip && (
+                  <div style={{ fontSize: 10, color: "var(--accent-dark)", background: "#fff", borderRadius: 6, padding: "2px 7px", border: "1px solid rgba(230,149,26,0.25)" }}>
+                    💡 {step.tip}
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      ) : (
+        /* ── Text view ── */
+        <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+          {body.map((line, j) => {
+            const t = line.trim();
+            if (!t) return <div key={j} style={{ height: 6 }} />;
+            if (t.startsWith("📊")) return <RecipeNutritionPanel key={j} line={t} />;
+            if (t === "材料:" || t === "手順:" || t.startsWith("材料") || t.startsWith("手順")) {
+              return <div key={j} style={{ fontFamily: "var(--font-heading)", fontWeight: 700, fontSize: 12, color: "var(--accent-dark)", marginTop: 8, letterSpacing: "0.04em", textTransform: "uppercase" }}>{t}</div>;
+            }
+            if (/^\d+\./.test(t)) {
+              return <div key={j} style={{ fontSize: 13, color: "var(--text-secondary)", lineHeight: 1.7, paddingLeft: 4, display: "flex", gap: 6 }}>
+                <span style={{ color: "var(--accent)", fontWeight: 700, flexShrink: 0 }}>{t.match(/^\d+/)?.[0]}.</span>
+                <span>{t.replace(/^\d+\.\s*/, "")}</span>
+              </div>;
+            }
+            return <div key={j} style={{ fontSize: 13, color: "var(--text-secondary)", lineHeight: 1.7 }}>{t}</div>;
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
+
 function RecipeSection({ text }: { text: string }) {
   const lines = text.split("\n");
   const blocks: { title: string; body: string[] }[] = [];
@@ -136,27 +298,7 @@ function RecipeSection({ text }: { text: string }) {
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
       {blocks.map((b, i) => (
-        <div key={i} style={{ background: "var(--bg-subtle)", borderRadius: 14, padding: "20px 22px" }}>
-          <h3 style={{ fontFamily: "var(--font-heading)", fontWeight: 700, fontSize: 15, color: "var(--text-primary)", marginBottom: 12, paddingBottom: 10, borderBottom: "1px solid var(--border)" }}>
-            🍽️ {b.title}
-          </h3>
-          <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-            {b.body.map((line, j) => {
-              const t = line.trim();
-              if (!t) return <div key={j} style={{ height: 6 }} />;
-              if (t === "材料:" || t === "手順:" || t.startsWith("材料") || t.startsWith("手順")) {
-                return <div key={j} style={{ fontFamily: "var(--font-heading)", fontWeight: 700, fontSize: 12, color: "var(--accent-dark)", marginTop: 8, letterSpacing: "0.04em", textTransform: "uppercase" }}>{t}</div>;
-              }
-              if (/^\d+\./.test(t)) {
-                return <div key={j} style={{ fontSize: 13, color: "var(--text-secondary)", lineHeight: 1.7, paddingLeft: 4, display: "flex", gap: 6 }}>
-                  <span style={{ color: "var(--accent)", fontWeight: 700, flexShrink: 0 }}>{t.match(/^\d+/)?.[0]}.</span>
-                  <span>{t.replace(/^\d+\.\s*/, "")}</span>
-                </div>;
-              }
-              return <div key={j} style={{ fontSize: 13, color: "var(--text-secondary)", lineHeight: 1.7 }}>{t}</div>;
-            })}
-          </div>
-        </div>
+        <RecipeBlock key={i} title={b.title} body={b.body} />
       ))}
     </div>
   );
@@ -254,6 +396,7 @@ function AppContent() {
   const [disliked, setDisliked] = useState("");
   const [style, setStyle] = useState("何でも");
   const [days, setDays] = useState("7");
+  const [noKnife, setNoKnife] = useState(false);
 
   // Output state
   const [rawOutput, setRawOutput] = useState("");
@@ -287,6 +430,7 @@ function AppContent() {
         if (p.disliked !== undefined)   setDisliked(p.disliked);
         if (p.style)                    setStyle(p.style);
         if (p.days)                     setDays(p.days);
+        if (p.noKnife !== undefined)    setNoKnife(p.noKnife);
       }
       const savedChecked = localStorage.getItem("meshilist_checked");
       if (savedChecked) setCheckedItems(new Set(JSON.parse(savedChecked)));
@@ -306,8 +450,8 @@ function AppContent() {
   // Persist inputs
   useEffect(() => {
     if (!ready) return;
-    localStorage.setItem("meshilist_inputs", JSON.stringify({ ingredients, selectedChips, familySize, disliked, style, days }));
-  }, [ready, ingredients, selectedChips, familySize, disliked, style, days]);
+    localStorage.setItem("meshilist_inputs", JSON.stringify({ ingredients, selectedChips, familySize, disliked, style, days, noKnife }));
+  }, [ready, ingredients, selectedChips, familySize, disliked, style, days, noKnife]);
 
   // Parse output when generation finishes
   useEffect(() => {
@@ -341,12 +485,14 @@ function AppContent() {
     setRawOutput("");
     setParsedOutput(null);
     setActiveTab("schedule");
+    setCheckedItems(new Set());
+    localStorage.removeItem("meshilist_checked");
     abortRef.current = new AbortController();
 
     try {
       const res = await fetch("/api/generate", {
         method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ingredients: allIngredients, familySize, disliked, style, days, deviceId }),
+        body: JSON.stringify({ ingredients: allIngredients, familySize, disliked, style, days, deviceId, noKnife }),
         signal: abortRef.current.signal,
       });
       if (res.status === 402) { setShowSubscribeModal(true); return; }
@@ -402,11 +548,25 @@ function AppContent() {
       <nav style={{ position: "sticky", top: 0, zIndex: 50, background: "rgba(245,243,238,0.92)", backdropFilter: "blur(12px)", borderBottom: "1px solid var(--border)", padding: "0 20px" }}>
         <div style={{ maxWidth: 820, margin: "0 auto", height: 56, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
           <a href="/" style={{ display: "flex", alignItems: "center", gap: 7, textDecoration: "none" }}>
-            <div style={{ width: 28, height: 28, borderRadius: 8, background: "var(--accent)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 14 }}>🍽️</div>
-            <span style={{ fontFamily: "var(--font-heading)", fontWeight: 800, fontSize: 15, color: "var(--text-primary)", letterSpacing: "-0.03em" }}>
-              メシ<span style={{ color: "var(--accent)" }}>リスト</span>
-            </span>
+            <KoocaBowlIcon size={34} />
+            <div style={{ display: "flex", flexDirection: "column", lineHeight: 1.1 }}>
+              <span style={{ fontFamily: "var(--font-heading)", fontWeight: 800, fontSize: 15, color: "var(--text-primary)", letterSpacing: "-0.03em" }}>
+                メシ<span style={{ color: "var(--accent)" }}>リスト</span>
+              </span>
+              <span style={{ fontFamily: "var(--font-pacifico)", fontSize: 9, color: "var(--text-muted)", letterSpacing: "0.02em" }}>
+                by kooca
+              </span>
+            </div>
           </a>
+          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            <a href="/recipes" style={{
+              padding: "5px 12px", borderRadius: 7, fontSize: 12,
+              fontFamily: "var(--font-heading)", fontWeight: 600,
+              color: "var(--text-secondary)", textDecoration: "none",
+              border: "1px solid var(--border)", background: "#fff",
+            }}>
+              📖 レシピ集
+            </a>
           {trialStatus && (
             trialStatus.subscribed ? (
               <div style={{ background: "#deecd6", borderRadius: 8, padding: "4px 12px", fontSize: 12, color: "#2f5228", fontFamily: "var(--font-heading)", fontWeight: 700 }}>✓ サブスク中</div>
@@ -420,6 +580,7 @@ function AppContent() {
               </button>
             )
           )}
+          </div>
         </div>
       </nav>
 
@@ -464,16 +625,23 @@ function AppContent() {
                 冷蔵庫にある食材
                 <span style={{ fontFamily: "var(--font-body)", fontWeight: 400, color: "var(--text-muted)", fontSize: 12, marginLeft: 8 }}>チップをタップ or テキスト入力</span>
               </label>
-              <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 10 }}>
-                {INGREDIENT_CHIPS.map(chip => {
-                  const selected = selectedChips.includes(chip);
-                  return (
-                    <button key={chip} onClick={() => setSelectedChips(prev => selected ? prev.filter(c => c !== chip) : [...prev, chip])}
-                      style={{ padding: "6px 13px", borderRadius: 20, border: `1px solid ${selected ? "var(--accent)" : "var(--border)"}`, background: selected ? "var(--accent-light)" : "var(--bg-subtle)", color: selected ? "var(--accent-dark)" : "var(--text-secondary)", fontSize: 12, cursor: "pointer", fontFamily: "var(--font-body)", transition: "all 0.15s", fontWeight: selected ? 600 : 400 }}>
-                      {chip}
-                    </button>
-                  );
-                })}
+              <div style={{ display: "flex", flexDirection: "column", gap: 8, marginBottom: 10 }}>
+                {INGREDIENT_CHIPS.map(group => (
+                  <div key={group.category}>
+                    <div style={{ fontSize: 10, fontFamily: "var(--font-heading)", fontWeight: 700, color: "var(--text-muted)", letterSpacing: "0.06em", marginBottom: 5 }}>{group.category}</div>
+                    <div style={{ display: "flex", flexWrap: "wrap", gap: 5 }}>
+                      {group.items.map(chip => {
+                        const selected = selectedChips.includes(chip);
+                        return (
+                          <button key={chip} className="chip-btn" onClick={() => setSelectedChips(prev => selected ? prev.filter(c => c !== chip) : [...prev, chip])}
+                            style={{ padding: "5px 12px", borderRadius: 20, border: `1px solid ${selected ? "var(--accent)" : "var(--border)"}`, background: selected ? "var(--accent-light)" : "var(--bg-subtle)", color: selected ? "var(--accent-dark)" : "var(--text-secondary)", fontSize: 12, cursor: "pointer", fontFamily: "var(--font-body)", fontWeight: selected ? 600 : 400 }}>
+                            {chip}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                ))}
               </div>
               <input
                 className="field"
@@ -532,6 +700,31 @@ function AppContent() {
               </div>
             </div>
 
+            {/* Options */}
+            <div>
+              <label style={{ display: "block", fontFamily: "var(--font-heading)", fontWeight: 700, fontSize: 13, color: "var(--text-primary)", marginBottom: 10 }}>オプション</label>
+              <button
+                onClick={() => setNoKnife(v => !v)}
+                style={{
+                  padding: "9px 20px", borderRadius: 10, border: `1px solid ${noKnife ? "#4a7840" : "var(--border)"}`,
+                  background: noKnife ? "#deecd6" : "var(--bg-subtle)",
+                  color: noKnife ? "#2f5228" : "var(--text-secondary)",
+                  fontFamily: "var(--font-body)", fontSize: 13, cursor: "pointer",
+                  transition: "all 0.15s", fontWeight: noKnife ? 700 : 400,
+                  display: "flex", alignItems: "center", gap: 8,
+                }}
+              >
+                <span>✂️</span>
+                <span>包丁いらずレシピのみ</span>
+                {noKnife && <span style={{ fontSize: 11, background: "#4a7840", color: "#fff", borderRadius: 4, padding: "1px 6px", fontFamily: "var(--font-heading)", fontWeight: 700 }}>ON</span>}
+              </button>
+              {noKnife && (
+                <p style={{ fontSize: 11, color: "#4a7840", marginTop: 6 }}>
+                  キッチンバサミや手でちぎれる食材を使ったレシピを提案します
+                </p>
+              )}
+            </div>
+
             {/* Generate button */}
             {generating ? (
               <button onClick={handleStop}
@@ -539,12 +732,19 @@ function AppContent() {
                 <span className="animate-spin-sm" style={{ width: 16, height: 16, borderRadius: "50%", border: "2px solid rgba(255,255,255,0.3)", borderTopColor: "#fff", display: "inline-block" }} />
                 生成中... （タップで停止）
               </button>
+            ) : !trialStatus ? (
+              <button disabled
+                style={{ width: "100%", padding: "16px", borderRadius: 12, border: "none", background: "var(--bg-subtle)", color: "var(--text-muted)", fontFamily: "var(--font-heading)", fontWeight: 700, fontSize: 15, cursor: "not-allowed", display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}>
+                <span className="animate-spin-sm" style={{ width: 14, height: 14, borderRadius: "50%", border: "2px solid rgba(0,0,0,0.1)", borderTopColor: "var(--text-muted)", display: "inline-block" }} />
+                読み込み中...
+              </button>
             ) : (
-              <button onClick={handleGenerate}
-                style={{ width: "100%", padding: "16px", borderRadius: 12, border: "none", background: "var(--accent)", color: "#fff", fontFamily: "var(--font-heading)", fontWeight: 700, fontSize: 15, cursor: "pointer", boxShadow: "0 4px 16px rgba(230,149,26,0.3)", transition: "transform 0.15s" }}
-                onMouseEnter={e => e.currentTarget.style.transform = "translateY(-1px)"}
-                onMouseLeave={e => e.currentTarget.style.transform = ""}>
-                献立を生成する ✨
+              <button className="press-btn" onClick={handleGenerate}
+                style={{ width: "100%", padding: "16px", borderRadius: 12, border: "none", background: "var(--accent)", color: "#fff", fontFamily: "var(--font-heading)", fontWeight: 700, fontSize: 15, cursor: "pointer", boxShadow: "0 4px 16px rgba(230,149,26,0.3)", display: "flex", alignItems: "center", justifyContent: "center", gap: 10 }}
+                onMouseEnter={e => { e.currentTarget.style.transform = "translateY(-1px)"; e.currentTarget.style.boxShadow = "0 8px 24px rgba(230,149,26,0.4)"; }}
+                onMouseLeave={e => { e.currentTarget.style.transform = ""; e.currentTarget.style.boxShadow = "0 4px 16px rgba(230,149,26,0.3)"; }}>
+                <KoocaBowlIcon size={22} />
+                献立を生成する
               </button>
             )}
           </div>
@@ -575,13 +775,36 @@ function AppContent() {
               )}
             </div>
 
-            {/* Streaming: show raw */}
+            {/* Streaming: show placeholder */}
             {generating && (
-              <div style={{ padding: "20px", maxHeight: "50vh", overflowY: "auto" }}>
-                <pre style={{ fontFamily: "var(--font-body)", fontSize: 13, lineHeight: 1.9, color: "var(--text-primary)", whiteSpace: "pre-wrap", wordBreak: "break-word", margin: 0 }}>
-                  {rawOutput}
-                  <span className="animate-blink" style={{ color: "var(--accent)" }}>▍</span>
-                </pre>
+              <div style={{ padding: "40px 20px 36px", display: "flex", flexDirection: "column", alignItems: "center", gap: 20 }}>
+                {/* Walking person illustration */}
+                <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 10, marginBottom: 4 }}>
+                  <div className="animate-walk">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src="/kooca-walk-transparent.png" alt="歩く人" style={{ height: 72 }} />
+                  </div>
+                  <div style={{ display: "flex", alignItems: "center", gap: 5 }}>
+                    <span style={{ fontFamily: "var(--font-heading)", fontWeight: 700, fontSize: 13, color: "var(--accent-dark)", letterSpacing: "0.1em" }}>コツコツ考えています</span>
+                    {[0, 1, 2].map(i => (
+                      <span key={i} className="animate-blink" style={{ width: 4, height: 4, borderRadius: "50%", background: "var(--accent)", display: "inline-block", animationDelay: `${i * 0.3}s` }} />
+                    ))}
+                  </div>
+                </div>
+                <div style={{ display: "flex", gap: 10 }}>
+                  {["📅 献立表", "🍳 レシピ", "🛒 買い物リスト"].map((label, i) => (
+                    <div key={i} style={{ display: "flex", alignItems: "center", gap: 5, background: "var(--bg-subtle)", borderRadius: 8, padding: "6px 12px", fontSize: 12, color: "var(--text-muted)", fontFamily: "var(--font-heading)", fontWeight: 600 }}>
+                      <span className="animate-blink" style={{ color: "var(--accent)", animationDelay: `${i * 0.3}s` }}>●</span>
+                      {label}
+                    </div>
+                  ))}
+                </div>
+                <p style={{ fontSize: 12, color: "var(--text-muted)", textAlign: "center", lineHeight: 1.8, margin: 0 }}>
+                  献立表・レシピ・買い物リストをまとめて生成中
+                </p>
+                <div style={{ width: "100%", maxWidth: 260, height: 3, background: "var(--border)", borderRadius: 4, overflow: "hidden" }}>
+                  <div className="animate-progress-bar" style={{ height: "100%", background: "linear-gradient(90deg, var(--accent), var(--accent-dark))", borderRadius: 4 }} />
+                </div>
               </div>
             )}
 

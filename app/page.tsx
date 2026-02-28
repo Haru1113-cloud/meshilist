@@ -45,6 +45,14 @@ const TICKER_ITEMS = [
   "🥘 家族全員が喜ぶ献立を", "🧅 冷蔵庫の食材で献立を提案", "⏱️ 入力30秒で献立完成",
 ];
 
+// ─── Brand image components ───────────────────────────────────────
+function KoocaBowlIcon({ size = 28 }: { size?: number }) {
+  return (
+    // eslint-disable-next-line @next/next/no-img-element
+    <img src="/kooca-bowl-transparent.png" alt="kooca" width={size} style={{ display: "block" }} />
+  );
+}
+
 export default function LandingPage() {
   const router = useRouter();
   const [openFaq, setOpenFaq] = useState<number | null>(null);
@@ -56,17 +64,36 @@ export default function LandingPage() {
       <nav style={{ position: "sticky", top: 0, zIndex: 50, background: "rgba(245,243,238,0.88)", backdropFilter: "blur(12px)", borderBottom: "1px solid var(--border)", padding: "0 24px" }}>
         <div style={{ maxWidth: 1080, margin: "0 auto", height: 60, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
           <a href="/" style={{ display: "flex", alignItems: "center", gap: 8, textDecoration: "none" }}>
-            <div style={{ width: 30, height: 30, borderRadius: 9, background: "var(--accent)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 15 }}>🍽️</div>
-            <span style={{ fontFamily: "var(--font-heading)", fontWeight: 800, fontSize: 17, color: "var(--text-primary)", letterSpacing: "-0.03em" }}>
-              メシ<span style={{ color: "var(--accent)" }}>リスト</span>
-            </span>
+            <KoocaBowlIcon size={36} />
+            <div style={{ display: "flex", flexDirection: "column", lineHeight: 1.1 }}>
+              <span style={{ fontFamily: "var(--font-heading)", fontWeight: 800, fontSize: 17, color: "var(--text-primary)", letterSpacing: "-0.03em" }}>
+                メシ<span style={{ color: "var(--accent)" }}>リスト</span>
+              </span>
+              <span style={{ fontFamily: "var(--font-pacifico)", fontSize: 10, color: "var(--text-muted)", letterSpacing: "0.02em" }}>
+                by kooca
+              </span>
+            </div>
           </a>
-          <button
-            onClick={() => router.push("/app")}
-            style={{ padding: "9px 20px", borderRadius: 10, border: "none", background: "var(--accent)", color: "#fff", fontFamily: "var(--font-heading)", fontWeight: 700, fontSize: 13, cursor: "pointer", letterSpacing: "0.01em" }}
-          >
-            無料で試す
-          </button>
+          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            <a href="/recipes" style={{
+              padding: "8px 16px", borderRadius: 10, fontSize: 13,
+              fontFamily: "var(--font-heading)", fontWeight: 600,
+              color: "var(--text-secondary)", textDecoration: "none",
+              border: "1px solid var(--border)", background: "#fff",
+              transition: "border-color 0.15s",
+            }}
+              onMouseEnter={e => (e.currentTarget.style.borderColor = "var(--accent)")}
+              onMouseLeave={e => (e.currentTarget.style.borderColor = "var(--border)")}
+            >
+              📖 レシピ集
+            </a>
+            <button
+              onClick={() => router.push("/app")}
+              style={{ padding: "9px 20px", borderRadius: 10, border: "none", background: "var(--accent)", color: "#fff", fontFamily: "var(--font-heading)", fontWeight: 700, fontSize: 13, cursor: "pointer", letterSpacing: "0.01em" }}
+            >
+              無料で試す
+            </button>
+          </div>
         </div>
       </nav>
 
@@ -99,16 +126,18 @@ export default function LandingPage() {
 
           <div className="animate-fade-up delay-3" style={{ display: "flex", flexWrap: "wrap", gap: 12, justifyContent: "center" }}>
             <button
+              className="press-btn"
               onClick={() => router.push("/app")}
-              style={{ padding: "16px 36px", borderRadius: 14, border: "none", background: "var(--accent)", color: "#fff", fontFamily: "var(--font-heading)", fontWeight: 700, fontSize: 16, cursor: "pointer", boxShadow: "0 4px 20px rgba(230,149,26,0.35)", transition: "transform 0.15s, box-shadow 0.15s" }}
-              onMouseEnter={e => { e.currentTarget.style.transform = "translateY(-2px)"; e.currentTarget.style.boxShadow = "0 8px 28px rgba(230,149,26,0.45)"; }}
+              style={{ padding: "16px 36px", borderRadius: 14, border: "none", background: "var(--accent)", color: "#fff", fontFamily: "var(--font-heading)", fontWeight: 700, fontSize: 16, cursor: "pointer", boxShadow: "0 4px 20px rgba(230,149,26,0.35)" }}
+              onMouseEnter={e => { e.currentTarget.style.transform = "translateY(-2px)"; e.currentTarget.style.boxShadow = "0 10px 30px rgba(230,149,26,0.45)"; }}
               onMouseLeave={e => { e.currentTarget.style.transform = ""; e.currentTarget.style.boxShadow = "0 4px 20px rgba(230,149,26,0.35)"; }}
             >
               今すぐ無料で試す →
             </button>
             <button
+              className="press-btn"
               onClick={() => document.getElementById("pricing")?.scrollIntoView({ behavior: "smooth" })}
-              style={{ padding: "16px 28px", borderRadius: 14, border: "1px solid var(--border)", background: "#fff", color: "var(--text-primary)", fontFamily: "var(--font-heading)", fontWeight: 600, fontSize: 14, cursor: "pointer", transition: "background 0.15s" }}
+              style={{ padding: "16px 28px", borderRadius: 14, border: "1px solid var(--border)", background: "#fff", color: "var(--text-primary)", fontFamily: "var(--font-heading)", fontWeight: 600, fontSize: 14, cursor: "pointer" }}
               onMouseEnter={e => e.currentTarget.style.background = "var(--bg-subtle)"}
               onMouseLeave={e => e.currentTarget.style.background = "#fff"}
             >
@@ -330,8 +359,17 @@ export default function LandingPage() {
       </section>
 
       {/* ── Footer CTA ── */}
-      <section style={{ padding: "72px 24px", textAlign: "center" }}>
+      <section style={{ padding: "72px 24px", textAlign: "center", background: "var(--accent-light)" }}>
         <div style={{ maxWidth: 560, margin: "0 auto" }}>
+          {/* Walking person illustration */}
+          <div style={{ display: "flex", flexDirection: "column", alignItems: "center", marginBottom: 24, gap: 6 }}>
+            <div className="animate-walk">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src="/kooca-walk-transparent.png" alt="歩く人" style={{ height: 80 }} />
+            </div>
+            <span style={{ fontFamily: "var(--font-heading)", fontSize: 13, fontWeight: 700, color: "var(--accent-dark)", letterSpacing: "0.14em" }}>コツコツツクル。</span>
+          </div>
+
           <h2 style={{ fontFamily: "var(--font-heading)", fontWeight: 800, fontSize: "clamp(26px, 4vw, 40px)", letterSpacing: "-0.03em", color: "var(--text-primary)", marginBottom: 20 }}>
             今夜から、献立で<br />
             <span style={{ color: "var(--accent)" }}>悩む時間</span>をなくそう。
@@ -340,10 +378,11 @@ export default function LandingPage() {
             7日間無料、クレジットカード不要。まず試してみてください。
           </p>
           <button
+            className="press-btn"
             onClick={() => router.push("/app")}
-            style={{ padding: "18px 44px", borderRadius: 14, border: "none", background: "var(--accent)", color: "#fff", fontFamily: "var(--font-heading)", fontWeight: 700, fontSize: 17, cursor: "pointer", boxShadow: "0 4px 24px rgba(230,149,26,0.35)", transition: "transform 0.15s" }}
-            onMouseEnter={e => e.currentTarget.style.transform = "translateY(-2px)"}
-            onMouseLeave={e => e.currentTarget.style.transform = ""}
+            style={{ padding: "18px 44px", borderRadius: 14, border: "none", background: "var(--accent)", color: "#fff", fontFamily: "var(--font-heading)", fontWeight: 700, fontSize: 17, cursor: "pointer", boxShadow: "0 4px 24px rgba(230,149,26,0.35)" }}
+            onMouseEnter={e => { e.currentTarget.style.transform = "translateY(-2px)"; e.currentTarget.style.boxShadow = "0 10px 30px rgba(230,149,26,0.45)"; }}
+            onMouseLeave={e => { e.currentTarget.style.transform = ""; e.currentTarget.style.boxShadow = "0 4px 24px rgba(230,149,26,0.35)"; }}
           >
             無料で献立を生成する →
           </button>
@@ -355,8 +394,11 @@ export default function LandingPage() {
         <div style={{ maxWidth: 1080, margin: "0 auto" }}>
           <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", justifyContent: "space-between", gap: 20 }}>
             <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-              <div style={{ width: 28, height: 28, borderRadius: 8, background: "var(--accent)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 14 }}>🍽️</div>
-              <span style={{ fontFamily: "var(--font-heading)", fontWeight: 800, fontSize: 16, color: "#fff", letterSpacing: "-0.03em" }}>メシリスト</span>
+              <KoocaBowlIcon size={28} />
+              <div style={{ display: "flex", flexDirection: "column", lineHeight: 1.2 }}>
+                <span style={{ fontFamily: "var(--font-heading)", fontWeight: 800, fontSize: 15, color: "#fff", letterSpacing: "-0.03em" }}>メシリスト</span>
+                <span style={{ fontFamily: "var(--font-pacifico)", fontSize: 10, color: "rgba(255,255,255,0.5)", letterSpacing: "0.02em" }}>by kooca</span>
+              </div>
             </div>
             <div style={{ display: "flex", flexWrap: "wrap", gap: 24 }}>
               {[
