@@ -4,7 +4,7 @@ import { NextRequest } from "next/server";
 const MOCK_IMAGE_URL = ""; // 空文字 = 表示しない
 
 export async function POST(request: NextRequest) {
-  const { dish, steps } = await request.json();
+  const { dish } = await request.json();
 
   if (!dish) {
     return Response.json({ error: "Missing dish name" }, { status: 400 });
@@ -19,12 +19,7 @@ export async function POST(request: NextRequest) {
   const { default: OpenAI } = await import("openai");
   const client = new OpenAI({ apiKey });
 
-  const stepCount = Array.isArray(steps) ? steps.length : 4;
-  const stepsDesc = Array.isArray(steps) && steps.length > 0
-    ? steps.map((s: string, i: number) => `panel ${i + 1}: ${s}`).join(" | ")
-    : "";
-
-  const prompt = `A cute Japanese cookbook-style recipe illustration card for "${dish}". ${stepCount} panels arranged in a 2-row grid, each panel showing one cooking action with hand-drawn watercolor illustrations of food and kitchen utensils. ${stepsDesc}. Style: warm watercolor, cozy home cooking, cream background, orange and brown tones, Studio Ghibli food aesthetic. IMPORTANT: absolutely no text, no letters, no numbers, no labels, no characters of any language anywhere in the image. Pure illustration only.`;
+  const prompt = `A beautiful Japanese cookbook watercolor illustration of "${dish}". The finished dish beautifully presented in a bowl or plate, surrounded by its key ingredients arranged artistically. Warm cozy home cooking aesthetic, hand-drawn watercolor style with clean line art, cream/beige background, soft orange and brown tones, Studio Ghibli food art style. The illustration is clean, detailed, and appetizing. CRITICAL: zero text, zero letters, zero numbers, zero words, zero labels of any kind anywhere in the image. Pure illustration only, no typography whatsoever.`;
 
   try {
     const response = await client.images.generate({

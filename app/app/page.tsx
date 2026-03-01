@@ -281,11 +281,10 @@ function RecipeBlock({ title, body }: { title: string; body: string[] }) {
     if (generatedRef.current) return;
     generatedRef.current = true;
     setImageLoading(true);
-    const steps = body.map(l => l.trim()).filter(l => /^\d+\./.test(l)).map(l => l.replace(/^\d+\.\s*/, ""));
     fetch("/api/generate-image", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ dish: title, steps }),
+      body: JSON.stringify({ dish: title }),
     })
       .then(r => r.json())
       .then(d => { if (d.url) setImageUrl(d.url); })
@@ -466,7 +465,7 @@ function AppContent() {
   const [familySize, setFamilySize] = useState("4");
   const [disliked, setDisliked] = useState("");
   const [style, setStyle] = useState("何でも");
-  const [days, setDays] = useState("7");
+  const days = "today";
   const [noKnife, setNoKnife] = useState(false);
   const [cookTime, setCookTime] = useState<"quick" | "normal" | "slow">("normal");
 
@@ -504,7 +503,6 @@ function AppContent() {
         if (p.familySize)               setFamilySize(p.familySize);
         if (p.disliked !== undefined)   setDisliked(p.disliked);
         if (p.style)                    setStyle(p.style);
-        if (p.days)                     setDays(p.days);
         if (p.noKnife !== undefined)    setNoKnife(p.noKnife);
         if (p.cookTime)                 setCookTime(p.cookTime);
       }
@@ -526,7 +524,7 @@ function AppContent() {
   // Persist inputs
   useEffect(() => {
     if (!ready) return;
-    localStorage.setItem("meshilist_inputs", JSON.stringify({ ingredients, selectedChips, familySize, disliked, style, days, noKnife, cookTime }));
+    localStorage.setItem("meshilist_inputs", JSON.stringify({ ingredients, selectedChips, familySize, disliked, style, noKnife, cookTime }));
   }, [ready, ingredients, selectedChips, familySize, disliked, style, days, noKnife]);
 
   // Parse output when generation finishes
@@ -773,19 +771,6 @@ function AppContent() {
                 {STYLE_OPTIONS.map(opt => (
                   <button key={opt.value} onClick={() => setStyle(opt.value)}
                     style={{ padding: "9px 20px", borderRadius: 10, border: `1px solid ${style === opt.value ? "var(--accent)" : "var(--border)"}`, background: style === opt.value ? "var(--accent-light)" : "var(--bg-subtle)", color: style === opt.value ? "var(--accent-dark)" : "var(--text-secondary)", fontFamily: "var(--font-body)", fontSize: 13, cursor: "pointer", transition: "all 0.15s", fontWeight: style === opt.value ? 700 : 400 }}>
-                    {opt.label}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* Days */}
-            <div>
-              <label style={{ display: "block", fontFamily: "var(--font-heading)", fontWeight: 700, fontSize: 13, color: "var(--text-primary)", marginBottom: 10 }}>日数</label>
-              <div style={{ display: "flex", gap: 8 }}>
-                {DAYS_OPTIONS.map(opt => (
-                  <button key={opt.value} onClick={() => setDays(opt.value)}
-                    style={{ flex: 1, padding: "11px", borderRadius: 10, border: `1px solid ${days === opt.value ? "var(--accent)" : "var(--border)"}`, background: days === opt.value ? "var(--accent-light)" : "var(--bg-subtle)", color: days === opt.value ? "var(--accent-dark)" : "var(--text-secondary)", fontFamily: "var(--font-heading)", fontWeight: 700, fontSize: 14, cursor: "pointer", transition: "all 0.15s" }}>
                     {opt.label}
                   </button>
                 ))}
