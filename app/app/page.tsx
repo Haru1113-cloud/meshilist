@@ -273,8 +273,40 @@ function RecipeIllustrationCard({ guide }: { guide: StepGuide }) {
 }
 
 function RecipeBlock({ title, body }: { title: string; body: string[] }) {
+  const [imageUrl, setImageUrl] = useState<string | null>(null);
+  const [imageLoading, setImageLoading] = useState(false);
+  const generatedRef = useRef(false);
+
+  useEffect(() => {
+    if (generatedRef.current) return;
+    generatedRef.current = true;
+    setImageLoading(true);
+    fetch("/api/generate-image", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ dish: title }),
+    })
+      .then(r => r.json())
+      .then(d => { if (d.url) setImageUrl(d.url); })
+      .catch(() => {})
+      .finally(() => setImageLoading(false));
+  }, [title]);
+
   return (
-    <div style={{ background: "var(--bg-subtle)", borderRadius: 14, padding: "20px 22px" }}>
+    <div style={{ background: "var(--bg-subtle)", borderRadius: 14, overflow: "hidden" }}>
+      {/* Recipe illustration */}
+      {imageLoading && (
+        <div style={{ height: 160, background: "#f0ebe0", display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}>
+          <span className="animate-spin-sm" style={{ width: 16, height: 16, borderRadius: "50%", border: "2px solid rgba(0,0,0,0.1)", borderTopColor: "var(--accent)", display: "inline-block" }} />
+          <span style={{ fontSize: 12, color: "var(--text-muted)", fontFamily: "var(--font-heading)", fontWeight: 600 }}>イラスト生成中...</span>
+        </div>
+      )}
+      {imageUrl && !imageLoading && (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img src={imageUrl} alt={title} style={{ width: "100%", height: 200, objectFit: "cover", display: "block" }} />
+      )}
+
+      <div style={{ padding: "20px 22px" }}>
       <div style={{ marginBottom: 12, paddingBottom: 10, borderBottom: "1px solid var(--border)" }}>
         <h3 style={{ fontFamily: "var(--font-heading)", fontWeight: 700, fontSize: 15, color: "var(--text-primary)", margin: 0 }}>
           🍽️ {title}
@@ -307,6 +339,7 @@ function RecipeBlock({ title, body }: { title: string; body: string[] }) {
             return <div key={j} style={{ fontSize: 13, color: "var(--text-secondary)", lineHeight: 1.7 }}>{cleaned}</div>;
           })}
         </div>
+      </div>
     </div>
   );
 }
