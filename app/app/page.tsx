@@ -256,6 +256,8 @@ function RecipeBlock({ title, body }: { title: string; body: string[] }) {
           {body.map((line, j) => {
             const t = line.trim();
             if (!t) return <div key={j} style={{ height: 6 }} />;
+            // Skip markdown separators and table separator rows
+            if (t === "---" || /^\|[-| ]+\|$/.test(t)) return null;
             if (t.startsWith("📊")) return <RecipeNutritionPanel key={j} line={t} />;
             if (t === "材料:" || t === "手順:" || t.startsWith("材料") || t.startsWith("手順")) {
               return <div key={j} style={{ fontFamily: "var(--font-heading)", fontWeight: 700, fontSize: 12, color: "var(--accent-dark)", marginTop: 8, letterSpacing: "0.04em", textTransform: "uppercase" }}>{t}</div>;
@@ -266,7 +268,14 @@ function RecipeBlock({ title, body }: { title: string; body: string[] }) {
                 <span>{t.replace(/^\d+\.\s*/, "")}</span>
               </div>;
             }
-            return <div key={j} style={{ fontSize: 13, color: "var(--text-secondary)", lineHeight: 1.7 }}>{t}</div>;
+            // Table row → render as simple line
+            if (t.startsWith("|") && t.endsWith("|")) {
+              const cells = t.split("|").map(c => c.trim()).filter(Boolean);
+              return <div key={j} style={{ fontSize: 13, color: "var(--text-secondary)", lineHeight: 1.7 }}>{cells.join("　")}</div>;
+            }
+            // Strip italic/bold markdown markers
+            const cleaned = t.replace(/^\*+|\*+$/g, "").trim();
+            return <div key={j} style={{ fontSize: 13, color: "var(--text-secondary)", lineHeight: 1.7 }}>{cleaned}</div>;
           })}
         </div>
       )}
