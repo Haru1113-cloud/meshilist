@@ -30,6 +30,11 @@ const DAYS_OPTIONS = [
   { value: "3",     label: "3日分" },
   { value: "7",     label: "1週間分" },
 ];
+const COOK_TIME_OPTIONS = [
+  { value: "quick",  label: "⚡ パッと", sub: "15分以内" },
+  { value: "normal", label: "🍳 ふつう", sub: "30分程度" },
+  { value: "slow",   label: "🕐 じっくり", sub: "1時間" },
+];
 const TABS: { key: TabKey; label: string; icon: string }[] = [
   { key: "schedule", label: "献立表", icon: "📅" },
   { key: "recipe",   label: "レシピ", icon: "🍳" },
@@ -406,12 +411,14 @@ function AppContent() {
   const [style, setStyle] = useState("何でも");
   const [days, setDays] = useState("7");
   const [noKnife, setNoKnife] = useState(false);
+  const [cookTime, setCookTime] = useState<"quick" | "normal" | "slow">("normal");
 
   // Output state
   const [rawOutput, setRawOutput] = useState("");
   const [generating, setGenerating] = useState(false);
   const [parsedOutput, setParsedOutput] = useState<ParsedOutput | null>(null);
   const [activeTab, setActiveTab] = useState<TabKey>("schedule");
+  const [view, setView] = useState<"form" | "result">("form");
 
   // Shopping list checkboxes
   const [checkedItems, setCheckedItems] = useState<Set<string>>(new Set());
@@ -440,6 +447,7 @@ function AppContent() {
         if (p.style)                    setStyle(p.style);
         if (p.days)                     setDays(p.days);
         if (p.noKnife !== undefined)    setNoKnife(p.noKnife);
+        if (p.cookTime)                 setCookTime(p.cookTime);
       }
       const savedChecked = localStorage.getItem("meshilist_checked");
       if (savedChecked) setCheckedItems(new Set(JSON.parse(savedChecked)));
@@ -459,7 +467,7 @@ function AppContent() {
   // Persist inputs
   useEffect(() => {
     if (!ready) return;
-    localStorage.setItem("meshilist_inputs", JSON.stringify({ ingredients, selectedChips, familySize, disliked, style, days, noKnife }));
+    localStorage.setItem("meshilist_inputs", JSON.stringify({ ingredients, selectedChips, familySize, disliked, style, days, noKnife, cookTime }));
   }, [ready, ingredients, selectedChips, familySize, disliked, style, days, noKnife]);
 
   // Parse output when generation finishes
@@ -491,6 +499,7 @@ function AppContent() {
     if (!allIngredients.trim()) { alert("食材を入力してください"); return; }
 
     setGenerating(true);
+    setView("result");
     setRawOutput("");
     setParsedOutput(null);
     setActiveTab("schedule");
@@ -501,7 +510,7 @@ function AppContent() {
     try {
       const res = await fetch("/api/generate", {
         method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ingredients: allIngredients, familySize, disliked, style, days, deviceId, noKnife }),
+        body: JSON.stringify({ ingredients: allIngredients, familySize, disliked, style, days, deviceId, noKnife, cookTime }),
         signal: abortRef.current.signal,
       });
       if (res.status === 402) { setShowSubscribeModal(true); return; }
@@ -625,7 +634,7 @@ function AppContent() {
         </div>
 
         {/* Input panel */}
-        <div style={{ background: "#fff", borderRadius: 20, padding: "28px", border: "1px solid var(--border)", marginBottom: 24 }}>
+        {view === "form" && <div style={{ background: "#fff", borderRadius: 20, padding: "28px", border: "1px solid var(--border)", marginBottom: 24 }}>
           <div style={{ display: "flex", flexDirection: "column", gap: 22 }}>
 
             {/* Ingredients */}
@@ -709,6 +718,20 @@ function AppContent() {
               </div>
             </div>
 
+            {/* Cook time */}
+            <div>
+              <label style={{ display: "block", fontFamily: "var(--font-heading)", fontWeight: 700, fontSize: 13, color: "var(--text-primary)", marginBottom: 10 }}>調理時間の目安</label>
+              <div style={{ display: "flex", gap: 8 }}>
+                {COOK_TIME_OPTIONS.map(opt => (
+                  <button key={opt.value} onClick={() => setCookTime(opt.value as "quick" | "normal" | "slow")}
+                    style={{ flex: 1, padding: "10px 8px", borderRadius: 10, border: `1px solid ${cookTime === opt.value ? "var(--accent)" : "var(--border)"}`, background: cookTime === opt.value ? "var(--accent-light)" : "var(--bg-subtle)", color: cookTime === opt.value ? "var(--accent-dark)" : "var(--text-secondary)", fontFamily: "var(--font-heading)", fontWeight: 700, fontSize: 13, cursor: "pointer", transition: "all 0.15s", display: "flex", flexDirection: "column", alignItems: "center", gap: 2 }}>
+                    <span>{opt.label}</span>
+                    <span style={{ fontSize: 10, fontWeight: 400, fontFamily: "var(--font-body)", opacity: 0.7 }}>{opt.sub}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+
             {/* Options */}
             <div>
               <label style={{ display: "block", fontFamily: "var(--font-heading)", fontWeight: 700, fontSize: 13, color: "var(--text-primary)", marginBottom: 10 }}>オプション</label>
@@ -757,14 +780,18 @@ function AppContent() {
               </button>
             )}
           </div>
-        </div>
+        </div>}
 
-        {/* ── Output Panel ── */}
-        {(rawOutput || generating) && (
-          <div ref={outputRef} style={{ background: "#fff", borderRadius: 20, border: "1px solid var(--border)", overflow: "hidden" }}>
+        {/* ── Output Panel (Full Screen Overlay) ── */}
+        {view === "result" && (
+          <div style={{ position: "fixed", left: 0, right: 0, top: 56, bottom: 0, background: "var(--bg)", zIndex: 40, display: "flex", flexDirection: "column", overflow: "hidden" }}>
 
             {/* Header */}
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "16px 20px", borderBottom: "1px solid var(--border)" }}>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "12px 20px", borderBottom: "1px solid var(--border)", background: "rgba(245,243,238,0.96)", backdropFilter: "blur(8px)", flexShrink: 0 }}>
+              <button onClick={() => setView("form")}
+                style={{ display: "flex", alignItems: "center", gap: 5, padding: "6px 12px", borderRadius: 8, border: "1px solid var(--border)", background: "var(--bg-subtle)", color: "var(--text-secondary)", fontFamily: "var(--font-heading)", fontWeight: 600, fontSize: 12, cursor: "pointer" }}>
+                ← 条件を変える
+              </button>
               <span style={{ fontFamily: "var(--font-heading)", fontWeight: 700, fontSize: 14, color: "var(--text-primary)", display: "flex", alignItems: "center", gap: 8 }}>
                 {generating
                   ? <><span className="animate-blink" style={{ color: "var(--accent)", fontSize: 10 }}>●</span> 生成中…</>
@@ -782,6 +809,7 @@ function AppContent() {
                   </button>
                 </div>
               )}
+              {generating && <div style={{ width: 80 }} />}
             </div>
 
             {/* Streaming: show placeholder */}
@@ -819,9 +847,9 @@ function AppContent() {
 
             {/* Done: show tabs */}
             {!generating && parsedOutput && (
-              <>
+              <div style={{ display: "flex", flexDirection: "column", flex: 1, overflow: "hidden" }}>
                 {/* Tab bar */}
-                <div style={{ display: "flex", borderBottom: "1px solid var(--border)", padding: "0 20px" }}>
+                <div style={{ display: "flex", borderBottom: "1px solid var(--border)", padding: "0 20px", flexShrink: 0 }}>
                   {TABS.map(tab => (
                     <button key={tab.key} onClick={() => setActiveTab(tab.key)}
                       style={{ padding: "12px 16px", border: "none", borderBottom: `2px solid ${activeTab === tab.key ? "#4a7840" : "transparent"}`, background: "none", color: activeTab === tab.key ? "#4a7840" : "var(--text-muted)", fontFamily: "var(--font-heading)", fontWeight: 700, fontSize: 13, cursor: "pointer", transition: "color 0.15s", display: "flex", alignItems: "center", gap: 6, opacity: tabHasContent(tab.key) ? 1 : 0.4 }}>
@@ -836,7 +864,7 @@ function AppContent() {
                 </div>
 
                 {/* Tab content */}
-                <div style={{ padding: "24px", maxHeight: "65vh", overflowY: "auto" }}>
+                <div style={{ padding: "24px", flex: 1, overflowY: "auto" }}>
                   {activeTab === "schedule" && parsedOutput.schedule && (
                     <ScheduleSection text={parsedOutput.schedule} />
                   )}
@@ -857,7 +885,7 @@ function AppContent() {
                     </p>
                   )}
                 </div>
-              </>
+              </div>
             )}
           </div>
         )}

@@ -175,7 +175,7 @@ async function streamMockResponse(text: string): Promise<ReadableStream> {
 }
 
 export async function POST(request: NextRequest) {
-  const { ingredients, familySize, disliked, style, days, deviceId, noKnife } =
+  const { ingredients, familySize, disliked, style, days, deviceId, noKnife, cookTime } =
     await request.json();
 
   if (!deviceId || !ingredients) {
@@ -212,7 +212,12 @@ export async function POST(request: NextRequest) {
     ? "包丁を使わずキッチンバサミや手でちぎるだけで作れる料理のみにしてください。"
     : "";
 
-  const systemPrompt = `あなたはプロの栄養士兼料理研究家です。忙しい家庭向けに、現実的で作りやすい献立を提案してください。カップ麺・インスタント食品・冷凍食品は絶対に含めないでください。${noKnifeInstruction}`;
+  const cookTimeLabel =
+    cookTime === "quick" ? "15分以内" :
+    cookTime === "slow"  ? "1時間程度" :
+    "30分程度";
+
+  const systemPrompt = `あなたは15年以上の経験を持つプロの家庭料理人です。家族のために心のこもった、本格的かつ現実的な献立を提案してください。旬の食材を活かし、栄養バランスと美味しさを両立した、愛情のある料理を心がけてください。カップ麺・インスタント食品・冷凍食品は絶対に含めないでください。${noKnifeInstruction}`;
 
   const isTonightMode = days === "today";
 
@@ -223,6 +228,7 @@ export async function POST(request: NextRequest) {
 - 人数: ${familySize}人
 - 苦手・アレルギー: ${disliked || "特になし"}
 - 料理スタイル: ${style}
+- 1品あたりの調理時間: ${cookTimeLabel}
 
 ## 出力形式
 
@@ -261,6 +267,7 @@ export async function POST(request: NextRequest) {
 - 人数: ${familySize}人
 - 苦手・アレルギー: ${disliked || "特になし"}
 - 料理スタイル: ${style}
+- 1品あたりの調理時間: ${cookTimeLabel}
 
 ## 出力形式
 
