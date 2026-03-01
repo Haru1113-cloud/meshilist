@@ -273,59 +273,15 @@ function RecipeIllustrationCard({ guide }: { guide: StepGuide }) {
 }
 
 function RecipeBlock({ title, body }: { title: string; body: string[] }) {
-  const [guide, setGuide] = useState<StepGuide | null>(null);
-  const [loadingDiagram, setLoadingDiagram] = useState(false);
-  const [showDiagram, setShowDiagram] = useState(false);
-
-  const handleDiagram = async () => {
-    if (guide) { setShowDiagram(v => !v); return; }
-    setLoadingDiagram(true);
-    // Extract steps from body
-    const steps = body.map(l => l.trim()).filter(l => /^\d+\./.test(l)).map(l => l.replace(/^\d+\.\s*/, ""));
-    const ingredients = body.map(l => l.trim()).filter(l => l.startsWith("材料:"))[0]?.replace("材料:", "").trim() || "";
-    try {
-      const res = await fetch("/api/generate-steps", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ dish: title, ingredients, steps }),
-      });
-      const data: StepGuide = await res.json();
-      setGuide(data);
-      setShowDiagram(true);
-    } catch { /* noop */ }
-    finally { setLoadingDiagram(false); }
-  };
-
   return (
     <div style={{ background: "var(--bg-subtle)", borderRadius: 14, padding: "20px 22px" }}>
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12, paddingBottom: 10, borderBottom: "1px solid var(--border)" }}>
+      <div style={{ marginBottom: 12, paddingBottom: 10, borderBottom: "1px solid var(--border)" }}>
         <h3 style={{ fontFamily: "var(--font-heading)", fontWeight: 700, fontSize: 15, color: "var(--text-primary)", margin: 0 }}>
           🍽️ {title}
         </h3>
-        <button
-          onClick={handleDiagram}
-          disabled={loadingDiagram}
-          style={{
-            padding: "5px 12px", borderRadius: 20, border: "1px solid var(--accent)",
-            background: showDiagram ? "var(--accent)" : "#fff",
-            color: showDiagram ? "#fff" : "var(--accent)",
-            fontSize: 11, fontFamily: "var(--font-heading)", fontWeight: 700,
-            cursor: loadingDiagram ? "wait" : "pointer",
-            display: "flex", alignItems: "center", gap: 5, flexShrink: 0,
-          }}
-        >
-          {loadingDiagram
-            ? <><span className="animate-spin-sm" style={{ width: 10, height: 10, borderRadius: "50%", border: "2px solid rgba(230,149,26,0.3)", borderTopColor: "var(--accent)", display: "inline-block" }} />生成中</>
-            : showDiagram ? "📝 テキスト" : "✏️ 図解を見る"}
-        </button>
       </div>
 
-      {showDiagram && guide ? (
-        /* ── Illustration Card ── */
-        <RecipeIllustrationCard guide={guide} />
-      ) : (
-        /* ── Text view ── */
-        <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+      <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
           {body.map((line, j) => {
             const t = line.trim();
             if (!t) return <div key={j} style={{ height: 6 }} />;
@@ -351,7 +307,6 @@ function RecipeBlock({ title, body }: { title: string; body: string[] }) {
             return <div key={j} style={{ fontSize: 13, color: "var(--text-secondary)", lineHeight: 1.7 }}>{cleaned}</div>;
           })}
         </div>
-      )}
     </div>
   );
 }
