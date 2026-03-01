@@ -13,12 +13,6 @@ export async function POST(request: NextRequest) {
     return Response.json({ url: "" });
   }
 
-  const { default: OpenAI } = await import("openai");
-  const client = new OpenAI({
-    apiKey,
-    baseURL: "https://api.aimlapi.com/v1",
-  });
-
   const prompt = `日本の家庭料理「${dish}」の作り方を示した手描き風レシピイラスト。
 上部に「作り方」という見出し。
 6〜8ステップをグリッド（3列×2〜3行）に配置。
@@ -27,16 +21,32 @@ export async function POST(request: NextRequest) {
 テキストはすべて日本語。ステップ番号は丸囲み数字または太字。`;
 
   try {
-    const response = await client.images.generate({
-      model: "google/gemini-3-pro-image-preview",
-      prompt,
-      n: 1,
-      // @ts-ignore
-      aspect_ratio: "16:9",
+    const res = await fetch("https://api.aimlapi.com/v1/images/generations", {
+      method: "POST",
+      headers: {
+        "Authorization": `Bearer ${apiKey}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        model: "google/gemini-3-pro-image-preview",
+        prompt,
+        num_images: 1,
+        aspect_ratio: "16:9",
+      }),
     });
 
-    const url = response.data?.[0]?.url ?? "";
-    const b64 = (response.data?.[0] as { b64_json?: string })?.b64_json;
+    if (!res.ok) {
+      const err = await res.text();
+      console.error("generate-process-image API error:", res.status, err);
+      return Response.json({ url: "" });
+    }
+
+    const data = await res.json();
+    console.log("generate-process-image response:", JSON.stringify(data).slice(0, 300));
+
+    const url = data?.data?.[0]?.url ?? "";
+    const b64 = data?.data?.[0]?.b64_json ?? "";
+
     if (!url && b64) return Response.json({ b64 });
     return Response.json({ url });
   } catch (e) {
