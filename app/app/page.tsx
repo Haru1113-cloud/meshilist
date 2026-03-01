@@ -31,9 +31,10 @@ const DAYS_OPTIONS = [
   { value: "7",     label: "1週間分" },
 ];
 const COOK_TIME_OPTIONS = [
-  { value: "quick",  label: "⚡ パッと", sub: "15分以内" },
-  { value: "normal", label: "🍳 ふつう", sub: "30分程度" },
-  { value: "slow",   label: "🕐 じっくり", sub: "1時間" },
+  { value: "microwave", label: "📦 レンチン", sub: "タッパーのみ" },
+  { value: "quick",     label: "⚡ パッと",   sub: "15分以内" },
+  { value: "normal",    label: "🍳 ふつう",   sub: "30分程度" },
+  { value: "slow",      label: "🕐 じっくり", sub: "1時間" },
 ];
 const TABS: { key: TabKey; label: string; icon: string }[] = [
   { key: "schedule", label: "献立表", icon: "📅" },
