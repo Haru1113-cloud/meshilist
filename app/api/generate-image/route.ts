@@ -18,7 +18,7 @@ export async function POST(request: NextRequest) {
   const { default: OpenAI } = await import("openai");
   const client = new OpenAI({ apiKey });
 
-  const prompt = `A beautiful, appetizing top-down photo of Japanese home-cooked "${dish}" served in a ceramic bowl on a warm wooden table. Soft natural lighting, shallow depth of field, food magazine style. Warm pastel tones, cozy and inviting atmosphere. No text, no watermark.`;
+  const prompt = `Professional food photography of Japanese home-cooked "${dish}". Beautifully plated in an artisan ceramic dish on a rustic wooden table. Warm golden-hour side lighting creating depth and highlights. Visible steam rising gently. Glossy sauce glistening. Vibrant fresh colors — golden-brown crust, rich caramelized tones, bright green garnish. Shallow depth of field with soft bokeh background. Shot with a 50mm lens, f/1.8. Michelin-quality food styling. Utterly mouth-watering and irresistible. No text, no watermark.`;
 
   try {
     const response = await client.images.generate({
