@@ -51,6 +51,8 @@ function getOrCreateDeviceId(): string {
 }
 
 function parseOutput(text: string): ParsedOutput {
+  // Normalize uppercase G (gram unit) to lowercase g
+  text = text.replace(/(\d+(?:\.\d+)?)\s*G\b/g, "$1g");
   const s: ParsedOutput = { schedule: "", recipe: "", shopping: "" };
   const scheduleMatch = text.match(/###\s*📅[^\n]*\n([\s\S]*?)(?=###\s*🍳|###\s*🛒|$)/);
   const recipeMatch   = text.match(/###\s*🍳[^\n]*\n([\s\S]*?)(?=###\s*📅|###\s*🛒|$)/);
@@ -135,7 +137,7 @@ const NUTRIENT_DEFS = [
 
 function RecipeNutritionPanel({ line }: { line: string }) {
   // 📊 290kcal / P:14g / F:10g / C:36g / 塩:2.2g
-  const m = line.match(/📊\s*(\d+)kcal\s*\/\s*P:([\d.]+)g\s*\/\s*F:([\d.]+)g\s*\/\s*C:([\d.]+)g\s*\/\s*塩:([\d.]+)g/);
+  const m = line.match(/📊\s*(\d+)kcal\s*\/\s*P:([\d.]+)[gG]\s*\/\s*F:([\d.]+)[gG]\s*\/\s*C:([\d.]+)[gG]\s*\/\s*塩:([\d.]+)[gG]/i);
   if (!m) return null;
   const [, kcal, protein, fat, carbs, salt] = m;
   const vals = { protein: +protein, fat: +fat, carbs: +carbs, salt: +salt };
