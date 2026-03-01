@@ -183,7 +183,94 @@ function RecipeNutritionPanel({ line }: { line: string }) {
   );
 }
 
-type StepGuide = { dish: string; totalTime: string; steps: { num: number; emoji: string; title: string; action: string; tip?: string }[] };
+type StepGuide = {
+  dish: string;
+  totalTime: string;
+  ingredientGroups?: { category: string; emoji: string; items: string[] }[];
+  steps: { num: number; emoji: string; title?: string; action: string; heat?: string; time?: string; tip?: string }[];
+};
+
+// ─── Recipe Illustration Card ─────────────────────────────────────
+function RecipeIllustrationCard({ guide }: { guide: StepGuide }) {
+  const hasGroups = (guide.ingredientGroups ?? []).length > 0;
+  const cols = Math.min(guide.steps.length, 3);
+
+  return (
+    <div style={{ background: "#fdf4e7", borderRadius: 16, border: "2px solid #c8a96e", overflow: "hidden", marginTop: 4 }}>
+      <div style={{ display: "grid", gridTemplateColumns: hasGroups ? "minmax(120px, 1fr) minmax(0, 1.7fr)" : "1fr" }}>
+
+        {/* ── 左: 材料 ── */}
+        {hasGroups && (
+          <div style={{ padding: "16px 14px", borderRight: "2px solid #c8a96e" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 12 }}>
+              <span style={{ width: 7, height: 14, borderRadius: 2, background: "#3d2b1a", display: "block", flexShrink: 0 }} />
+              <span style={{ fontFamily: "var(--font-heading)", fontWeight: 800, fontSize: 12, color: "#3d2b1a" }}>材料</span>
+            </div>
+            {guide.ingredientGroups!.map(group => (
+              <div key={group.category} style={{ marginBottom: 10 }}>
+                <div style={{ display: "inline-flex", alignItems: "center", gap: 4, background: "#e8c98a", borderRadius: 20, padding: "2px 10px", marginBottom: 5 }}>
+                  <span style={{ fontSize: 12 }}>{group.emoji}</span>
+                  <span style={{ fontSize: 10, fontFamily: "var(--font-heading)", fontWeight: 700, color: "#5a3e1b" }}>{group.category}</span>
+                </div>
+                {group.items.map((item, i) => (
+                  <div key={i} style={{ fontSize: 11, color: "#4a3520", lineHeight: 1.7, paddingLeft: 4 }}>・{item}</div>
+                ))}
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* ── 右: 作り方 ── */}
+        <div style={{ padding: "16px 14px" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 12 }}>
+            <span style={{ width: 7, height: 14, borderRadius: 2, background: "#3d2b1a", display: "block", flexShrink: 0 }} />
+            <span style={{ fontFamily: "var(--font-heading)", fontWeight: 800, fontSize: 12, color: "#3d2b1a" }}>作り方</span>
+            <span style={{ fontSize: 10, color: "#8a6840", marginLeft: "auto", fontFamily: "var(--font-heading)", fontWeight: 600 }}>⏱ {guide.totalTime}</span>
+          </div>
+          <div style={{ display: "grid", gridTemplateColumns: `repeat(${cols}, 1fr)`, gap: 6 }}>
+            {guide.steps.map((step, i) => (
+              <div key={step.num} style={{ display: "flex", alignItems: "stretch", gap: 4 }}>
+                <div style={{ background: "#fff8ee", borderRadius: 10, padding: "10px 6px", textAlign: "center", border: "1px solid #e0c8a0", flex: 1 }}>
+                  {/* 絵文字 "イラスト" */}
+                  <div style={{ fontSize: 28, lineHeight: 1, marginBottom: 5 }}>{step.emoji}</div>
+                  {/* 火加減・時間チップ */}
+                  {(step.heat || step.time) && (
+                    <div style={{ display: "flex", justifyContent: "center", gap: 3, marginBottom: 5, flexWrap: "wrap" }}>
+                      {step.heat && (
+                        <span style={{ fontSize: 9, background: "#fff0d0", color: "#c2410c", borderRadius: 4, padding: "1px 5px", fontFamily: "var(--font-heading)", fontWeight: 700, whiteSpace: "nowrap" }}>
+                          🔥{step.heat}
+                        </span>
+                      )}
+                      {step.time && (
+                        <span style={{ fontSize: 9, background: "#f0f9ff", color: "#0369a1", borderRadius: 4, padding: "1px 5px", fontFamily: "var(--font-heading)", fontWeight: 700, whiteSpace: "nowrap" }}>
+                          ⏱{step.time}
+                        </span>
+                      )}
+                    </div>
+                  )}
+                  {/* ステップ番号＋説明 */}
+                  <div style={{ fontSize: 10, color: "#4a3520", lineHeight: 1.5 }}>
+                    <span style={{ fontFamily: "var(--font-heading)", fontWeight: 800, color: "#c8a96e" }}>{step.num}. </span>
+                    {step.action}
+                  </div>
+                  {step.tip && (
+                    <div style={{ fontSize: 9, color: "#7a5c2e", background: "#fef3c7", borderRadius: 4, padding: "2px 5px", marginTop: 4 }}>
+                      💡{step.tip}
+                    </div>
+                  )}
+                </div>
+                {/* 矢印 */}
+                {i < guide.steps.length - 1 && i % cols !== cols - 1 && (
+                  <div style={{ display: "flex", alignItems: "center", color: "#c8a96e", fontSize: 14, flexShrink: 0 }}>→</div>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 function RecipeBlock({ title, body }: { title: string; body: string[] }) {
   const [guide, setGuide] = useState<StepGuide | null>(null);
@@ -234,29 +321,8 @@ function RecipeBlock({ title, body }: { title: string; body: string[] }) {
       </div>
 
       {showDiagram && guide ? (
-        /* ── Diagram view ── */
-        <div>
-          <p style={{ fontSize: 11, color: "var(--text-muted)", textAlign: "right", marginBottom: 10 }}>
-            合計時間: <strong style={{ color: "var(--text-primary)" }}>{guide.totalTime}</strong>
-          </p>
-          <div style={{ display: "grid", gridTemplateColumns: `repeat(${Math.min(guide.steps.length, 3)}, 1fr)`, gap: 8 }}>
-            {guide.steps.map(step => (
-              <div key={step.num} style={{ background: "var(--accent-light)", borderRadius: 12, padding: "12px 8px", display: "flex", flexDirection: "column", alignItems: "center", gap: 5, textAlign: "center", border: "1px solid rgba(230,149,26,0.15)", position: "relative" }}>
-                <div style={{ position: "absolute", top: 7, left: 7, width: 18, height: 18, borderRadius: "50%", background: "var(--accent)", color: "#fff", fontSize: 9, fontFamily: "var(--font-heading)", fontWeight: 800, display: "flex", alignItems: "center", justifyContent: "center" }}>
-                  {step.num}
-                </div>
-                <span style={{ fontSize: 26, lineHeight: 1, marginTop: 8 }}>{step.emoji}</span>
-                <div style={{ fontFamily: "var(--font-heading)", fontWeight: 800, fontSize: 11, color: "var(--accent-dark)" }}>{step.title}</div>
-                <div style={{ fontSize: 11, color: "var(--text-secondary)", lineHeight: 1.6 }}>{step.action}</div>
-                {step.tip && (
-                  <div style={{ fontSize: 10, color: "var(--accent-dark)", background: "#fff", borderRadius: 6, padding: "2px 7px", border: "1px solid rgba(230,149,26,0.25)" }}>
-                    💡 {step.tip}
-                  </div>
-                )}
-              </div>
-            ))}
-          </div>
-        </div>
+        /* ── Illustration Card ── */
+        <RecipeIllustrationCard guide={guide} />
       ) : (
         /* ── Text view ── */
         <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
