@@ -281,13 +281,17 @@ function RecipeBlock({ title, body }: { title: string; body: string[] }) {
     if (generatedRef.current) return;
     generatedRef.current = true;
     setImageLoading(true);
+    const steps = body.map(l => l.trim()).filter(l => /^\d+\./.test(l)).map(l => l.replace(/^\d+\.\s*/, ""));
     fetch("/api/generate-image", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ dish: title }),
+      body: JSON.stringify({ dish: title, steps }),
     })
       .then(r => r.json())
-      .then(d => { if (d.url) setImageUrl(d.url); })
+      .then(d => {
+        if (d.url) setImageUrl(d.url);
+        else if (d.b64) setImageUrl(`data:image/png;base64,${d.b64}`);
+      })
       .catch(() => {})
       .finally(() => setImageLoading(false));
   }, [title]);
