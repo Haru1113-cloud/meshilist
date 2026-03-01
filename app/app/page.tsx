@@ -480,11 +480,13 @@ function AppContent() {
   // Image generation: keyed by dish name. undefined = pending, null = failed, string = url
   const [imageResults, setImageResults] = useState<Record<string, string | null>>({});
   const pendingImagesRef = useRef<Set<string>>(new Set());
+  const imagePromisesRef = useRef<Promise<void>[]>([]);
+  const [generatingPhase, setGeneratingPhase] = useState<"text" | "image">("text");
 
   const triggerImageGen = (dish: string) => {
     if (pendingImagesRef.current.has(dish)) return;
     pendingImagesRef.current.add(dish);
-    fetch("/api/generate-image", {
+    const p: Promise<void> = fetch("/api/generate-image", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ dish }),
@@ -497,6 +499,7 @@ function AppContent() {
       .catch(() => {
         setImageResults(prev => ({ ...prev, [dish]: null }));
       });
+    imagePromisesRef.current.push(p);
   };
 
   // Initialize from localStorage
@@ -566,6 +569,7 @@ function AppContent() {
     if (!allIngredients.trim()) { alert("食材を入力してください"); return; }
 
     setGenerating(true);
+    setGeneratingPhase("text");
     setView("result");
     setRawOutput("");
     setParsedOutput(null);
@@ -573,6 +577,7 @@ function AppContent() {
     setCheckedItems(new Set());
     setImageResults({});
     pendingImagesRef.current = new Set();
+    imagePromisesRef.current = [];
     localStorage.removeItem("meshilist_checked");
     abortRef.current = new AbortController();
 
@@ -604,6 +609,10 @@ function AppContent() {
           }
         }
       }
+      // Wait for all image generations to complete
+      setGeneratingPhase("image");
+      await Promise.all(imagePromisesRef.current);
+      setActiveTab("recipe");
     } catch (e: unknown) {
       if (e instanceof Error && e.name !== "AbortError") alert("エラーが発生しました。もう一度お試しください。");
     } finally {
@@ -904,7 +913,7 @@ function AppContent() {
                     <img src="/kooca-walk-transparent.png" alt="歩く人" style={{ height: 72 }} />
                   </div>
                   <div style={{ display: "flex", alignItems: "center", gap: 5 }}>
-                    <span style={{ fontFamily: "var(--font-heading)", fontWeight: 700, fontSize: 13, color: "var(--accent-dark)", letterSpacing: "0.1em" }}>コツコツ考えています</span>
+                    <span style={{ fontFamily: "var(--font-heading)", fontWeight: 700, fontSize: 13, color: "var(--accent-dark)", letterSpacing: "0.1em" }}>{generatingPhase === "image" ? "イラストを描いています" : "コツコツ考えています"}</span>
                     {[0, 1, 2].map(i => (
                       <span key={i} className="animate-blink" style={{ width: 4, height: 4, borderRadius: "50%", background: "var(--accent)", display: "inline-block", animationDelay: `${i * 0.3}s` }} />
                     ))}
@@ -919,7 +928,7 @@ function AppContent() {
                   ))}
                 </div>
                 <p style={{ fontSize: 12, color: "var(--text-muted)", textAlign: "center", lineHeight: 1.8, margin: 0 }}>
-                  献立表・レシピ・買い物リストをまとめて生成中
+                  {generatingPhase === "image" ? "料理のイラストを生成中..." : "献立表・レシピ・買い物リストをまとめて生成中"}
                 </p>
                 <div style={{ width: "100%", maxWidth: 260, height: 3, background: "var(--border)", borderRadius: 4, overflow: "hidden" }}>
                   <div className="animate-progress-bar" style={{ height: "100%", background: "linear-gradient(90deg, var(--accent), var(--accent-dark))", borderRadius: 4 }} />
