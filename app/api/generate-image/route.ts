@@ -19,20 +19,21 @@ export async function POST(request: NextRequest) {
   const { default: OpenAI } = await import("openai");
   const client = new OpenAI({ apiKey });
 
-  const stepsText = Array.isArray(steps) && steps.length > 0
-    ? steps.map((s: string, i: number) => `Step ${i + 1}: ${s}`).join(", ")
+  const stepCount = Array.isArray(steps) ? steps.length : 4;
+  const stepsDesc = Array.isArray(steps) && steps.length > 0
+    ? steps.map((s: string, i: number) => `panel ${i + 1}: ${s}`).join(" | ")
     : "";
 
-  const prompt = `Japanese home cooking recipe step-by-step illustration for "${dish}". Watercolor and line art style, warm cream/beige background, cozy cookbook aesthetic. Shows all cooking steps arranged in a grid layout (like a recipe card): ${stepsText}. Each step in its own panel with cute hand-drawn illustrations of food ingredients and cooking utensils (frying pan, bowl, knife, etc). Arrows connecting each step. Warm orange and brown tones, inviting and charming style. No text or numbers in the image.`;
+  const prompt = `A cute Japanese cookbook-style recipe illustration card for "${dish}". ${stepCount} panels arranged in a 2-row grid, each panel showing one cooking action with hand-drawn watercolor illustrations of food and kitchen utensils. ${stepsDesc}. Style: warm watercolor, cozy home cooking, cream background, orange and brown tones, Studio Ghibli food aesthetic. IMPORTANT: absolutely no text, no letters, no numbers, no labels, no characters of any language anywhere in the image. Pure illustration only.`;
 
   try {
     const response = await client.images.generate({
       model: "dall-e-3",
       prompt,
       n: 1,
-      size: "1792x1024",
-      quality: "standard",
-      style: "natural",
+      size: "1024x1024",
+      quality: "hd",
+      style: "vivid",
     });
 
     const url = response.data?.[0]?.url ?? "";
