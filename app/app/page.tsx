@@ -307,7 +307,7 @@ function RecipeBlock({ title, body }: { title: string; body: string[] }) {
       )}
       {imageUrl && !imageLoading && (
         // eslint-disable-next-line @next/next/no-img-element
-        <img src={imageUrl} alt={title} style={{ width: "100%", height: "auto", display: "block" }} />
+        <img src={imageUrl} alt={title} style={{ width: "100%", maxHeight: 280, objectFit: "cover", display: "block" }} />
       )}
 
       <div style={{ padding: "20px 22px" }}>

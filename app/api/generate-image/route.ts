@@ -18,37 +18,14 @@ export async function POST(request: NextRequest) {
   const { default: OpenAI } = await import("openai");
   const client = new OpenAI({ apiKey });
 
-  const stepsJa = Array.isArray(steps) && steps.length > 0
-    ? steps.map((s: string, i: number) => `${i + 1}. ${s}`).join("\n")
-    : "";
-
-  const stepCount = Array.isArray(steps) && steps.length > 0 ? steps.length : 5;
-  const cols = stepCount <= 3 ? stepCount : 3;
-  const rows = Math.ceil(stepCount / cols);
-
-  const prompt = `日本の家庭料理レシピカードのイラスト。料理名：「${dish}」。
-
-温かみのあるクリーム色の背景に、${rows}行×${cols}列のグリッドレイアウトで作り方を図解してください。
-各コマには手描き水彩風のかわいい料理イラストと、以下の日本語テキストを明確に表示してください：
-
-${stepsJa}
-
-デザイン要件：
-- 各コマに丸数字（①②③…）と日本語の手順テキストを読みやすく配置
-- コマ間には矢印（→）でつなぐ
-- 手描き水彩＋ライン画のスタイル
-- 温かいオレンジ・茶色トーン
-- 「${dish}」のタイトルを上部に太字で表示
-- Studio Ghibli風の食べ物イラスト
-
-料理のイラストは鮮明で食欲をそそるものにしてください。`;
+  const prompt = `「${dish}」の完成料理イラスト。温かみのあるクリーム色の背景に、美しく盛り付けられた${dish}を手描き水彩スタイルで描いてください。主な食材も周囲にさりげなく配置。Studio Ghibli風の食べ物イラスト、温かいオレンジ・茶色トーン。テキストや文字は一切不要。料理のみのシンプルで美しいイラスト。`;
 
   try {
     const response = await client.images.generate({
       model: "gpt-image-1",
       prompt,
       n: 1,
-      size: "1536x1024",
+      size: "1024x1024",
       quality: "medium",
     });
 
