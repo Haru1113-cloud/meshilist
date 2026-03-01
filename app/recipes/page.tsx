@@ -402,7 +402,9 @@ function RecipeCard({ recipe, onClick }: { recipe: Recipe; onClick: () => void }
 function StepDiagram({ recipe, meta }: { recipe: Recipe; meta: typeof CATEGORY_META[keyof typeof CATEGORY_META] }) {
   const [guide, setGuide] = useState<StepGuide | null>(null);
   const [loading, setLoading] = useState(false);
-  const [mode, setMode] = useState<"steps" | "diagram">("steps");
+  const [imageLoading, setImageLoading] = useState(false);
+  const [mode, setMode] = useState<"steps" | "diagram" | "images">("steps");
+  const [stepImages, setStepImages] = useState<string[]>([]);
 
   const fetchDiagram = useCallback(async () => {
     if (guide) { setMode("diagram"); return; }
@@ -420,6 +422,48 @@ function StepDiagram({ recipe, meta }: { recipe: Recipe; meta: typeof CATEGORY_M
     finally { setLoading(false); }
   }, [guide, recipe]);
 
+  const fetchImages = useCallback(async () => {
+    if (stepImages.length > 0) { setMode("images"); return; }
+    setMode("images");
+
+    // ガイドがなければ先に取得
+    let currentGuide = guide;
+    if (!currentGuide) {
+      setLoading(true);
+      try {
+        const res = await fetch("/api/generate-steps", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ dish: recipe.name, ingredients: recipe.ingredients, steps: recipe.steps }),
+        });
+        currentGuide = await res.json() as StepGuide;
+        setGuide(currentGuide);
+      } catch {
+        setLoading(false);
+        return;
+      }
+      setLoading(false);
+    }
+
+    setImageLoading(true);
+    try {
+      const res = await fetch("/api/generate-step-images", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ steps: currentGuide!.steps, dish: recipe.name }),
+      });
+      const data = await res.json();
+      setStepImages(data.images || []);
+    } catch { /* エラー時は絵文字フォールバック */ }
+    finally { setImageLoading(false); }
+  }, [guide, recipe, stepImages]);
+
+  const anyLoading = loading || imageLoading;
+
+  const Spinner = ({ color }: { color: string }) => (
+    <span style={{ display: "inline-block", width: 10, height: 10, borderRadius: "50%", border: `2px solid ${color}`, borderTopColor: "transparent", animation: "spin 0.8s linear infinite" }} />
+  );
+
   return (
     <div>
       {/* Mode toggle */}
@@ -427,26 +471,42 @@ function StepDiagram({ recipe, meta }: { recipe: Recipe; meta: typeof CATEGORY_M
         <h3 style={{ fontFamily: "var(--font-heading)", fontWeight: 700, fontSize: 12, color: meta.color, letterSpacing: "0.08em", textTransform: "uppercase", margin: 0 }}>
           手順
         </h3>
-        <button
-          onClick={mode === "steps" ? fetchDiagram : () => setMode("steps")}
-          disabled={loading}
-          style={{
-            padding: "4px 12px", borderRadius: 20, border: `1px solid ${meta.color}`,
-            background: mode === "diagram" ? meta.color : "#fff",
-            color: mode === "diagram" ? "#fff" : meta.color,
-            fontSize: 11, fontFamily: "var(--font-heading)", fontWeight: 700,
-            cursor: loading ? "wait" : "pointer", display: "flex", alignItems: "center", gap: 5,
-            opacity: loading ? 0.7 : 1,
-          }}
-        >
-          {loading ? (
-            <><span style={{ display: "inline-block", width: 10, height: 10, borderRadius: "50%", border: `2px solid ${meta.color}`, borderTopColor: "transparent", animation: "spin 0.8s linear infinite" }} /> 生成中</>
-          ) : mode === "diagram" ? "📝 テキスト表示" : "✏️ 図解を見る"}
-        </button>
+        <div style={{ display: "flex", gap: 6 }}>
+          {/* 図解ボタン */}
+          <button
+            onClick={mode === "diagram" ? () => setMode("steps") : fetchDiagram}
+            disabled={anyLoading}
+            style={{
+              padding: "4px 12px", borderRadius: 20, border: `1px solid ${meta.color}`,
+              background: mode === "diagram" ? meta.color : "#fff",
+              color: mode === "diagram" ? "#fff" : meta.color,
+              fontSize: 11, fontFamily: "var(--font-heading)", fontWeight: 700,
+              cursor: anyLoading ? "wait" : "pointer", display: "flex", alignItems: "center", gap: 5,
+              opacity: anyLoading ? 0.7 : 1,
+            }}
+          >
+            {loading ? <><Spinner color={mode === "diagram" ? "#fff" : meta.color} /> 生成中</> : mode === "diagram" ? "📝 テキスト" : "✏️ 図解"}
+          </button>
+          {/* 画像ボタン */}
+          <button
+            onClick={mode === "images" ? () => setMode("steps") : fetchImages}
+            disabled={anyLoading}
+            style={{
+              padding: "4px 12px", borderRadius: 20, border: `1px solid ${meta.color}`,
+              background: mode === "images" ? meta.color : "#fff",
+              color: mode === "images" ? "#fff" : meta.color,
+              fontSize: 11, fontFamily: "var(--font-heading)", fontWeight: 700,
+              cursor: anyLoading ? "wait" : "pointer", display: "flex", alignItems: "center", gap: 5,
+              opacity: anyLoading ? 0.7 : 1,
+            }}
+          >
+            {imageLoading ? <><Spinner color={mode === "images" ? "#fff" : meta.color} /> 画像生成中</> : mode === "images" ? "📝 テキスト" : "🖼️ 画像"}
+          </button>
+        </div>
       </div>
 
-      {mode === "steps" || !guide ? (
-        /* Plain step list */
+      {mode === "steps" ? (
+        /* プレーンテキスト手順 */
         <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
           {recipe.steps.map((step, i) => (
             <div key={i} style={{ display: "flex", gap: 12, alignItems: "flex-start" }}>
@@ -457,25 +517,94 @@ function StepDiagram({ recipe, meta }: { recipe: Recipe; meta: typeof CATEGORY_M
             </div>
           ))}
         </div>
+
+      ) : mode === "images" ? (
+        /* 画像ステップカード */
+        <div>
+          {loading || (imageLoading && stepImages.length === 0) ? (
+            <div style={{ textAlign: "center", padding: "32px 20px", color: "var(--text-muted)" }}>
+              <div style={{ fontSize: 32, marginBottom: 12 }}>🎨</div>
+              <div style={{ fontFamily: "var(--font-heading)", fontWeight: 700, fontSize: 13, color: "var(--text-primary)" }}>
+                {loading ? "手順を解析中..." : "調理画像を生成中..."}
+              </div>
+              <div style={{ fontSize: 11, marginTop: 6 }}>Nano Banana Pro で各ステップを画像化しています</div>
+            </div>
+          ) : guide ? (
+            <>
+              <p style={{ fontSize: 11, color: "var(--text-muted)", marginBottom: 12, textAlign: "right" }}>
+                合計時間: <strong style={{ color: "var(--text-primary)" }}>{guide.totalTime}</strong>
+              </p>
+              <div style={{
+                display: "grid",
+                gridTemplateColumns: `repeat(${Math.min(guide.steps.length, 3)}, 1fr)`,
+                gap: 8,
+              }}>
+                {guide.steps.map((step, i) => (
+                  <div key={step.num} style={{
+                    background: meta.bg, borderRadius: 14, overflow: "hidden",
+                    border: `1px solid ${meta.color}20`,
+                    display: "flex", flexDirection: "column",
+                  }}>
+                    {/* 画像エリア */}
+                    <div style={{
+                      aspectRatio: "1", background: `${meta.color}10`,
+                      display: "flex", alignItems: "center", justifyContent: "center",
+                      position: "relative", overflow: "hidden",
+                    }}>
+                      {stepImages[i] ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img src={stepImages[i]} alt={`手順${step.num}`} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                      ) : imageLoading ? (
+                        <div style={{ textAlign: "center" }}>
+                          <div style={{ width: 18, height: 18, borderRadius: "50%", border: `2px solid ${meta.color}`, borderTopColor: "transparent", animation: "spin 0.8s linear infinite", margin: "0 auto 6px" }} />
+                          <div style={{ fontSize: 9, color: meta.color, fontFamily: "var(--font-heading)", fontWeight: 700 }}>生成中</div>
+                        </div>
+                      ) : (
+                        <span style={{ fontSize: 32 }}>{step.emoji}</span>
+                      )}
+                      {/* ステップ番号バッジ */}
+                      <div style={{ position: "absolute", top: 6, left: 6, width: 18, height: 18, borderRadius: "50%", background: meta.color, color: "#fff", fontSize: 9, fontFamily: "var(--font-heading)", fontWeight: 800, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                        {step.num}
+                      </div>
+                    </div>
+                    {/* テキスト */}
+                    <div style={{ padding: "8px 10px", display: "flex", flexDirection: "column", gap: 4 }}>
+                      <div style={{ fontSize: 11, color: "var(--text-secondary)", lineHeight: 1.5 }}>{step.action}</div>
+                      {step.tip && (
+                        <div style={{ fontSize: 10, color: meta.color, lineHeight: 1.4 }}>💡 {step.tip}</div>
+                      )}
+                      {(step.heat || step.time) && (
+                        <div style={{ display: "flex", gap: 4, flexWrap: "wrap", marginTop: 2 }}>
+                          {step.heat && <span style={{ fontSize: 9, background: "#fff", border: `1px solid ${meta.color}30`, borderRadius: 4, padding: "1px 5px", color: meta.color, fontFamily: "var(--font-heading)", fontWeight: 700 }}>{step.heat}</span>}
+                          {step.time && <span style={{ fontSize: 9, background: "#fff", border: `1px solid ${meta.color}30`, borderRadius: 4, padding: "1px 5px", color: "var(--text-muted)" }}>⏱ {step.time}</span>}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </>
+          ) : null}
+        </div>
+
       ) : (
-        /* Diagram grid — all steps visible at once, no scroll */
+        /* 図解グリッド */
         <div>
           <p style={{ fontSize: 11, color: "var(--text-muted)", marginBottom: 12, textAlign: "right" }}>
-            合計時間: <strong style={{ color: "var(--text-primary)" }}>{guide.totalTime}</strong>
+            合計時間: <strong style={{ color: "var(--text-primary)" }}>{guide!.totalTime}</strong>
           </p>
           <div style={{
             display: "grid",
-            gridTemplateColumns: `repeat(${Math.min(guide.steps.length, 3)}, 1fr)`,
+            gridTemplateColumns: `repeat(${Math.min(guide!.steps.length, 3)}, 1fr)`,
             gap: 8,
           }}>
-            {guide.steps.map((step) => (
+            {guide!.steps.map((step) => (
               <div key={step.num} style={{
                 background: meta.bg, borderRadius: 14, padding: "12px 10px",
                 display: "flex", flexDirection: "column", alignItems: "center", gap: 6,
                 textAlign: "center", border: `1px solid ${meta.color}20`,
                 position: "relative",
               }}>
-                {/* Step number */}
                 <div style={{ position: "absolute", top: 8, left: 8, width: 18, height: 18, borderRadius: "50%", background: meta.color, color: "#fff", fontSize: 9, fontFamily: "var(--font-heading)", fontWeight: 800, display: "flex", alignItems: "center", justifyContent: "center" }}>
                   {step.num}
                 </div>

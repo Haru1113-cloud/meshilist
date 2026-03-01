@@ -274,20 +274,38 @@ function RecipeIllustrationCard({ guide }: { guide: StepGuide }) {
   );
 }
 
-function RecipeBlock({ title, body, imageUrl, imageLoading }: { title: string; body: string[]; imageUrl?: string | null; imageLoading?: boolean }) {
+function RecipeBlock({ title, body, imageUrl, imageLoading, processImageUrl, processImageLoading }: {
+  title: string;
+  body: string[];
+  imageUrl?: string | null;
+  imageLoading?: boolean;
+  processImageUrl?: string | null;
+  processImageLoading?: boolean;
+}) {
 
   return (
     <div style={{ background: "var(--bg-subtle)", borderRadius: 14, overflow: "hidden" }}>
-      {/* Recipe illustration */}
+      {/* 料理写真 */}
       {imageLoading && (
         <div style={{ height: 160, background: "#f0ebe0", display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}>
           <span className="animate-spin-sm" style={{ width: 16, height: 16, borderRadius: "50%", border: "2px solid rgba(0,0,0,0.1)", borderTopColor: "var(--accent)", display: "inline-block" }} />
-          <span style={{ fontSize: 12, color: "var(--text-muted)", fontFamily: "var(--font-heading)", fontWeight: 600 }}>イラスト生成中...</span>
+          <span style={{ fontSize: 12, color: "var(--text-muted)", fontFamily: "var(--font-heading)", fontWeight: 600 }}>写真生成中...</span>
         </div>
       )}
       {imageUrl && !imageLoading && (
         // eslint-disable-next-line @next/next/no-img-element
         <img src={imageUrl} alt={title} style={{ width: "100%", maxHeight: 280, objectFit: "cover", display: "block" }} />
+      )}
+      {/* 調理過程イラスト（Nano Banana Pro） */}
+      {processImageLoading && (
+        <div style={{ height: 120, background: "#fdf4e3", display: "flex", alignItems: "center", justifyContent: "center", gap: 8, borderTop: "1px solid var(--border)" }}>
+          <span className="animate-spin-sm" style={{ width: 16, height: 16, borderRadius: "50%", border: "2px solid rgba(0,0,0,0.1)", borderTopColor: "var(--accent)", display: "inline-block" }} />
+          <span style={{ fontSize: 12, color: "var(--text-muted)", fontFamily: "var(--font-heading)", fontWeight: 600 }}>作り方イラスト生成中...</span>
+        </div>
+      )}
+      {processImageUrl && !processImageLoading && (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img src={processImageUrl} alt={`${title} 作り方`} style={{ width: "100%", display: "block", borderTop: "1px solid var(--border)" }} />
       )}
 
       <div style={{ padding: "20px 22px" }}>
@@ -328,7 +346,11 @@ function RecipeBlock({ title, body, imageUrl, imageLoading }: { title: string; b
   );
 }
 
-function RecipeSection({ text, imageResults }: { text: string; imageResults: Record<string, string | null> }) {
+function RecipeSection({ text, imageResults, processImageResults }: {
+  text: string;
+  imageResults: Record<string, string | null>;
+  processImageResults: Record<string, string | null>;
+}) {
   const lines = text.split("\n");
   const blocks: { title: string; body: string[] }[] = [];
   let cur: { title: string; body: string[] } | null = null;
@@ -358,6 +380,8 @@ function RecipeSection({ text, imageResults }: { text: string; imageResults: Rec
           body={b.body}
           imageUrl={imageResults[b.title]}
           imageLoading={!(b.title in imageResults)}
+          processImageUrl={processImageResults[b.title]}
+          processImageLoading={!(b.title in processImageResults)}
         />
       ))}
     </div>
@@ -481,7 +505,9 @@ function AppContent() {
 
   // Image generation: keyed by dish name. undefined = pending, null = failed, string = url
   const [imageResults, setImageResults] = useState<Record<string, string | null>>({});
+  const [processImageResults, setProcessImageResults] = useState<Record<string, string | null>>({});
   const pendingImagesRef = useRef<Set<string>>(new Set());
+  const pendingProcessImagesRef = useRef<Set<string>>(new Set());
   const imagePromisesRef = useRef<Promise<void>[]>([]);
   const [generatingPhase, setGeneratingPhase] = useState<"text" | "image">("text");
 
@@ -502,6 +528,24 @@ function AppContent() {
         setImageResults(prev => ({ ...prev, [dish]: null }));
       });
     imagePromisesRef.current.push(p);
+  };
+
+  const triggerProcessImageGen = (dish: string) => {
+    if (pendingProcessImagesRef.current.has(dish)) return;
+    pendingProcessImagesRef.current.add(dish);
+    fetch("/api/generate-process-image", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ dish }),
+    })
+      .then(r => r.json())
+      .then(d => {
+        const url = d.url || (d.b64 ? `data:image/png;base64,${d.b64}` : null) || null;
+        setProcessImageResults(prev => ({ ...prev, [dish]: url }));
+      })
+      .catch(() => {
+        setProcessImageResults(prev => ({ ...prev, [dish]: null }));
+      });
   };
 
   // Initialize from localStorage
@@ -607,6 +651,7 @@ function AppContent() {
           if (recipeMatch) {
             for (const match of recipeMatch[1].matchAll(/\*\*(.+?)\*\*/g)) {
               triggerImageGen(match[1]);
+              triggerProcessImageGen(match[1]);
             }
           }
         }
@@ -970,7 +1015,7 @@ function AppContent() {
                           <span style={{ width: 12, height: 12, borderRadius: "50%", background: "#fff", transform: wakeLockOn ? "translateX(12px)" : "translateX(0)", transition: "transform 0.2s", display: "block" }} />
                         </span>
                       </button>
-                      <RecipeSection text={parsedOutput.recipe} imageResults={imageResults} />
+                      <RecipeSection text={parsedOutput.recipe} imageResults={imageResults} processImageResults={processImageResults} />
                     </>
                   )}
                   {activeTab === "shopping" && parsedOutput.shopping && (

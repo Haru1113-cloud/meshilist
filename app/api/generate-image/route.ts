@@ -1,7 +1,5 @@
 import { NextRequest } from "next/server";
 
-const MOCK_IMAGE_URL = "";
-
 export async function POST(request: NextRequest) {
   const { dish } = await request.json();
 
@@ -12,7 +10,7 @@ export async function POST(request: NextRequest) {
   const apiKey = process.env.OPENAI_API_KEY;
   if (!apiKey || !apiKey.startsWith("sk-")) {
     await new Promise((r) => setTimeout(r, 500));
-    return Response.json({ url: MOCK_IMAGE_URL });
+    return Response.json({ url: "" });
   }
 
   const { default: OpenAI } = await import("openai");
@@ -30,13 +28,8 @@ export async function POST(request: NextRequest) {
     });
 
     const url = response.data?.[0]?.url ?? "";
-
-    // gpt-image-1 may return base64 instead of URL
     const b64 = (response.data?.[0] as { b64_json?: string })?.b64_json;
-    if (!url && b64) {
-      return Response.json({ b64 });
-    }
-
+    if (!url && b64) return Response.json({ b64 });
     return Response.json({ url });
   } catch (e) {
     console.error("generate-image error:", e);
