@@ -573,7 +573,7 @@ function AppContent() {
     setView("result");
     setRawOutput("");
     setParsedOutput(null);
-    setActiveTab("schedule");
+    setActiveTab("recipe");
     setCheckedItems(new Set());
     setImageResults({});
     pendingImagesRef.current = new Set();
@@ -612,7 +612,6 @@ function AppContent() {
       // Wait for all image generations to complete
       setGeneratingPhase("image");
       await Promise.all(imagePromisesRef.current);
-      setActiveTab("recipe");
     } catch (e: unknown) {
       if (e instanceof Error && e.name !== "AbortError") alert("エラーが発生しました。もう一度お試しください。");
     } finally {
@@ -941,7 +940,7 @@ function AppContent() {
               <div style={{ display: "flex", flexDirection: "column", flex: 1, overflow: "hidden" }}>
                 {/* Tab bar */}
                 <div style={{ display: "flex", borderBottom: "1px solid var(--border)", padding: "0 20px", flexShrink: 0 }}>
-                  {TABS.map(tab => (
+                  {TABS.filter(tab => tab.key !== "schedule").map(tab => (
                     <button key={tab.key} onClick={() => setActiveTab(tab.key)}
                       style={{ padding: "12px 16px", border: "none", borderBottom: `2px solid ${activeTab === tab.key ? "#4a7840" : "transparent"}`, background: "none", color: activeTab === tab.key ? "#4a7840" : "var(--text-muted)", fontFamily: "var(--font-heading)", fontWeight: 700, fontSize: 13, cursor: "pointer", transition: "color 0.15s", display: "flex", alignItems: "center", gap: 6, opacity: tabHasContent(tab.key) ? 1 : 0.4 }}>
                       {tab.icon} {tab.label}
