@@ -430,6 +430,8 @@ function AppContent() {
 
   const abortRef = useRef<AbortController | null>(null);
   const outputRef = useRef<HTMLDivElement>(null);
+  const wakeLockRef = useRef<WakeLockSentinel | null>(null);
+  const [wakeLockOn, setWakeLockOn] = useState(false);
 
   // Initialize from localStorage
   useEffect(() => {
@@ -533,6 +535,21 @@ function AppContent() {
   };
 
   const handleStop = () => { abortRef.current?.abort(); setGenerating(false); };
+
+  const toggleWakeLock = async () => {
+    if (!("wakeLock" in navigator)) return;
+    if (wakeLockOn) {
+      await wakeLockRef.current?.release();
+      wakeLockRef.current = null;
+      setWakeLockOn(false);
+    } else {
+      try {
+        wakeLockRef.current = await navigator.wakeLock.request("screen");
+        wakeLockRef.current.addEventListener("release", () => setWakeLockOn(false));
+        setWakeLockOn(true);
+      } catch {}
+    }
+  };
 
   const handleCopy = async () => {
     const text = parsedOutput
@@ -869,7 +886,17 @@ function AppContent() {
                     <ScheduleSection text={parsedOutput.schedule} />
                   )}
                   {activeTab === "recipe" && parsedOutput.recipe && (
-                    <RecipeSection text={parsedOutput.recipe} />
+                    <>
+                      <button onClick={toggleWakeLock}
+                        style={{ display: "flex", alignItems: "center", gap: 7, marginBottom: 16, padding: "7px 14px", borderRadius: 20, border: `1px solid ${wakeLockOn ? "#f97316" : "var(--border)"}`, background: wakeLockOn ? "#fff7ed" : "var(--bg-subtle)", color: wakeLockOn ? "#c2410c" : "var(--text-muted)", fontFamily: "var(--font-heading)", fontWeight: 600, fontSize: 12, cursor: "wakeLock" in navigator ? "pointer" : "default", opacity: "wakeLock" in navigator ? 1 : 0.4 }}>
+                        <span style={{ fontSize: 14 }}>{wakeLockOn ? "📲" : "📵"}</span>
+                        {wakeLockOn ? "画面常時点灯 ON" : "画面を暗くしない"}
+                        <span style={{ marginLeft: 2, width: 28, height: 16, borderRadius: 8, background: wakeLockOn ? "#f97316" : "var(--border)", display: "inline-flex", alignItems: "center", padding: "0 2px", transition: "background 0.2s", flexShrink: 0 }}>
+                          <span style={{ width: 12, height: 12, borderRadius: "50%", background: "#fff", transform: wakeLockOn ? "translateX(12px)" : "translateX(0)", transition: "transform 0.2s", display: "block" }} />
+                        </span>
+                      </button>
+                      <RecipeSection text={parsedOutput.recipe} />
+                    </>
                   )}
                   {activeTab === "shopping" && parsedOutput.shopping && (
                     <ShoppingList
