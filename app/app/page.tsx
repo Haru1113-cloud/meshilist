@@ -272,29 +272,7 @@ function RecipeIllustrationCard({ guide }: { guide: StepGuide }) {
   );
 }
 
-function RecipeBlock({ title, body }: { title: string; body: string[] }) {
-  const [imageUrl, setImageUrl] = useState<string | null>(null);
-  const [imageLoading, setImageLoading] = useState(false);
-  const generatedRef = useRef(false);
-
-  useEffect(() => {
-    if (generatedRef.current) return;
-    generatedRef.current = true;
-    setImageLoading(true);
-    const steps = body.map(l => l.trim()).filter(l => /^\d+\./.test(l)).map(l => l.replace(/^\d+\.\s*/, ""));
-    fetch("/api/generate-image", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ dish: title, steps }),
-    })
-      .then(r => r.json())
-      .then(d => {
-        if (d.url) setImageUrl(d.url);
-        else if (d.b64) setImageUrl(`data:image/png;base64,${d.b64}`);
-      })
-      .catch(() => {})
-      .finally(() => setImageLoading(false));
-  }, [title]);
+function RecipeBlock({ title, body, imageUrl, imageLoading }: { title: string; body: string[]; imageUrl?: string | null; imageLoading?: boolean }) {
 
   return (
     <div style={{ background: "var(--bg-subtle)", borderRadius: 14, overflow: "hidden" }}>
@@ -348,7 +326,7 @@ function RecipeBlock({ title, body }: { title: string; body: string[] }) {
   );
 }
 
-function RecipeSection({ text }: { text: string }) {
+function RecipeSection({ text, imageResults }: { text: string; imageResults: Record<string, string | null> }) {
   const lines = text.split("\n");
   const blocks: { title: string; body: string[] }[] = [];
   let cur: { title: string; body: string[] } | null = null;
@@ -372,7 +350,13 @@ function RecipeSection({ text }: { text: string }) {
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
       {blocks.map((b, i) => (
-        <RecipeBlock key={i} title={b.title} body={b.body} />
+        <RecipeBlock
+          key={i}
+          title={b.title}
+          body={b.body}
+          imageUrl={imageResults[b.title]}
+          imageLoading={!(b.title in imageResults)}
+        />
       ))}
     </div>
   );
@@ -493,6 +477,28 @@ function AppContent() {
   const wakeLockRef = useRef<WakeLockSentinel | null>(null);
   const [wakeLockOn, setWakeLockOn] = useState(false);
 
+  // Image generation: keyed by dish name. undefined = pending, null = failed, string = url
+  const [imageResults, setImageResults] = useState<Record<string, string | null>>({});
+  const pendingImagesRef = useRef<Set<string>>(new Set());
+
+  const triggerImageGen = (dish: string) => {
+    if (pendingImagesRef.current.has(dish)) return;
+    pendingImagesRef.current.add(dish);
+    fetch("/api/generate-image", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ dish }),
+    })
+      .then(r => r.json())
+      .then(d => {
+        const url = d.url || (d.b64 ? `data:image/png;base64,${d.b64}` : null) || null;
+        setImageResults(prev => ({ ...prev, [dish]: url }));
+      })
+      .catch(() => {
+        setImageResults(prev => ({ ...prev, [dish]: null }));
+      });
+  };
+
   // Initialize from localStorage
   useEffect(() => {
     const id = getOrCreateDeviceId();
@@ -565,6 +571,8 @@ function AppContent() {
     setParsedOutput(null);
     setActiveTab("schedule");
     setCheckedItems(new Set());
+    setImageResults({});
+    pendingImagesRef.current = new Set();
     localStorage.removeItem("meshilist_checked");
     abortRef.current = new AbortController();
 
@@ -580,10 +588,21 @@ function AppContent() {
       const reader = res.body.getReader();
       const decoder = new TextDecoder();
       let done = false;
+      let accumulated = "";
       while (!done) {
         const { value, done: d } = await reader.read();
         done = d;
-        if (value) setRawOutput(prev => prev + decoder.decode(value, { stream: true }));
+        if (value) {
+          accumulated += decoder.decode(value, { stream: true });
+          setRawOutput(accumulated);
+          // Detect recipe titles in stream and start image generation in parallel
+          const recipeMatch = accumulated.match(/###\s*🍳[^\n]*\n([\s\S]*?)(?=###\s*📅|###\s*🛒|$)/);
+          if (recipeMatch) {
+            for (const match of recipeMatch[1].matchAll(/\*\*(.+?)\*\*/g)) {
+              triggerImageGen(match[1]);
+            }
+          }
+        }
       }
     } catch (e: unknown) {
       if (e instanceof Error && e.name !== "AbortError") alert("エラーが発生しました。もう一度お試しください。");
@@ -941,7 +960,7 @@ function AppContent() {
                           <span style={{ width: 12, height: 12, borderRadius: "50%", background: "#fff", transform: wakeLockOn ? "translateX(12px)" : "translateX(0)", transition: "transform 0.2s", display: "block" }} />
                         </span>
                       </button>
-                      <RecipeSection text={parsedOutput.recipe} />
+                      <RecipeSection text={parsedOutput.recipe} imageResults={imageResults} />
                     </>
                   )}
                   {activeTab === "shopping" && parsedOutput.shopping && (
