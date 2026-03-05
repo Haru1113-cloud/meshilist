@@ -18,6 +18,7 @@ interface CookedRecord {
   dishName: string;
   cookedAt: string; // ISO
   rating: 1 | 2 | 3; // 😐 / 😊 / 🤩
+  recipeBody?: string[]; // 材料・手順の生テキスト行
 }
 
 // ─── Constants ───────────────────────────────────────────────────
@@ -296,13 +297,13 @@ function RecipeBlock({ title, body, imageUrl, imageLoading, processImageUrl, pro
   processImageUrl?: string | null;
   processImageLoading?: boolean;
   savedRating?: number;
-  onRate?: (stars: 1 | 2 | 3) => void;
+  onRate?: (stars: 1 | 2 | 3, body: string[]) => void;
 }) {
   const [ratingOpen, setRatingOpen] = useState(false);
   const [justSaved, setJustSaved] = useState(false);
 
   const handleRate = (stars: 1 | 2 | 3) => {
-    onRate?.(stars);
+    onRate?.(stars, body);
     setJustSaved(true);
     setRatingOpen(false);
     setTimeout(() => setJustSaved(false), 2500);
@@ -418,7 +419,7 @@ function RecipeSection({ text, imageResults, processImageResults, ratings, onRat
   imageResults: Record<string, string | null>;
   processImageResults: Record<string, string | null>;
   ratings?: Record<string, number>;
-  onRate?: (dish: string, stars: 1 | 2 | 3) => void;
+  onRate?: (dish: string, stars: 1 | 2 | 3, body: string[]) => void;
 }) {
   const lines = text.split("\n");
   const blocks: { title: string; body: string[] }[] = [];
@@ -452,9 +453,108 @@ function RecipeSection({ text, imageResults, processImageResults, ratings, onRat
           processImageUrl={processImageResults[b.title]}
           processImageLoading={!(b.title in processImageResults)}
           savedRating={ratings?.[b.title]}
-          onRate={onRate ? (stars) => onRate(b.title, stars) : undefined}
+          onRate={onRate ? (stars, body) => onRate(b.title, stars, body) : undefined}
         />
       ))}
+    </div>
+  );
+}
+
+// ─── History Modal ───────────────────────────────────────────────
+function HistoryRecipeDetail({ body }: { body: string[] }) {
+  return (
+    <div style={{ background: "var(--bg-subtle)", borderRadius: 12, padding: "14px 16px", marginTop: 10, display: "flex", flexDirection: "column", gap: 4 }}>
+      {body.map((line, j) => {
+        const t = line.trim();
+        if (!t) return null;
+        if (t === "---" || /^\|[-| ]+\|$/.test(t)) return null;
+        if (t.startsWith("📊")) {
+          // 栄養成分行をシンプルに表示
+          return <div key={j} style={{ fontSize: 12, color: "var(--accent-dark)", fontFamily: "var(--font-heading)", fontWeight: 700 }}>{t}</div>;
+        }
+        if (t === "材料:" || t === "手順:" || t.startsWith("材料") || t.startsWith("手順")) {
+          return <div key={j} style={{ fontFamily: "var(--font-heading)", fontWeight: 700, fontSize: 11, color: "var(--accent-dark)", marginTop: 8, letterSpacing: "0.04em", textTransform: "uppercase" }}>{t}</div>;
+        }
+        if (/^\d+\./.test(t)) {
+          return <div key={j} style={{ fontSize: 12, color: "var(--text-secondary)", lineHeight: 1.7, display: "flex", gap: 5 }}>
+            <span style={{ color: "var(--accent)", fontWeight: 700, flexShrink: 0 }}>{t.match(/^\d+/)?.[0]}.</span>
+            <span>{t.replace(/^\d+\.\s*/, "")}</span>
+          </div>;
+        }
+        const cleaned = t.replace(/^\*+|\*+$/g, "").trim();
+        if (!cleaned) return null;
+        return <div key={j} style={{ fontSize: 12, color: "var(--text-secondary)", lineHeight: 1.7 }}>{cleaned}</div>;
+      })}
+    </div>
+  );
+}
+
+function HistoryModal({ records, onClear, onClose }: { records: CookedRecord[]; onClear: () => void; onClose: () => void }) {
+  const [expandedId, setExpandedId] = useState<string | null>(null);
+  return (
+    <div onClick={onClose}
+      style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.55)", zIndex: 200, display: "flex", alignItems: "flex-end", justifyContent: "center" }}>
+      <div onClick={e => e.stopPropagation()}
+        style={{ background: "#fff", borderRadius: "24px 24px 0 0", width: "100%", maxWidth: 540, maxHeight: "80vh", display: "flex", flexDirection: "column", boxShadow: "0 -8px 40px rgba(0,0,0,0.12)" }}>
+        <div style={{ padding: "20px 24px 12px", flexShrink: 0 }}>
+          <div style={{ width: 36, height: 4, background: "var(--border)", borderRadius: 4, margin: "0 auto 16px" }} />
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+            <h3 style={{ fontFamily: "var(--font-heading)", fontWeight: 800, fontSize: 16, color: "var(--text-primary)", margin: 0 }}>
+              📓 料理記録
+            </h3>
+            {records.length > 0 && (
+              <button onClick={onClear}
+                style={{ fontSize: 11, color: "var(--text-muted)", background: "none", border: "none", cursor: "pointer", textDecoration: "underline", padding: 0 }}>
+                全件削除
+              </button>
+            )}
+          </div>
+        </div>
+        <div style={{ overflowY: "auto", padding: "0 24px 36px" }}>
+          {records.length === 0 ? (
+            <div style={{ textAlign: "center", padding: "40px 0", color: "var(--text-muted)" }}>
+              <div style={{ fontSize: 36, marginBottom: 12 }}>🍳</div>
+              <div style={{ fontFamily: "var(--font-heading)", fontWeight: 700, fontSize: 14, marginBottom: 6 }}>まだ記録がありません</div>
+              <div style={{ fontSize: 12 }}>レシピの「作った！」ボタンで記録できます</div>
+            </div>
+          ) : (
+            <div style={{ display: "flex", flexDirection: "column" }}>
+              {records.map(r => {
+                const opt = RATING_OPTIONS.find(o => o.value === r.rating);
+                const date = new Date(r.cookedAt);
+                const dateStr = `${date.getMonth() + 1}/${date.getDate()}`;
+                const isOpen = expandedId === r.id;
+                const hasRecipe = r.recipeBody && r.recipeBody.length > 0;
+                return (
+                  <div key={r.id} style={{ borderBottom: "1px solid var(--border)", paddingBottom: isOpen ? 14 : 0 }}>
+                    <button
+                      onClick={() => setExpandedId(isOpen ? null : r.id)}
+                      style={{ width: "100%", display: "flex", alignItems: "center", gap: 12, padding: "13px 0", background: "none", border: "none", cursor: hasRecipe ? "pointer" : "default", textAlign: "left" }}
+                    >
+                      <span style={{ fontSize: 22, flexShrink: 0 }}>{opt?.emoji}</span>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{ fontFamily: "var(--font-heading)", fontWeight: 700, fontSize: 14, color: "var(--text-primary)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                          {r.dishName}
+                        </div>
+                        <div style={{ fontSize: 11, color: "var(--text-muted)", marginTop: 1 }}>{opt?.label}</div>
+                      </div>
+                      <div style={{ display: "flex", alignItems: "center", gap: 8, flexShrink: 0 }}>
+                        <div style={{ fontSize: 11, color: "var(--text-muted)" }}>{dateStr}</div>
+                        {hasRecipe && (
+                          <div style={{ fontSize: 11, color: "var(--accent-dark)", fontFamily: "var(--font-heading)", fontWeight: 700, background: "var(--accent-light)", borderRadius: 6, padding: "2px 8px", display: "flex", alignItems: "center", gap: 3 }}>
+                            {isOpen ? "▲" : "▼"} レシピ
+                          </div>
+                        )}
+                      </div>
+                    </button>
+                    {isOpen && hasRecipe && <HistoryRecipeDetail body={r.recipeBody!} />}
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      </div>
     </div>
   );
 }
@@ -572,6 +672,8 @@ function AppContent() {
   const [showShareModal, setShowShareModal] = useState(false);
   const [shareMenuText, setShareMenuText] = useState("");
   const [shareCopied, setShareCopied] = useState(false);
+  const [shareImageDataUrl, setShareImageDataUrl] = useState<string | null>(null);
+  const [shareImageFile, setShareImageFile] = useState<File | null>(null);
 
   // History panel
   const [showHistory, setShowHistory] = useState(false);
@@ -780,8 +882,8 @@ function AppContent() {
 
   const handleStop = () => { abortRef.current?.abort(); setGenerating(false); };
 
-  const saveCookedRecord = (dishName: string, stars: 1 | 2 | 3) => {
-    const record: CookedRecord = { id: crypto.randomUUID(), dishName, cookedAt: new Date().toISOString(), rating: stars };
+  const saveCookedRecord = (dishName: string, stars: 1 | 2 | 3, recipeBody?: string[]) => {
+    const record: CookedRecord = { id: crypto.randomUUID(), dishName, cookedAt: new Date().toISOString(), rating: stars, recipeBody };
     setCookedRecords(prev => {
       const next = [record, ...prev].slice(0, 50); // 最大50件
       localStorage.setItem("meshilist_cooked", JSON.stringify(next));
@@ -792,13 +894,23 @@ function AppContent() {
 
   const handleShare = () => {
     if (!parsedOutput) return;
-    // 献立表から料理名だけ抜き出す
     const dishNames = parsedOutput.recipe
       .match(/\*\*(.+?)\*\*/g)?.map(s => s.replace(/\*\*/g, "")) ?? [];
     const menuLine = dishNames.slice(0, 5).join("・") + (dishNames.length > 5 ? "など" : "");
     const text = `🍽️ 今週のAI献立\n${menuLine}\n\nメシリストでかんたん献立生成✨\n#メシリスト #AI献立 #今日の献立`;
     setShareMenuText(text);
+    setShareImageDataUrl(null);
+    setShareImageFile(null);
     setShowShareModal(true);
+  };
+
+  const handleShareImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setShareImageFile(file);
+    const reader = new FileReader();
+    reader.onload = ev => setShareImageDataUrl(ev.target?.result as string);
+    reader.readAsDataURL(file);
   };
 
   const handleShareX = () => {
@@ -811,7 +923,11 @@ function AppContent() {
   };
   const handleShareNative = async () => {
     try {
-      await navigator.share({ title: "今週のAI献立", text: shareMenuText });
+      const shareData: ShareData = { title: "今週のAI献立", text: shareMenuText };
+      if (shareImageFile && navigator.canShare?.({ files: [shareImageFile] })) {
+        shareData.files = [shareImageFile];
+      }
+      await navigator.share(shareData);
     } catch { /* キャンセルor非対応 */ }
   };
   const handleShareCopy = async () => {
@@ -1185,7 +1301,7 @@ function AppContent() {
                           <span style={{ width: 12, height: 12, borderRadius: "50%", background: "#fff", transform: wakeLockOn ? "translateX(12px)" : "translateX(0)", transition: "transform 0.2s", display: "block" }} />
                         </span>
                       </button>
-                      <RecipeSection text={parsedOutput.recipe} imageResults={imageResults} processImageResults={processImageResults} ratings={dishRatings} onRate={saveCookedRecord} />
+                      <RecipeSection text={parsedOutput.recipe} imageResults={imageResults} processImageResults={processImageResults} ratings={dishRatings} onRate={(dish, stars, body) => saveCookedRecord(dish, stars, body)} />
                     </>
                   )}
                   {activeTab === "shopping" && parsedOutput.shopping && (
@@ -1236,19 +1352,41 @@ function AppContent() {
             <p style={{ fontSize: 12, color: "var(--text-muted)", textAlign: "center", marginBottom: 20 }}>みんなに今週の献立を教えよう</p>
 
             {/* シェアカード（スクリーンショット用） */}
-            <div style={{ background: "linear-gradient(135deg, #f5a623 0%, #e6951a 50%, #c87c0a 100%)", borderRadius: 16, padding: "20px 22px", marginBottom: 20, position: "relative", overflow: "hidden" }}>
-              <div style={{ position: "absolute", top: -20, right: -20, width: 100, height: 100, borderRadius: "50%", background: "rgba(255,255,255,0.1)" }} />
-              <div style={{ position: "absolute", bottom: -30, left: -10, width: 120, height: 120, borderRadius: "50%", background: "rgba(255,255,255,0.08)" }} />
-              <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 12 }}>
-                <span style={{ fontFamily: "var(--font-heading)", fontWeight: 900, fontSize: 13, color: "rgba(255,255,255,0.9)", letterSpacing: "0.06em" }}>メシリスト AI献立</span>
-                <span style={{ background: "rgba(255,255,255,0.25)", borderRadius: 20, padding: "1px 8px", fontSize: 10, color: "#fff", fontFamily: "var(--font-heading)", fontWeight: 700 }}>by kooca</span>
+            <div style={{ background: "linear-gradient(135deg, #f5a623 0%, #e6951a 50%, #c87c0a 100%)", borderRadius: 16, overflow: "hidden", marginBottom: 14, position: "relative" }}>
+              {/* 料理写真（ユーザーが添付した場合） */}
+              {shareImageDataUrl && (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={shareImageDataUrl} alt="料理写真" style={{ width: "100%", maxHeight: 200, objectFit: "cover", display: "block" }} />
+              )}
+              <div style={{ padding: "18px 20px", position: "relative" }}>
+                <div style={{ position: "absolute", top: -20, right: -20, width: 100, height: 100, borderRadius: "50%", background: "rgba(255,255,255,0.1)" }} />
+                <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 10 }}>
+                  <span style={{ fontFamily: "var(--font-heading)", fontWeight: 900, fontSize: 13, color: "rgba(255,255,255,0.9)", letterSpacing: "0.06em" }}>メシリスト AI献立</span>
+                  <span style={{ background: "rgba(255,255,255,0.25)", borderRadius: 20, padding: "1px 8px", fontSize: 10, color: "#fff", fontFamily: "var(--font-heading)", fontWeight: 700 }}>by kooca</span>
+                </div>
+                <div style={{ fontFamily: "var(--font-heading)", fontWeight: 800, fontSize: 15, color: "#fff", lineHeight: 1.6, whiteSpace: "pre-wrap" }}>
+                  {shareMenuText.split("\n").slice(1, 3).join("\n")}
+                </div>
+                <div style={{ marginTop: 10, fontSize: 11, color: "rgba(255,255,255,0.7)" }}>冷蔵庫にある食材でAIが作った献立✨</div>
               </div>
-              <div style={{ fontFamily: "var(--font-heading)", fontWeight: 800, fontSize: 15, color: "#fff", lineHeight: 1.6, whiteSpace: "pre-wrap" }}>
-                {shareMenuText.split("\n").slice(1, 3).join("\n")}
-              </div>
-              <div style={{ marginTop: 12, fontSize: 11, color: "rgba(255,255,255,0.7)" }}>冷蔵庫にある食材でAIが作った献立✨</div>
             </div>
-            <p style={{ fontSize: 11, color: "var(--text-muted)", textAlign: "center", marginBottom: 16 }}>📸 上のカードをスクリーンショットしてインスタに投稿しよう！</p>
+
+            {/* 写真を追加 */}
+            <label style={{ display: "flex", alignItems: "center", gap: 10, padding: "11px 16px", borderRadius: 12, border: "1.5px dashed var(--border)", background: "var(--bg-subtle)", cursor: "pointer", marginBottom: 16 }}>
+              <span style={{ fontSize: 20 }}>{shareImageDataUrl ? "🔄" : "📷"}</span>
+              <div>
+                <div style={{ fontFamily: "var(--font-heading)", fontWeight: 700, fontSize: 13, color: "var(--text-primary)" }}>
+                  {shareImageDataUrl ? "写真を変更する" : "料理の写真を追加する（任意）"}
+                </div>
+                <div style={{ fontSize: 11, color: "var(--text-muted)" }}>カメラで撮影 or カメラロールから選択</div>
+              </div>
+              {shareImageDataUrl && (
+                <button onClick={e => { e.preventDefault(); setShareImageDataUrl(null); setShareImageFile(null); }}
+                  style={{ marginLeft: "auto", fontSize: 18, background: "none", border: "none", cursor: "pointer", color: "var(--text-muted)", lineHeight: 1 }}>×</button>
+              )}
+              <input type="file" accept="image/*" capture="environment" onChange={handleShareImageSelect} style={{ display: "none" }} />
+            </label>
+            <p style={{ fontSize: 11, color: "var(--text-muted)", textAlign: "center", marginBottom: 14 }}>📸 カードをスクリーンショットしてインスタに投稿しよう！</p>
 
             {/* シェアボタン */}
             <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
@@ -1278,57 +1416,7 @@ function AppContent() {
       )}
 
       {/* ── History Modal ── */}
-      {showHistory && (
-        <div onClick={() => setShowHistory(false)}
-          style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.55)", zIndex: 200, display: "flex", alignItems: "flex-end", justifyContent: "center" }}>
-          <div onClick={e => e.stopPropagation()}
-            style={{ background: "#fff", borderRadius: "24px 24px 0 0", width: "100%", maxWidth: 540, maxHeight: "75vh", display: "flex", flexDirection: "column", boxShadow: "0 -8px 40px rgba(0,0,0,0.12)" }}>
-            <div style={{ padding: "20px 24px 12px", flexShrink: 0 }}>
-              <div style={{ width: 36, height: 4, background: "var(--border)", borderRadius: 4, margin: "0 auto 16px" }} />
-              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-                <h3 style={{ fontFamily: "var(--font-heading)", fontWeight: 800, fontSize: 16, color: "var(--text-primary)", margin: 0 }}>
-                  📓 料理記録
-                </h3>
-                {cookedRecords.length > 0 && (
-                  <button onClick={() => { setCookedRecords([]); localStorage.removeItem("meshilist_cooked"); }}
-                    style={{ fontSize: 11, color: "var(--text-muted)", background: "none", border: "none", cursor: "pointer", textDecoration: "underline", padding: 0 }}>
-                    全件削除
-                  </button>
-                )}
-              </div>
-            </div>
-            <div style={{ overflowY: "auto", padding: "0 24px 32px" }}>
-              {cookedRecords.length === 0 ? (
-                <div style={{ textAlign: "center", padding: "40px 0", color: "var(--text-muted)" }}>
-                  <div style={{ fontSize: 36, marginBottom: 12 }}>🍳</div>
-                  <div style={{ fontFamily: "var(--font-heading)", fontWeight: 700, fontSize: 14, marginBottom: 6 }}>まだ記録がありません</div>
-                  <div style={{ fontSize: 12 }}>レシピの「作った！」ボタンで記録できます</div>
-                </div>
-              ) : (
-                <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
-                  {cookedRecords.map(r => {
-                    const opt = RATING_OPTIONS.find(o => o.value === r.rating);
-                    const date = new Date(r.cookedAt);
-                    const dateStr = `${date.getMonth() + 1}/${date.getDate()}`;
-                    return (
-                      <div key={r.id} style={{ display: "flex", alignItems: "center", gap: 12, padding: "11px 0", borderBottom: "1px solid var(--border)" }}>
-                        <span style={{ fontSize: 22, flexShrink: 0 }}>{opt?.emoji}</span>
-                        <div style={{ flex: 1, minWidth: 0 }}>
-                          <div style={{ fontFamily: "var(--font-heading)", fontWeight: 700, fontSize: 14, color: "var(--text-primary)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                            {r.dishName}
-                          </div>
-                          <div style={{ fontSize: 11, color: "var(--text-muted)" }}>{opt?.label}</div>
-                        </div>
-                        <div style={{ fontSize: 11, color: "var(--text-muted)", flexShrink: 0 }}>{dateStr}</div>
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
+      {showHistory && <HistoryModal records={cookedRecords} onClear={() => { setCookedRecords([]); localStorage.removeItem("meshilist_cooked"); }} onClose={() => setShowHistory(false)} />}
 
       {/* Subscribe Modal */}
       {showSubscribeModal && (
