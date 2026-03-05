@@ -33,6 +33,31 @@ interface Recipe {
   noKnife?: boolean;   // 包丁いらず
 }
 
+// ─── Copy button ──────────────────────────────────────────────────
+function CopyButton({ text, label = "コピー", color }: { text: string; label?: string; color: string }) {
+  const [copied, setCopied] = useState(false);
+  const handleCopy = async () => {
+    await navigator.clipboard.writeText(text);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+  return (
+    <button
+      onClick={handleCopy}
+      style={{
+        padding: "3px 10px", borderRadius: 20, border: `1px solid ${color}`,
+        background: copied ? color : "#fff",
+        color: copied ? "#fff" : color,
+        fontSize: 11, fontFamily: "var(--font-heading)", fontWeight: 700,
+        cursor: "pointer", display: "flex", alignItems: "center", gap: 4,
+        transition: "all 0.2s",
+      }}
+    >
+      {copied ? "✓ コピー済み" : `📋 ${label}`}
+    </button>
+  );
+}
+
 // ─── Data ────────────────────────────────────────────────────────
 const RECIPES: Recipe[] = [
   // 肉料理
@@ -186,13 +211,139 @@ const RECIPES: Recipe[] = [
     id: 23, name: "豚汁", category: "汁物", time: "25分", difficulty: "簡単",
     ingredients: ["豚バラ薄切り 150g", "大根 1/4本", "にんじん 1/2本", "ごぼう 1/2本", "こんにゃく 1/2枚", "味噌 大さじ3", "だし汁 800ml"],
     steps: ["野菜は食べやすく切り、ごぼうは水にさらす", "鍋に油を熱し豚肉を炒め、野菜を加える", "だし汁を加えて野菜が柔らかくなるまで煮る", "火を弱め、味噌を溶き入れる", "一煮立ちさせず完成"],
-    nutrition: { kcal: 180, protein: 10, fat: 10, carbs: 14, salt: 1.8 },
+    nutrition: { kcal: 182, protein: 11, fat: 10, carbs: 13, salt: 1.8 },
   },
   {
     id: 24, name: "けんちん汁", category: "汁物", time: "25分", difficulty: "普通",
     ingredients: ["木綿豆腐 1/2丁", "大根・にんじん・ごぼう 各適量", "こんにゃく 1/4枚", "醤油 大さじ2", "だし汁 700ml", "ごま油 大さじ1"],
     steps: ["豆腐は手で崩す。野菜は食べやすく切る", "鍋にごま油を熱し豆腐を炒める", "野菜・こんにゃくを加えてさらに炒める", "だし汁を加えて野菜が柔らかくなるまで煮る", "醤油で味を調えて完成"],
-    nutrition: { kcal: 120, protein: 6, fat: 6, carbs: 12, salt: 1.6 },
+    nutrition: { kcal: 118, protein: 6, fat: 6, carbs: 11, salt: 1.6 },
+  },
+
+  // ── 追加レシピ（肉料理）──
+  {
+    id: 25, name: "塩鶏のレンジ蒸し", category: "肉料理", time: "15分", difficulty: "簡単",
+    ingredients: ["鶏むね肉 200g（皮なし）", "料理酒 大さじ2", "塩 小さじ1/2", "ごま油 小さじ1", "長ねぎの青い部分 適量"],
+    steps: ["鶏むね肉をフォークで全体に穴をあけ、塩を両面にすり込む", "耐熱皿に鶏肉をのせ、料理酒・ねぎをかけてラップをする", "電子レンジ600Wで4分加熱し、裏返してさらに2分加熱する", "ラップをしたまま5分蒸らして余熱で火を通す（中心が白くなればOK）", "食べやすく手でほぐし、ごま油をかけて完成"],
+    nutrition: { kcal: 162, protein: 33, fat: 3, carbs: 1, salt: 1.0 },
+    noKnife: true,
+  },
+  {
+    id: 26, name: "豚こまと白菜の塩ダレ蒸し", category: "肉料理", time: "20分", difficulty: "簡単",
+    ingredients: ["豚こま切れ肉 200g", "白菜 1/4個（約350g）", "にんにく 1かけ", "塩 小さじ1/2", "ごま油 大さじ1", "鶏がらスープの素 小さじ1"],
+    steps: ["白菜をざく切りにしてフライパンに敷き詰める", "豚こまを広げてのせ、薄切りにしたにんにく・塩・鶏がらスープの素を散らす", "ふたをして中火で10〜12分、白菜がしんなりするまで蒸し焼きにする", "水分が出てきたら強火で30秒飛ばす", "ごま油をまわしかけて完成"],
+    nutrition: { kcal: 268, protein: 18, fat: 18, carbs: 6, salt: 1.4 },
+  },
+  {
+    id: 27, name: "鶏の塩麹焼き", category: "肉料理", time: "20分", difficulty: "簡単",
+    ingredients: ["鶏もも肉 2枚（約500g）", "塩麹 大さじ2", "オリーブオイル 小さじ1"],
+    steps: ["鶏もも肉の両面に塩麹を塗り、15分以上おく（前日から漬けてもOK）", "フライパンにオリーブオイルを熱し、鶏肉を皮目から中火で焼く", "5分ほど焼いて皮がきつね色になったら裏返す", "ふたをして弱火で6〜7分蒸し焼きにする（竹串を刺して透明な汁が出ればOK）", "食べやすく切って完成（塩麹が焦げやすいため火加減注意）"],
+    nutrition: { kcal: 288, protein: 26, fat: 18, carbs: 3, salt: 1.5 },
+  },
+  {
+    id: 28, name: "キャベツと豚バラの重ね蒸し", category: "肉料理", time: "25分", difficulty: "簡単",
+    ingredients: ["豚バラ薄切り 150g", "キャベツ 1/4個（約300g）", "ポン酢 大さじ3", "ごま油 小さじ1", "塩・こしょう 少々"],
+    steps: ["キャベツを大きめのざく切りにする", "鍋にキャベツ→豚バラ→キャベツ→豚バラの順に重ねて並べる", "塩・こしょうを振り、ふたをして弱中火で15分蒸し煮する（水は不要、野菜の水分で蒸れる）", "豚バラに火が通ったら器に盛る", "ポン酢・ごま油を合わせたタレをかけて完成"],
+    nutrition: { kcal: 346, protein: 14, fat: 28, carbs: 8, salt: 1.4 },
+  },
+
+  // ── 追加レシピ（魚料理）──
+  {
+    id: 29, name: "さば缶キムチ炒め", category: "魚料理", time: "10分", difficulty: "簡単",
+    ingredients: ["さば水煮缶 1缶（190g）", "キムチ 100g", "豆腐 1/2丁", "ごま油 小さじ1", "長ねぎ 適量"],
+    steps: ["豆腐はキッチンペーパーで包んで水切りし、手でひと口大にちぎる", "フライパンにごま油を熱し、豆腐を軽く焼いて両面に焼き色をつける", "さば缶を汁ごと加え、キムチを加えてさっと炒め合わせる", "全体がなじんだら強火で30秒水分を飛ばす", "刻んだ長ねぎを散らして完成"],
+    nutrition: { kcal: 278, protein: 24, fat: 18, carbs: 4, salt: 2.0 },
+    noKnife: true,
+  },
+  {
+    id: 30, name: "たらの和風ポン酢煮", category: "魚料理", time: "20分", difficulty: "簡単",
+    ingredients: ["たらの切り身 2切れ", "大根 1/4本（約250g）", "ポン酢 大さじ3", "みりん 大さじ2", "水 100ml", "長ねぎ 1/2本"],
+    steps: ["大根は1cm厚さの半月切りにして耐熱皿に並べ、600Wで4分レンジ加熱して下ゆで代わりにする", "フライパンに水・みりん・ポン酢を合わせて中火で煮立てる", "大根・たらを加えてふたをし、弱中火で10分煮る（たらが白く固まったらOK）", "斜め切りにした長ねぎを加えてひと煮立ちさせる", "たらを崩さないよう器に盛り、煮汁をかけて完成"],
+    nutrition: { kcal: 142, protein: 24, fat: 1, carbs: 10, salt: 2.0 },
+  },
+  {
+    id: 31, name: "ツナと野菜のレンジ蒸し", category: "魚料理", time: "10分", difficulty: "簡単",
+    ingredients: ["ツナ缶 1缶", "ブロッコリー 1/2株", "コーン缶 1/2缶", "マヨネーズ 大さじ2", "塩・こしょう 少々"],
+    steps: ["ブロッコリーを小房に分けて耐熱容器に入れる", "ツナ缶（汁を軽く切る）・コーンを加える", "塩・こしょう・マヨネーズを加えて軽く混ぜる", "ラップをかけて600Wで3分レンジ加熱する", "全体を混ぜて完成"],
+    nutrition: { kcal: 196, protein: 16, fat: 12, carbs: 8, salt: 1.0 },
+    noKnife: true,
+  },
+
+  // ── 追加レシピ（卵・豆腐）──
+  {
+    id: 32, name: "トマトと卵の中華炒め", category: "卵・豆腐", time: "10分", difficulty: "簡単",
+    ingredients: ["卵 3個", "トマト 2個", "塩 小さじ1/3", "砂糖 小さじ1", "醤油 小さじ1", "サラダ油 大さじ1.5", "ごま油 少々"],
+    steps: ["卵を溶いて塩・砂糖を加えてよく混ぜる", "トマトをくし形に切る", "フライパンに油を強火で熱し、卵液を流して半熟になったら一度取り出す", "同じフライパンにトマトを加えて中火で炒め、醤油を加える", "戻した卵を加えてさっくり混ぜ、ごま油をまわしかけて完成"],
+    nutrition: { kcal: 196, protein: 13, fat: 14, carbs: 6, salt: 0.8 },
+  },
+  {
+    id: 33, name: "豆腐のひき肉あんかけ", category: "卵・豆腐", time: "15分", difficulty: "簡単",
+    ingredients: ["絹豆腐 1丁（300g）", "豚ひき肉 100g", "醤油 大さじ1.5", "みりん 大さじ1", "砂糖 小さじ1", "水 150ml", "水溶き片栗粉 大さじ1", "ごま油 少々", "生姜（すりおろし） 1かけ"],
+    steps: ["豆腐を耐熱皿に入れ、600Wで2分レンジ加熱して水気を出す（余分な水は捨てる）", "フライパンに油は引かずにひき肉を入れ、中火で色が変わるまで炒める", "醤油・みりん・砂糖・水・すりおろし生姜を加えて煮立てる", "水溶き片栗粉を加えてとろみをつける", "豆腐の上にあんをかけ、ごま油をまわしかけて完成"],
+    nutrition: { kcal: 252, protein: 18, fat: 15, carbs: 9, salt: 1.6 },
+    noKnife: true,
+  },
+
+  // ── 追加レシピ（野菜）──
+  {
+    id: 34, name: "小松菜と油揚げの煮浸し", category: "野菜", time: "10分", difficulty: "簡単",
+    ingredients: ["小松菜 1束（200g）", "油揚げ 1枚", "だし汁 200ml", "醤油 大さじ1", "みりん 大さじ1", "砂糖 小さじ1/2"],
+    steps: ["油揚げにキッチンペーパーで余分な油を吸わせ、キッチンバサミで細切りにする", "小松菜をキッチンバサミで4〜5cm幅に切る", "鍋にだし汁・醤油・みりん・砂糖を合わせて中火で煮立てる", "油揚げを加えて2分煮、小松菜の軸から加えて1〜2分煮る", "火を止め、5分おいて味をしみ込ませて完成"],
+    nutrition: { kcal: 102, protein: 6, fat: 6, carbs: 6, salt: 1.1 },
+    noKnife: true,
+  },
+  {
+    id: 35, name: "塩昆布とキャベツのさっと炒め", category: "野菜", time: "8分", difficulty: "簡単",
+    ingredients: ["キャベツ 1/2個（約500g）", "塩昆布 15g", "ごま油 大さじ1", "いりごま 大さじ1", "醤油 小さじ1"],
+    steps: ["キャベツをざく切りにして手でちぎる", "フライパンにごま油を強火で熱する", "キャベツを加えて大きく混ぜながら2分炒める（シャキッと感を残す）", "塩昆布・醤油を加えてさっと炒め合わせる", "いりごまをふって完成"],
+    nutrition: { kcal: 86, protein: 3, fat: 6, carbs: 6, salt: 1.6 },
+    noKnife: true,
+  },
+  {
+    id: 36, name: "ひじきの煮物", category: "野菜", time: "20分", difficulty: "簡単",
+    ingredients: ["乾燥ひじき 20g", "油揚げ 1枚", "にんじん 1/3本", "だし汁 200ml", "醤油 大さじ2", "みりん 大さじ2", "砂糖 大さじ1", "ごま油 小さじ1"],
+    steps: ["乾燥ひじきを水で20分戻して水気を切る", "にんじんを細切り、油揚げを短冊切りにする", "鍋にごま油を熱し、ひじき・にんじん・油揚げを炒める", "だし汁・醤油・みりん・砂糖を加えて中火で10〜12分、汁気が少なくなるまで煮る", "火を止め、余熱で味をなじませて完成"],
+    nutrition: { kcal: 112, protein: 4, fat: 5, carbs: 12, salt: 1.6 },
+  },
+
+  // ── 追加レシピ（ご飯・麺）──
+  {
+    id: 37, name: "ツナ醤油パスタ", category: "ご飯・麺", time: "15分", difficulty: "簡単",
+    ingredients: ["パスタ 160g", "ツナ缶 1缶（70g）", "醤油 大さじ1.5", "バター 10g", "大葉 5枚", "塩 少々", "オリーブオイル 大さじ1"],
+    steps: ["たっぷりのお湯に塩を加えてパスタを袋の表示通り茹でる", "フライパンにオリーブオイルを熱し、汁を切ったツナを炒める", "茹で上がったパスタを加え、パスタの茹で汁大さじ2を加えて混ぜる", "火を止めてバター・醤油を加えてよく絡める", "千切りにした大葉を散らして完成"],
+    nutrition: { kcal: 462, protein: 22, fat: 14, carbs: 64, salt: 1.5 },
+  },
+  {
+    id: 38, name: "卵雑炊", category: "ご飯・麺", time: "15分", difficulty: "簡単",
+    ingredients: ["ご飯 2膳（300g）", "卵 2個", "だし汁 500ml", "醤油 大さじ1", "みりん 大さじ1", "塩 少々", "長ねぎ 1/3本"],
+    steps: ["ご飯を水で軽く洗って粘りを取り、ざるで水を切る", "鍋にだし汁・醤油・みりんを入れて中火で煮立てる", "ご飯を加えて5分ほど煮る（好みの柔らかさになるまで）", "溶き卵を細く回し入れて半熟になったら火を止める", "塩で味を調え、小口切りにした長ねぎをのせて完成"],
+    nutrition: { kcal: 356, protein: 14, fat: 6, carbs: 62, salt: 1.6 },
+    noKnife: true,
+  },
+  {
+    id: 39, name: "冷やし素麺", category: "ご飯・麺", time: "10分", difficulty: "簡単",
+    ingredients: ["素麺 160g（乾麺）", "ツナ缶 1缶", "きゅうり 1本", "めんつゆ（2倍濃縮） 100ml", "水 200ml", "氷 適量", "いりごま 少々"],
+    steps: ["たっぷりの湯で素麺を2分茹で、流水で洗って氷水でしめる", "きゅうりを細切りにする", "めんつゆを水で割ってつゆを作り、氷を入れたグラスに注ぐ", "素麺を器に盛り、ツナ・きゅうりをのせる", "いりごまをふり、つゆに浸けながらいただく"],
+    nutrition: { kcal: 364, protein: 18, fat: 4, carbs: 66, salt: 2.0 },
+  },
+  {
+    id: 40, name: "クリームシチュー", category: "汁物", time: "35分", difficulty: "普通",
+    ingredients: ["鶏もも肉 200g", "じゃがいも 2個", "玉ねぎ 1個", "にんじん 1本", "ブロッコリー 1/2株", "シチューのルー 1/2箱", "牛乳 200ml", "水 600ml", "油 大さじ1"],
+    steps: ["野菜と鶏肉を一口大に切る", "鍋に油を熱し玉ねぎを中火で3分炒め、鶏肉・にんじん・じゃがいもを加えてさらに3分炒める", "水を加えて煮立てたらアクを取り、ふたをして弱火で15分煮る", "火を止めてルーを加えて溶かし、牛乳を加える", "弱火で5分煮て、ブロッコリーを加えてひと煮立ちさせて完成"],
+    nutrition: { kcal: 382, protein: 20, fat: 14, carbs: 44, salt: 2.2 },
+  },
+  {
+    id: 41, name: "豆腐とわかめの味噌汁", category: "汁物", time: "5分", difficulty: "簡単",
+    ingredients: ["絹豆腐 1/2丁（150g）", "乾燥わかめ 大さじ1", "だし汁 400ml", "味噌 大さじ1.5"],
+    steps: ["鍋にだし汁を中火で温める", "豆腐をスプーンで一口大にすくって加える", "乾燥わかめを加えてひと煮立ちさせる", "火を弱め、味噌をお玉の中で溶かしながら加える（沸騰させない）", "お椀に注いで完成"],
+    nutrition: { kcal: 82, protein: 6, fat: 4, carbs: 5, salt: 1.3 },
+    noKnife: true,
+  },
+  {
+    id: 42, name: "ミネストローネ", category: "汁物", time: "25分", difficulty: "普通",
+    ingredients: ["カットトマト缶 1缶（400g）", "玉ねぎ 1個", "にんじん 1/2本", "セロリ 1/2本", "ツナ缶 1缶", "コンソメ 1個", "水 300ml", "オリーブオイル 大さじ1", "塩・こしょう 少々"],
+    steps: ["玉ねぎ・にんじん・セロリを1cm角に切る", "鍋にオリーブオイルを熱し、玉ねぎを中火で3分炒めてしんなりさせる", "にんじん・セロリを加えて2分炒める", "トマト缶・水・コンソメ・ツナ缶（汁ごと）を加えて15分煮る", "塩・こしょうで味を調えて完成"],
+    nutrition: { kcal: 164, protein: 11, fat: 8, carbs: 13, salt: 1.8 },
   },
 ];
 
@@ -471,7 +622,12 @@ function StepDiagram({ recipe, meta }: { recipe: Recipe; meta: typeof CATEGORY_M
         <h3 style={{ fontFamily: "var(--font-heading)", fontWeight: 700, fontSize: 12, color: meta.color, letterSpacing: "0.08em", textTransform: "uppercase", margin: 0 }}>
           手順
         </h3>
-        <div style={{ display: "flex", gap: 6 }}>
+        <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+          <CopyButton
+            color={meta.color}
+            label="手順をコピー"
+            text={`【${recipe.name} 作り方】\n${recipe.steps.map((s, i) => `${i + 1}. ${s}`).join('\n')}`}
+          />
           {/* 図解ボタン */}
           <button
             onClick={mode === "diagram" ? () => setMode("steps") : fetchDiagram}
@@ -704,13 +860,20 @@ function RecipeModal({ recipe, onClose }: { recipe: Recipe; onClose: () => void 
 
           {/* Nutrition */}
           <div style={{ marginBottom: 20 }}>
-            <h3 style={{
-              fontFamily: "var(--font-heading)", fontWeight: 700, fontSize: 12,
-              color: meta.color, letterSpacing: "0.08em", textTransform: "uppercase",
-              marginBottom: 10,
-            }}>
-              栄養成分（1人分）
-            </h3>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 10 }}>
+              <h3 style={{
+                fontFamily: "var(--font-heading)", fontWeight: 700, fontSize: 12,
+                color: meta.color, letterSpacing: "0.08em", textTransform: "uppercase",
+                margin: 0,
+              }}>
+                栄養成分（1人分）
+              </h3>
+              <CopyButton
+                color={meta.color}
+                label="栄養成分をコピー"
+                text={`【${recipe.name} 栄養成分（1人分）】\n🔥 ${recipe.nutrition.kcal}kcal\nたんぱく質: ${recipe.nutrition.protein}g\n脂質: ${recipe.nutrition.fat}g\n炭水化物: ${recipe.nutrition.carbs}g\n食塩相当量: ${recipe.nutrition.salt}g`}
+              />
+            </div>
             <NutritionTable nutrition={recipe.nutrition} />
           </div>
 
