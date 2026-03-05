@@ -289,13 +289,11 @@ const RATING_OPTIONS: { value: 1 | 2 | 3; emoji: string; label: string }[] = [
   { value: 3, emoji: "🤩", label: "最高！" },
 ];
 
-function RecipeBlock({ title, body, imageUrl, imageLoading, processImageUrl, processImageLoading, savedRating, onRate }: {
+function RecipeBlock({ title, body, imageUrl, imageLoading, savedRating, onRate }: {
   title: string;
   body: string[];
   imageUrl?: string | null;
   imageLoading?: boolean;
-  processImageUrl?: string | null;
-  processImageLoading?: boolean;
   savedRating?: number;
   onRate?: (stars: 1 | 2 | 3, body: string[]) => void;
 }) {
@@ -323,16 +321,6 @@ function RecipeBlock({ title, body, imageUrl, imageLoading, processImageUrl, pro
         <img src={imageUrl} alt={title} style={{ width: "100%", maxHeight: 280, objectFit: "cover", display: "block" }} />
       )}
       {/* 調理過程イラスト（Nano Banana Pro） */}
-      {processImageLoading && (
-        <div style={{ height: 120, background: "#fdf4e3", display: "flex", alignItems: "center", justifyContent: "center", gap: 8, borderTop: "1px solid var(--border)" }}>
-          <span className="animate-spin-sm" style={{ width: 16, height: 16, borderRadius: "50%", border: "2px solid rgba(0,0,0,0.1)", borderTopColor: "var(--accent)", display: "inline-block" }} />
-          <span style={{ fontSize: 12, color: "var(--text-muted)", fontFamily: "var(--font-heading)", fontWeight: 600 }}>作り方イラスト生成中...</span>
-        </div>
-      )}
-      {processImageUrl && !processImageLoading && (
-        // eslint-disable-next-line @next/next/no-img-element
-        <img src={processImageUrl} alt={`${title} 作り方`} style={{ width: "100%", display: "block", borderTop: "1px solid var(--border)" }} />
-      )}
 
       <div style={{ padding: "20px 22px" }}>
       <div style={{ marginBottom: 12, paddingBottom: 10, borderBottom: "1px solid var(--border)" }}>
@@ -414,10 +402,9 @@ function RecipeBlock({ title, body, imageUrl, imageLoading, processImageUrl, pro
   );
 }
 
-function RecipeSection({ text, imageResults, processImageResults, ratings, onRate }: {
+function RecipeSection({ text, imageResults, ratings, onRate }: {
   text: string;
   imageResults: Record<string, string | null>;
-  processImageResults: Record<string, string | null>;
   ratings?: Record<string, number>;
   onRate?: (dish: string, stars: 1 | 2 | 3, body: string[]) => void;
 }) {
@@ -450,8 +437,6 @@ function RecipeSection({ text, imageResults, processImageResults, ratings, onRat
           body={b.body}
           imageUrl={imageResults[b.title]}
           imageLoading={!(b.title in imageResults)}
-          processImageUrl={processImageResults[b.title]}
-          processImageLoading={!(b.title in processImageResults)}
           savedRating={ratings?.[b.title]}
           onRate={onRate ? (stars, body) => onRate(b.title, stars, body) : undefined}
         />
@@ -690,11 +675,8 @@ function AppContent() {
 
   // Image generation: keyed by dish name. undefined = pending, null = failed, string = url
   const [imageResults, setImageResults] = useState<Record<string, string | null>>({});
-  const [processImageResults, setProcessImageResults] = useState<Record<string, string | null>>({});
   const pendingImagesRef = useRef<Set<string>>(new Set());
-  const pendingProcessImagesRef = useRef<Set<string>>(new Set());
   const imagePromisesRef = useRef<Promise<void>[]>([]);
-  const [generatingPhase, setGeneratingPhase] = useState<"text" | "image">("text");
 
   const triggerImageGen = (dish: string) => {
     if (pendingImagesRef.current.has(dish)) return;
@@ -715,23 +697,6 @@ function AppContent() {
     imagePromisesRef.current.push(p);
   };
 
-  const triggerProcessImageGen = (dish: string, steps?: string[]) => {
-    if (pendingProcessImagesRef.current.has(dish)) return;
-    pendingProcessImagesRef.current.add(dish);
-    fetch("/api/generate-process-image", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ dish, steps }),
-    })
-      .then(r => r.json())
-      .then(d => {
-        const url = d.url || (d.b64 ? `data:image/png;base64,${d.b64}` : null) || null;
-        setProcessImageResults(prev => ({ ...prev, [dish]: url }));
-      })
-      .catch(() => {
-        setProcessImageResults(prev => ({ ...prev, [dish]: null }));
-      });
-  };
 
   // Initialize from localStorage
   useEffect(() => {
@@ -802,7 +767,6 @@ function AppContent() {
     if (!allIngredients.trim()) { alert("食材を入力してください"); return; }
 
     setGenerating(true);
-    setGeneratingPhase("text");
     setView("result");
     setRawOutput("");
     setParsedOutput(null);
@@ -843,34 +807,7 @@ function AppContent() {
           }
         }
       }
-      // After full generation, extract actual steps per dish and trigger process image gen
-      const recipeSectionMatch = accumulated.match(/###\s*🍳[^\n]*\n([\s\S]*?)(?=###\s*📅|###\s*🛒|$)/);
-      if (recipeSectionMatch) {
-        const recipeLines = recipeSectionMatch[1].split("\n");
-        let currentDish: string | null = null;
-        let inSteps = false;
-        const dishSteps: Record<string, string[]> = {};
-        for (const line of recipeLines) {
-          const t = line.trim();
-          const isBoldTitle = t.startsWith("**") && t.endsWith("**") && t.length > 4;
-          if (isBoldTitle) {
-            currentDish = t.slice(2, -2);
-            dishSteps[currentDish] = [];
-            inSteps = false;
-          } else if (currentDish) {
-            if (t === "手順:" || t.startsWith("手順")) {
-              inSteps = true;
-            } else if (inSteps && /^\d+\./.test(t)) {
-              dishSteps[currentDish].push(t.replace(/^\d+\.\s*/, ""));
-            }
-          }
-        }
-        for (const [dish, steps] of Object.entries(dishSteps)) {
-          triggerProcessImageGen(dish, steps);
-        }
-      }
-      // Wait for all image generations to complete
-      setGeneratingPhase("image");
+      // Wait for dish photo generations to complete
       await Promise.all(imagePromisesRef.current);
     } catch (e: unknown) {
       if (e instanceof Error && e.name !== "AbortError") alert("エラーが発生しました。もう一度お試しください。");
@@ -1245,7 +1182,7 @@ function AppContent() {
                     <img src="/kooca-walk-transparent.png" alt="歩く人" style={{ height: 72 }} />
                   </div>
                   <div style={{ display: "flex", alignItems: "center", gap: 5 }}>
-                    <span style={{ fontFamily: "var(--font-heading)", fontWeight: 700, fontSize: 13, color: "var(--accent-dark)", letterSpacing: "0.1em" }}>{generatingPhase === "image" ? "イラストを描いています" : "コツコツ考えています"}</span>
+                    <span style={{ fontFamily: "var(--font-heading)", fontWeight: 700, fontSize: 13, color: "var(--accent-dark)", letterSpacing: "0.1em" }}>コツコツ考えています</span>
                     {[0, 1, 2].map(i => (
                       <span key={i} className="animate-blink" style={{ width: 4, height: 4, borderRadius: "50%", background: "var(--accent)", display: "inline-block", animationDelay: `${i * 0.3}s` }} />
                     ))}
@@ -1260,7 +1197,7 @@ function AppContent() {
                   ))}
                 </div>
                 <p style={{ fontSize: 12, color: "var(--text-muted)", textAlign: "center", lineHeight: 1.8, margin: 0 }}>
-                  {generatingPhase === "image" ? "料理のイラストを生成中..." : "献立表・レシピ・買い物リストをまとめて生成中"}
+                  献立表・レシピ・買い物リストをまとめて生成中
                 </p>
                 <div style={{ width: "100%", maxWidth: 260, height: 3, background: "var(--border)", borderRadius: 4, overflow: "hidden" }}>
                   <div className="animate-progress-bar" style={{ height: "100%", background: "linear-gradient(90deg, var(--accent), var(--accent-dark))", borderRadius: 4 }} />
@@ -1301,7 +1238,7 @@ function AppContent() {
                           <span style={{ width: 12, height: 12, borderRadius: "50%", background: "#fff", transform: wakeLockOn ? "translateX(12px)" : "translateX(0)", transition: "transform 0.2s", display: "block" }} />
                         </span>
                       </button>
-                      <RecipeSection text={parsedOutput.recipe} imageResults={imageResults} processImageResults={processImageResults} ratings={dishRatings} onRate={(dish, stars, body) => saveCookedRecord(dish, stars, body)} />
+                      <RecipeSection text={parsedOutput.recipe} imageResults={imageResults} ratings={dishRatings} onRate={(dish, stars, body) => saveCookedRecord(dish, stars, body)} />
                     </>
                   )}
                   {activeTab === "shopping" && parsedOutput.shopping && (
