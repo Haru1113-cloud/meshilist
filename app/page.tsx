@@ -276,26 +276,39 @@ export default function LandingPage() {
       </section>
 
       {/* ── Pricing ── */}
-      <section id="pricing" style={{ padding: "72px 24px" }}>
-        <div style={{ maxWidth: 900, margin: "0 auto", textAlign: "center" }}>
+      <section id="pricing" style={{ padding: "72px 24px", background: "#fff" }}>
+        <div style={{ maxWidth: 960, margin: "0 auto", textAlign: "center" }}>
           <p className="label" style={{ marginBottom: 12 }}>Pricing</p>
           <h2 style={{ fontFamily: "var(--font-heading)", fontWeight: 800, fontSize: "clamp(24px, 4vw, 36px)", color: "var(--text-primary)", letterSpacing: "-0.03em", marginBottom: 12 }}>
             あなたに合ったプランを
           </h2>
-          <p style={{ fontSize: 14, color: "var(--text-secondary)", marginBottom: 48 }}>全プラン 7日間無料トライアルつき</p>
+          <p style={{ fontSize: 14, color: "var(--text-secondary)", marginBottom: 8 }}>全プラン 7日間無料トライアルつき · クレジットカード不要</p>
+          <p style={{ fontSize: 13, color: "var(--text-muted)", marginBottom: 48 }}>トライアル中は全機能が使えます。終了後は自動的に課金されません。</p>
 
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", gap: 20, alignItems: "stretch" }}>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))", gap: 20, alignItems: "stretch" }}>
             {/* ライト */}
-            <div style={{ background: "#fff", borderRadius: 20, padding: "32px 28px", border: "1.5px solid var(--border)", textAlign: "left", display: "flex", flexDirection: "column" }}>
-              <div style={{ fontFamily: "var(--font-heading)", fontWeight: 700, fontSize: 13, color: "var(--text-muted)", letterSpacing: "0.06em", marginBottom: 8 }}>LIGHT</div>
+            <div style={{ background: "var(--bg-subtle)", borderRadius: 20, padding: "32px 28px", border: "1.5px solid var(--border)", textAlign: "left", display: "flex", flexDirection: "column" }}>
+              <div style={{ display: "inline-flex", alignItems: "center", gap: 6, marginBottom: 16 }}>
+                <span style={{ fontFamily: "var(--font-heading)", fontWeight: 700, fontSize: 13, color: "var(--text-muted)", letterSpacing: "0.06em" }}>LIGHT</span>
+                <span style={{ fontSize: 11, background: "#e8f4e8", color: "#4a7840", borderRadius: 6, padding: "2px 8px", fontFamily: "var(--font-heading)", fontWeight: 700 }}>お試し向け</span>
+              </div>
               <div style={{ fontFamily: "var(--font-heading)", fontWeight: 800, fontSize: 40, color: "var(--text-primary)", lineHeight: 1, marginBottom: 4 }}>
                 ¥280<span style={{ fontSize: 14, fontWeight: 400, color: "var(--text-muted)" }}>/月</span>
               </div>
-              <p style={{ fontSize: 12, color: "var(--text-muted)", marginBottom: 24 }}>月10回まで · 1日あたり約9円</p>
-              <ul style={{ listStyle: "none", margin: "0 0 28px", padding: 0, display: "flex", flexDirection: "column", gap: 10, flex: 1 }}>
-                {["献立生成 月10回", "1週間分プランニング", "レシピ概要・手順つき", "まとめ買いリスト", "いつでも解約OK"].map(f => (
-                  <li key={f} style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 13, color: "var(--text-secondary)" }}>
-                    <span style={{ color: "#4a7840", fontWeight: 700 }}>✓</span>{f}
+              <p style={{ fontSize: 12, color: "var(--text-muted)", marginBottom: 6 }}>月10回まで · 1日あたり約9円</p>
+              <p style={{ fontSize: 12, color: "var(--text-secondary)", marginBottom: 24, lineHeight: 1.6 }}>週2〜3回ペースで使いたい方に。まず安く始めたい方向け。</p>
+              <ul style={{ listStyle: "none", margin: "0 0 28px", padding: 0, display: "flex", flexDirection: "column", gap: 8, flex: 1 }}>
+                {[
+                  { text: "献立生成 月10回", ok: true },
+                  { text: "料理写真つき生成", ok: true },
+                  { text: "1週間分プランニング", ok: true },
+                  { text: "レシピ概要・手順つき", ok: true },
+                  { text: "まとめ買いリスト", ok: true },
+                  { text: "レシピ保存・評価", ok: false },
+                ].map(f => (
+                  <li key={f.text} style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 13, color: f.ok ? "var(--text-secondary)" : "var(--text-muted)" }}>
+                    <span style={{ color: f.ok ? "#4a7840" : "#ccc", fontWeight: 700, fontSize: 14, flexShrink: 0 }}>{f.ok ? "✓" : "✕"}</span>
+                    <span style={{ textDecoration: f.ok ? "none" : "line-through" }}>{f.text}</span>
                   </li>
                 ))}
               </ul>
@@ -303,25 +316,37 @@ export default function LandingPage() {
                 style={{ width: "100%", padding: "13px", borderRadius: 12, border: "1.5px solid var(--accent)", background: "#fff", color: "var(--accent)", fontFamily: "var(--font-heading)", fontWeight: 700, fontSize: 14, cursor: "pointer", transition: "background 0.15s" }}
                 onMouseEnter={e => { e.currentTarget.style.background = "var(--accent-light)"; }}
                 onMouseLeave={e => { e.currentTarget.style.background = "#fff"; }}>
-                無料で試す →
+                7日間無料で試す →
               </button>
             </div>
 
             {/* スタンダード（おすすめ） */}
             <div style={{ position: "relative", paddingTop: 18, display: "flex", flexDirection: "column" }}>
               <div style={{ position: "absolute", top: 0, left: "50%", transform: "translateX(-50%)", zIndex: 1, background: "#4a7840", color: "#fff", fontFamily: "var(--font-heading)", fontWeight: 700, fontSize: 11, letterSpacing: "0.08em", padding: "5px 18px", borderRadius: 20, whiteSpace: "nowrap" }}>
-                いちばん人気
+                👑 いちばん人気
               </div>
               <div style={{ background: "#fff", borderRadius: 20, padding: "32px 28px", border: "2px solid var(--accent)", borderTop: "4px solid #4a7840", boxShadow: "0 8px 40px rgba(230,149,26,0.15)", textAlign: "left", display: "flex", flexDirection: "column", flex: 1 }}>
-                <div style={{ fontFamily: "var(--font-heading)", fontWeight: 700, fontSize: 13, color: "var(--accent)", letterSpacing: "0.06em", marginBottom: 8 }}>STANDARD</div>
+                <div style={{ display: "inline-flex", alignItems: "center", gap: 6, marginBottom: 16 }}>
+                  <span style={{ fontFamily: "var(--font-heading)", fontWeight: 700, fontSize: 13, color: "var(--accent)", letterSpacing: "0.06em" }}>STANDARD</span>
+                  <span style={{ fontSize: 11, background: "#fff3d6", color: "#a07010", borderRadius: 6, padding: "2px 8px", fontFamily: "var(--font-heading)", fontWeight: 700 }}>ヘビーユーザー向け</span>
+                </div>
                 <div style={{ fontFamily: "var(--font-heading)", fontWeight: 800, fontSize: 40, color: "var(--text-primary)", lineHeight: 1, marginBottom: 4 }}>
                   ¥480<span style={{ fontSize: 14, fontWeight: 400, color: "var(--text-muted)" }}>/月</span>
                 </div>
-                <p style={{ fontSize: 12, color: "var(--text-muted)", marginBottom: 24 }}>無制限 · 1日あたり約16円</p>
-                <ul style={{ listStyle: "none", margin: "0 0 28px", padding: 0, display: "flex", flexDirection: "column", gap: 10, flex: 1 }}>
-                  {["献立生成 無制限", "1週間分プランニング", "レシピ概要・手順つき", "まとめ買いリスト", "苦手食材・人数設定", "いつでも解約OK"].map(f => (
-                    <li key={f} style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 13, color: "var(--text-secondary)" }}>
-                      <span style={{ color: "#4a7840", fontWeight: 700 }}>✓</span>{f}
+                <p style={{ fontSize: 12, color: "var(--text-muted)", marginBottom: 6 }}>無制限 · 1日あたり約16円</p>
+                <p style={{ fontSize: 12, color: "var(--text-secondary)", marginBottom: 24, lineHeight: 1.6 }}>毎日使いたい方に。作った料理を保存して自分だけのレシピ帳に。</p>
+                <ul style={{ listStyle: "none", margin: "0 0 28px", padding: 0, display: "flex", flexDirection: "column", gap: 8, flex: 1 }}>
+                  {[
+                    { text: "献立生成 無制限", ok: true },
+                    { text: "料理写真つき生成", ok: true },
+                    { text: "1週間分プランニング", ok: true },
+                    { text: "レシピ概要・手順つき", ok: true },
+                    { text: "まとめ買いリスト", ok: true },
+                    { text: "レシピ保存・評価 ★", ok: true },
+                  ].map(f => (
+                    <li key={f.text} style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 13, color: "var(--text-secondary)" }}>
+                      <span style={{ color: "#4a7840", fontWeight: 700, fontSize: 14, flexShrink: 0 }}>✓</span>
+                      {f.text}
                     </li>
                   ))}
                 </ul>
@@ -335,16 +360,28 @@ export default function LandingPage() {
             </div>
 
             {/* プレミアム */}
-            <div style={{ background: "#fff", borderRadius: 20, padding: "32px 28px", border: "1.5px solid var(--border)", textAlign: "left", display: "flex", flexDirection: "column" }}>
-              <div style={{ fontFamily: "var(--font-heading)", fontWeight: 700, fontSize: 13, color: "var(--text-muted)", letterSpacing: "0.06em", marginBottom: 8 }}>PREMIUM</div>
+            <div style={{ background: "var(--bg-subtle)", borderRadius: 20, padding: "32px 28px", border: "1.5px solid var(--border)", textAlign: "left", display: "flex", flexDirection: "column" }}>
+              <div style={{ display: "inline-flex", alignItems: "center", gap: 6, marginBottom: 16 }}>
+                <span style={{ fontFamily: "var(--font-heading)", fontWeight: 700, fontSize: 13, color: "var(--text-muted)", letterSpacing: "0.06em" }}>PREMIUM</span>
+                <span style={{ fontSize: 11, background: "#f3e8ff", color: "#7c3aed", borderRadius: 6, padding: "2px 8px", fontFamily: "var(--font-heading)", fontWeight: 700 }}>こだわり派向け</span>
+              </div>
               <div style={{ fontFamily: "var(--font-heading)", fontWeight: 800, fontSize: 40, color: "var(--text-primary)", lineHeight: 1, marginBottom: 4 }}>
                 ¥980<span style={{ fontSize: 14, fontWeight: 400, color: "var(--text-muted)" }}>/月</span>
               </div>
-              <p style={{ fontSize: 12, color: "var(--text-muted)", marginBottom: 24 }}>無制限 + 料理写真 · 1日あたり約33円</p>
-              <ul style={{ listStyle: "none", margin: "0 0 28px", padding: 0, display: "flex", flexDirection: "column", gap: 10, flex: 1 }}>
-                {["献立生成 無制限", "1週間分プランニング", "レシピ概要・手順つき", "まとめ買いリスト", "苦手食材・人数設定", "料理写真つき生成（月15回）", "いつでも解約OK"].map(f => (
-                  <li key={f} style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 13, color: "var(--text-secondary)" }}>
-                    <span style={{ color: "#4a7840", fontWeight: 700 }}>✓</span>{f}
+              <p style={{ fontSize: 12, color: "var(--text-muted)", marginBottom: 6 }}>無制限 · 1日あたり約33円</p>
+              <p style={{ fontSize: 12, color: "var(--text-secondary)", marginBottom: 24, lineHeight: 1.6 }}>料理を「見て楽しむ」レベルへ。高画質写真でテーブルが映える。</p>
+              <ul style={{ listStyle: "none", margin: "0 0 28px", padding: 0, display: "flex", flexDirection: "column", gap: 8, flex: 1 }}>
+                {[
+                  { text: "献立生成 無制限", ok: true },
+                  { text: "料理写真つき生成（高画質）✨", ok: true },
+                  { text: "1週間分プランニング", ok: true },
+                  { text: "レシピ概要・手順つき", ok: true },
+                  { text: "まとめ買いリスト", ok: true },
+                  { text: "レシピ保存・評価 ★", ok: true },
+                ].map(f => (
+                  <li key={f.text} style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 13, color: "var(--text-secondary)" }}>
+                    <span style={{ color: "#4a7840", fontWeight: 700, fontSize: 14, flexShrink: 0 }}>✓</span>
+                    {f.text}
                   </li>
                 ))}
               </ul>
@@ -352,11 +389,42 @@ export default function LandingPage() {
                 style={{ width: "100%", padding: "13px", borderRadius: 12, border: "1.5px solid var(--accent)", background: "#fff", color: "var(--accent)", fontFamily: "var(--font-heading)", fontWeight: 700, fontSize: 14, cursor: "pointer", transition: "background 0.15s" }}
                 onMouseEnter={e => { e.currentTarget.style.background = "var(--accent-light)"; }}
                 onMouseLeave={e => { e.currentTarget.style.background = "#fff"; }}>
-                無料で試す →
+                7日間無料で試す →
               </button>
             </div>
           </div>
-          <p style={{ marginTop: 20, fontSize: 12, color: "var(--text-muted)" }}>クレジットカード不要 · いつでも解約OK</p>
+
+          {/* 比較ポイント */}
+          <div style={{ marginTop: 40, background: "var(--bg-subtle)", borderRadius: 16, padding: "20px 24px", border: "1px solid var(--border)", textAlign: "left" }}>
+            <p style={{ fontFamily: "var(--font-heading)", fontWeight: 700, fontSize: 13, color: "var(--text-primary)", marginBottom: 12 }}>📊 プランの主な違い</p>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr 1fr", gap: 0, fontSize: 12 }}>
+              {[
+                ["", "LIGHT", "STANDARD", "PREMIUM"],
+                ["献立生成", "月10回", "無制限", "無制限"],
+                ["料理写真", "標準画質", "標準画質", "高画質 ✨"],
+                ["レシピ保存", "—", "✓", "✓"],
+                ["月額", "¥280", "¥480", "¥980"],
+              ].map((row, i) => (
+                row.map((cell, j) => (
+                  <div key={`${i}-${j}`} style={{
+                    padding: "10px 12px",
+                    borderBottom: i < 4 ? "1px solid var(--border)" : "none",
+                    borderRight: j < 3 ? "1px solid var(--border)" : "none",
+                    background: i === 0 ? "#fff" : j === 2 ? "rgba(230,149,26,0.05)" : "transparent",
+                    fontFamily: i === 0 || j === 0 ? "var(--font-heading)" : "inherit",
+                    fontWeight: i === 0 || j === 0 ? 700 : 400,
+                    color: i === 0 ? "var(--text-muted)" : j === 0 ? "var(--text-primary)" : "var(--text-secondary)",
+                    fontSize: i === 0 ? 11 : 12,
+                    letterSpacing: i === 0 ? "0.06em" : "normal",
+                  }}>
+                    {cell}
+                  </div>
+                ))
+              ))}
+            </div>
+          </div>
+
+          <p style={{ marginTop: 20, fontSize: 12, color: "var(--text-muted)" }}>いつでも解約OK · 解約後も当月末まで利用可能</p>
         </div>
       </section>
 

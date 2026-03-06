@@ -82,8 +82,18 @@ export function canGenerate(deviceId: string): boolean {
 
 export function canGenerateImage(deviceId: string): boolean {
   const status = getTrialStatus(deviceId);
-  if (!status.subscribed) return false;
-  return status.plan === "premium" && (status.imageGenerationsLeft ?? 0) > 0;
+  return status.trialActive; // all active users (trial + any plan) get images
+}
+
+export function getImageQuality(deviceId: string): "low" | "high" {
+  const status = getTrialStatus(deviceId);
+  return status.plan === "premium" ? "high" : "low";
+}
+
+export function canSave(deviceId: string): boolean {
+  const status = getTrialStatus(deviceId);
+  if (!status.subscribed) return status.trialActive; // trial: all features
+  return status.plan === "standard" || status.plan === "premium";
 }
 
 export function incrementGeneration(deviceId: string): void {

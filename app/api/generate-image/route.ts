@@ -1,5 +1,5 @@
 import { NextRequest } from "next/server";
-import { canGenerateImage, incrementImageGeneration } from "@/lib/trial";
+import { canGenerateImage, getImageQuality, incrementImageGeneration } from "@/lib/trial";
 
 export async function POST(request: NextRequest) {
   const { dish, deviceId } = await request.json();
@@ -18,6 +18,7 @@ export async function POST(request: NextRequest) {
     return Response.json({ url: "" });
   }
 
+  const quality = getImageQuality(deviceId);
   const { default: OpenAI } = await import("openai");
   const client = new OpenAI({ apiKey });
 
@@ -29,7 +30,7 @@ export async function POST(request: NextRequest) {
       prompt,
       n: 1,
       size: "1024x1024",
-      quality: "low",
+      quality,
     });
 
     incrementImageGeneration(deviceId);

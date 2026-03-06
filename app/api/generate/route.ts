@@ -175,7 +175,7 @@ async function streamMockResponse(text: string): Promise<ReadableStream> {
 }
 
 export async function POST(request: NextRequest) {
-  const { ingredients, familySize, disliked, style, days, deviceId, noKnife, cookTime } =
+  const { ingredients, familySize, disliked, style, days, deviceId, noKnife, cookTime, dishCount = "3" } =
     await request.json();
 
   if (!deviceId || !ingredients) {
@@ -245,23 +245,36 @@ export async function POST(request: NextRequest) {
 
   const isTonightMode = days === "today";
 
+  const dishCountNum = parseInt(dishCount, 10) || 1;
+  const dishSpec =
+    dishCountNum === 1 ? "主菜1品" :
+    dishCountNum === 2 ? "主菜1品・副菜1品（計2品）" :
+    dishCountNum === 3 ? "主菜1品・副菜2品（計3品）" :
+    "主菜1品・副菜3品（計4品）";
+  const dishTableHeader =
+    dishCountNum === 1 ? "| 今夜（主菜） |" :
+    dishCountNum === 2 ? "| 今夜（主菜） | 今夜（副菜） |" :
+    dishCountNum === 3 ? "| 今夜（主菜） | 今夜（副菜1） | 今夜（副菜2） |" :
+    "| 今夜（主菜） | 今夜（副菜1） | 今夜（副菜2） | 今夜（副菜3） |";
+
   const userPrompt = isTonightMode
-    ? `以下の条件で今夜の夕食を1品提案してください。
+    ? `以下の条件で今夜の夕食を${dishSpec}提案してください。
 
 - 使える食材: ${ingredients}
 - 人数: ${familySize}人
 - 苦手・アレルギー: ${disliked || "特になし"}
 - 料理スタイル: ${style}
 - 1品あたりの調理時間: ${cookTimeLabel}
+- 品数: ${dishSpec}
 
 ## 出力形式
 
 ### 📅 献立表
-| 日 | 夕食 |
-|---|---|
-| 今夜 | （料理名） |
+${dishTableHeader}
+（料理名を入れてください）
 
 ### 🍳 レシピ概要
+各料理を以下の形式で記載してください（主菜→副菜の順）：
 **（料理名）**
 📊 （カロリー数字のみ）kcal / P:（g数字のみ）g / F:（g数字のみ）g / C:（g数字のみ）g / 塩:（g数字のみ）g
 材料: （材料を「食材200g・調味料大さじ1」のようにカンマ区切りで1行に）
