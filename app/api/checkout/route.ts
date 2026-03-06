@@ -1,12 +1,24 @@
 import { NextRequest, NextResponse } from "next/server";
 import Stripe from "stripe";
 
+const PLAN_PRICE_MAP: Record<string, string | undefined> = {
+  light: process.env.STRIPE_LIGHT_PRICE_ID,
+  standard: process.env.STRIPE_STANDARD_PRICE_ID || process.env.STRIPE_MONTHLY_PRICE_ID,
+  premium: process.env.STRIPE_PREMIUM_PRICE_ID,
+};
+
 export async function POST(request: NextRequest) {
   const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
-  const { deviceId } = await request.json();
+  const { deviceId, planId = "standard" } = await request.json();
 
   if (!deviceId) {
     return NextResponse.json({ error: "Missing deviceId" }, { status: 400 });
+  }
+
+  const priceId = PLAN_PRICE_MAP[planId] ?? process.env.STRIPE_MONTHLY_PRICE_ID!;
+
+  if (!priceId) {
+    return NextResponse.json({ error: "Invalid plan" }, { status: 400 });
   }
 
   const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000";
@@ -14,11 +26,11 @@ export async function POST(request: NextRequest) {
   try {
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ["card"],
-      line_items: [{ price: process.env.STRIPE_MONTHLY_PRICE_ID!, quantity: 1 }],
+      line_items: [{ price: priceId, quantity: 1 }],
       mode: "subscription",
       success_url: `${baseUrl}/app?checkout=success`,
       cancel_url: `${baseUrl}/cancel`,
-      metadata: { deviceId },
+      metadata: { deviceId, planId },
     });
 
     return NextResponse.json({ url: session.url });

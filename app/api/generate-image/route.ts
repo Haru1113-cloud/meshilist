@@ -1,10 +1,15 @@
 import { NextRequest } from "next/server";
+import { canGenerateImage, incrementImageGeneration } from "@/lib/trial";
 
 export async function POST(request: NextRequest) {
-  const { dish } = await request.json();
+  const { dish, deviceId } = await request.json();
 
   if (!dish) {
     return Response.json({ error: "Missing dish name" }, { status: 400 });
+  }
+
+  if (!deviceId || !canGenerateImage(deviceId)) {
+    return Response.json({ url: "" });
   }
 
   const apiKey = process.env.OPENAI_API_KEY;
@@ -26,6 +31,8 @@ export async function POST(request: NextRequest) {
       size: "1024x1024",
       quality: "low",
     });
+
+    incrementImageGeneration(deviceId);
 
     const url = response.data?.[0]?.url ?? "";
     const b64 = (response.data?.[0] as { b64_json?: string })?.b64_json;

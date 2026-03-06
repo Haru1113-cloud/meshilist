@@ -627,7 +627,7 @@ function AppContent() {
 
   const [ready, setReady] = useState(false);
   const [deviceId, setDeviceId] = useState("");
-  const [trialStatus, setTrialStatus] = useState<{ trialActive: boolean; daysLeft: number; subscribed: boolean } | null>(null);
+  const [trialStatus, setTrialStatus] = useState<{ trialActive: boolean; daysLeft: number; subscribed: boolean; plan: string | null; generationsLeft: number | null; imageGenerationsLeft: number | null } | null>(null);
 
   // Input state
   const [ingredients, setIngredients] = useState("");
@@ -665,6 +665,7 @@ function AppContent() {
 
   // UI
   const [showSubscribeModal, setShowSubscribeModal] = useState(false);
+  const [selectedPlan, setSelectedPlan] = useState<"light" | "standard" | "premium">("standard");
   const [copied, setCopied] = useState(false);
   const [showTip, setShowTip] = useState(false);
 
@@ -684,7 +685,7 @@ function AppContent() {
     const p: Promise<void> = fetch("/api/generate-image", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ dish }),
+      body: JSON.stringify({ dish, deviceId }),
     })
       .then(r => r.json())
       .then(d => {
@@ -764,6 +765,7 @@ function AppContent() {
   const handleGenerate = async () => {
     if (!trialStatus) return;
     if (!trialStatus.trialActive && !trialStatus.subscribed) { setShowSubscribeModal(true); return; }
+    if (trialStatus.subscribed && trialStatus.plan === "light" && (trialStatus.generationsLeft ?? 0) <= 0) { setShowSubscribeModal(true); return; }
     if (!allIngredients.trim()) { alert("食材を入力してください"); return; }
 
     setGenerating(true);
@@ -798,11 +800,13 @@ function AppContent() {
         if (value) {
           accumulated += decoder.decode(value, { stream: true });
           setRawOutput(accumulated);
-          // Detect recipe titles in stream and start dish photo generation in parallel
-          const recipeMatch = accumulated.match(/###\s*🍳[^\n]*\n([\s\S]*?)(?=###\s*📅|###\s*🛒|$)/);
-          if (recipeMatch) {
-            for (const match of recipeMatch[1].matchAll(/\*\*(.+?)\*\*/g)) {
-              triggerImageGen(match[1]);
+          // Detect recipe titles in stream and start dish photo generation in parallel (premium only)
+          if (trialStatus?.plan === "premium") {
+            const recipeMatch = accumulated.match(/###\s*🍳[^\n]*\n([\s\S]*?)(?=###\s*📅|###\s*🛒|$)/);
+            if (recipeMatch) {
+              for (const match of recipeMatch[1].matchAll(/\*\*(.+?)\*\*/g)) {
+                triggerImageGen(match[1]);
+              }
             }
           }
         }
@@ -901,7 +905,7 @@ function AppContent() {
     try {
       const res = await fetch("/api/checkout", {
         method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ deviceId }),
+        body: JSON.stringify({ deviceId, planId: selectedPlan }),
       });
       const { url } = await res.json();
       if (url) window.location.href = url;
@@ -956,7 +960,9 @@ function AppContent() {
             </button>
           {trialStatus && (
             trialStatus.subscribed ? (
-              <div style={{ background: "#deecd6", borderRadius: 8, padding: "4px 12px", fontSize: 12, color: "#2f5228", fontFamily: "var(--font-heading)", fontWeight: 700 }}>✓ サブスク中</div>
+              <div style={{ background: "#deecd6", borderRadius: 8, padding: "4px 12px", fontSize: 12, color: "#2f5228", fontFamily: "var(--font-heading)", fontWeight: 700 }}>
+                ✓ {trialStatus.plan === "light" ? `ライト (残${trialStatus.generationsLeft ?? 0}回)` : trialStatus.plan === "premium" ? "プレミアム" : "スタンダード"}
+              </div>
             ) : trialStatus.trialActive ? (
               <div style={{ background: "var(--bg-subtle)", borderRadius: 8, padding: "5px 12px", fontSize: 12, color: "var(--text-secondary)", fontFamily: "var(--font-heading)", fontWeight: 600, border: "1px solid var(--border)" }}>
                 無料期間 残<span style={{ color: "var(--accent)", fontSize: 14 }}>{trialStatus.daysLeft}</span>日
@@ -1358,33 +1364,53 @@ function AppContent() {
       {/* Subscribe Modal */}
       {showSubscribeModal && (
         <div onClick={() => setShowSubscribeModal(false)}
-          style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.5)", zIndex: 100, display: "flex", alignItems: "center", justifyContent: "center", padding: 24 }}>
+          style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.5)", zIndex: 100, display: "flex", alignItems: "center", justifyContent: "center", padding: 16, overflowY: "auto" }}>
           <div onClick={e => e.stopPropagation()}
-            style={{ background: "#fff", borderRadius: 24, padding: "40px 36px", maxWidth: 440, width: "100%", boxShadow: "0 16px 64px rgba(0,0,0,0.16)" }}>
-            <div style={{ textAlign: "center", marginBottom: 28 }}>
-              <div style={{ fontSize: 40, marginBottom: 12 }}>🍽️</div>
-              <h2 style={{ fontFamily: "var(--font-heading)", fontWeight: 800, fontSize: 22, color: "var(--text-primary)", letterSpacing: "-0.03em", marginBottom: 8 }}>
+            style={{ background: "#fff", borderRadius: 24, padding: "32px 28px", maxWidth: 480, width: "100%", boxShadow: "0 16px 64px rgba(0,0,0,0.16)" }}>
+            <div style={{ textAlign: "center", marginBottom: 24 }}>
+              <div style={{ fontSize: 36, marginBottom: 8 }}>🍽️</div>
+              <h2 style={{ fontFamily: "var(--font-heading)", fontWeight: 800, fontSize: 20, color: "var(--text-primary)", letterSpacing: "-0.03em", marginBottom: 6 }}>
                 メシリストを続ける
               </h2>
-              <p style={{ fontSize: 13, color: "var(--text-secondary)", lineHeight: 1.7 }}>
-                無料トライアルが終了しました。サブスクに登録すると献立生成が無制限で使えます。
+              <p style={{ fontSize: 12, color: "var(--text-secondary)", lineHeight: 1.7 }}>
+                プランを選んで登録してください。全プラン7日間無料。
               </p>
             </div>
-            <div style={{ background: "var(--bg-subtle)", borderRadius: 14, padding: "20px", marginBottom: 24 }}>
-              <div style={{ fontFamily: "var(--font-heading)", fontWeight: 800, fontSize: 36, color: "var(--text-primary)", textAlign: "center", marginBottom: 4 }}>
-                ¥480<span style={{ fontSize: 14, fontWeight: 400, color: "var(--text-muted)" }}>/月</span>
+
+            {/* Plan cards */}
+            {([
+              { id: "light" as const, label: "ライト", price: "¥280", unit: "/月", sub: "月10回まで", features: ["献立生成 月10回", "レシピ・手順つき", "まとめ買いリスト"] },
+              { id: "standard" as const, label: "スタンダード", price: "¥480", unit: "/月", sub: "無制限", features: ["献立生成 無制限", "レシピ・手順つき", "まとめ買いリスト", "苦手食材設定"], recommended: true },
+              { id: "premium" as const, label: "プレミアム", price: "¥980", unit: "/月", sub: "無制限＋料理写真", features: ["献立生成 無制限", "料理写真つき（月15回）", "レシピ・手順つき", "まとめ買いリスト", "苦手食材設定"] },
+            ] as const).map(plan => (
+              <div key={plan.id} onClick={() => setSelectedPlan(plan.id)}
+                style={{ borderRadius: 14, padding: "14px 16px", marginBottom: 10, border: selectedPlan === plan.id ? "2px solid var(--accent)" : "1.5px solid var(--border)", background: selectedPlan === plan.id ? "var(--accent-light)" : "#fff", cursor: "pointer", position: "relative" }}>
+                {"recommended" in plan && plan.recommended && (
+                  <span style={{ position: "absolute", top: -10, left: 16, background: "#4a7840", color: "#fff", fontSize: 10, fontFamily: "var(--font-heading)", fontWeight: 700, padding: "2px 10px", borderRadius: 10 }}>おすすめ</span>
+                )}
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                  <div>
+                    <span style={{ fontFamily: "var(--font-heading)", fontWeight: 700, fontSize: 13, color: "var(--text-primary)" }}>{plan.label}</span>
+                    <span style={{ fontSize: 11, color: "var(--text-muted)", marginLeft: 8 }}>{plan.sub}</span>
+                  </div>
+                  <div style={{ display: "flex", alignItems: "baseline", gap: 2 }}>
+                    <span style={{ fontFamily: "var(--font-heading)", fontWeight: 800, fontSize: 20, color: "var(--text-primary)" }}>{plan.price}</span>
+                    <span style={{ fontSize: 11, color: "var(--text-muted)" }}>{plan.unit}</span>
+                  </div>
+                </div>
+                <div style={{ display: "flex", flexWrap: "wrap", gap: "4px 12px", marginTop: 8 }}>
+                  {plan.features.map(f => (
+                    <span key={f} style={{ fontSize: 11, color: "var(--text-secondary)", display: "flex", alignItems: "center", gap: 4 }}>
+                      <span style={{ color: "#4a7840", fontWeight: 700 }}>✓</span>{f}
+                    </span>
+                  ))}
+                </div>
               </div>
-              <ul style={{ listStyle: "none", margin: "12px 0 0", padding: 0, display: "flex", flexDirection: "column", gap: 8 }}>
-                {["献立生成 無制限", "1週間分まとめてプランニング", "買い物リスト（チェック機能つき）", "いつでも解約OK"].map(f => (
-                  <li key={f} style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 13, color: "var(--text-secondary)" }}>
-                    <span style={{ color: "var(--accent)", fontWeight: 700 }}>✓</span>{f}
-                  </li>
-                ))}
-              </ul>
-            </div>
+            ))}
+
             <button onClick={handleSubscribe}
-              style={{ width: "100%", padding: "14px", borderRadius: 12, border: "none", background: "var(--accent)", color: "#fff", fontFamily: "var(--font-heading)", fontWeight: 700, fontSize: 15, cursor: "pointer", marginBottom: 10 }}>
-              ¥480/月で登録する →
+              style={{ width: "100%", padding: "14px", borderRadius: 12, border: "none", background: "var(--accent)", color: "#fff", fontFamily: "var(--font-heading)", fontWeight: 700, fontSize: 15, cursor: "pointer", marginTop: 4, marginBottom: 10, boxShadow: "0 4px 16px rgba(230,149,26,0.3)" }}>
+              {selectedPlan === "light" ? "¥280" : selectedPlan === "standard" ? "¥480" : "¥980"}/月で登録する →
             </button>
             <button onClick={() => setShowSubscribeModal(false)}
               style={{ width: "100%", padding: "12px", borderRadius: 12, border: "1px solid var(--border)", background: "none", color: "var(--text-muted)", fontFamily: "var(--font-heading)", fontWeight: 600, fontSize: 13, cursor: "pointer" }}>

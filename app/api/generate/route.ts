@@ -1,5 +1,5 @@
 import { NextRequest } from "next/server";
-import { initUser, canGenerate } from "@/lib/trial";
+import { initUser, canGenerate, incrementGeneration } from "@/lib/trial";
 
 const MOCK_OUTPUT_WEEK = `### 📅 献立表
 | 日 | 朝食 | 昼食 | 夕食 |
@@ -187,6 +187,8 @@ export async function POST(request: NextRequest) {
   if (!canGenerate(deviceId)) {
     return new Response("Trial expired", { status: 402 });
   }
+
+  incrementGeneration(deviceId);
 
   // APIキー未設定の場合はモック献立を返す
   const apiKey = process.env.ANTHROPIC_API_KEY;

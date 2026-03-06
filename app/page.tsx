@@ -277,54 +277,86 @@ export default function LandingPage() {
 
       {/* ── Pricing ── */}
       <section id="pricing" style={{ padding: "72px 24px" }}>
-        <div style={{ maxWidth: 480, margin: "0 auto", textAlign: "center" }}>
+        <div style={{ maxWidth: 900, margin: "0 auto", textAlign: "center" }}>
           <p className="label" style={{ marginBottom: 12 }}>Pricing</p>
-          <h2 style={{ fontFamily: "var(--font-heading)", fontWeight: 800, fontSize: "clamp(24px, 4vw, 36px)", color: "var(--text-primary)", letterSpacing: "-0.03em", marginBottom: 40 }}>
-            シンプルな1プランのみ
+          <h2 style={{ fontFamily: "var(--font-heading)", fontWeight: 800, fontSize: "clamp(24px, 4vw, 36px)", color: "var(--text-primary)", letterSpacing: "-0.03em", marginBottom: 12 }}>
+            あなたに合ったプランを
           </h2>
+          <p style={{ fontSize: 14, color: "var(--text-secondary)", marginBottom: 48 }}>全プラン 7日間無料トライアルつき</p>
 
-          <div style={{ position: "relative", paddingTop: 18 }}>
-            {/* badge — sits on top border */}
-            <div style={{ position: "absolute", top: 0, left: "50%", transform: "translateX(-50%)", zIndex: 1, background: "#4a7840", color: "#fff", fontFamily: "var(--font-heading)", fontWeight: 700, fontSize: 11, letterSpacing: "0.08em", padding: "5px 20px", borderRadius: 20, whiteSpace: "nowrap" }}>
-              7日間無料トライアル
-            </div>
-
-          <div style={{ background: "#fff", borderRadius: 24, padding: "40px 36px", border: "2px solid var(--accent)", borderTop: "4px solid #4a7840", boxShadow: "0 8px 40px rgba(230,149,26,0.12)" }}>
-
-            <div style={{ marginBottom: 24 }}>
-              <div style={{ fontFamily: "var(--font-heading)", fontWeight: 800, fontSize: 48, color: "var(--text-primary)", lineHeight: 1 }}>
-                ¥480<span style={{ fontSize: 16, fontWeight: 400, color: "var(--text-muted)" }}>/月</span>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", gap: 20, alignItems: "start" }}>
+            {/* ライト */}
+            <div style={{ background: "#fff", borderRadius: 20, padding: "32px 28px", border: "1.5px solid var(--border)", textAlign: "left" }}>
+              <div style={{ fontFamily: "var(--font-heading)", fontWeight: 700, fontSize: 13, color: "var(--text-muted)", letterSpacing: "0.06em", marginBottom: 8 }}>LIGHT</div>
+              <div style={{ fontFamily: "var(--font-heading)", fontWeight: 800, fontSize: 40, color: "var(--text-primary)", lineHeight: 1, marginBottom: 4 }}>
+                ¥280<span style={{ fontSize: 14, fontWeight: 400, color: "var(--text-muted)" }}>/月</span>
               </div>
-              <p style={{ fontSize: 13, color: "var(--text-muted)", marginTop: 6 }}>1日あたり約16円</p>
+              <p style={{ fontSize: 12, color: "var(--text-muted)", marginBottom: 24 }}>月10回まで · 1日あたり約9円</p>
+              <ul style={{ listStyle: "none", margin: "0 0 28px", padding: 0, display: "flex", flexDirection: "column", gap: 10 }}>
+                {["献立生成 月10回", "1週間分プランニング", "レシピ概要・手順つき", "まとめ買いリスト", "いつでも解約OK"].map(f => (
+                  <li key={f} style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 13, color: "var(--text-secondary)" }}>
+                    <span style={{ color: "#4a7840", fontWeight: 700 }}>✓</span>{f}
+                  </li>
+                ))}
+              </ul>
+              <button onClick={() => router.push("/app")}
+                style={{ width: "100%", padding: "13px", borderRadius: 12, border: "1.5px solid var(--accent)", background: "#fff", color: "var(--accent)", fontFamily: "var(--font-heading)", fontWeight: 700, fontSize: 14, cursor: "pointer", transition: "background 0.15s" }}
+                onMouseEnter={e => { e.currentTarget.style.background = "var(--accent-light)"; }}
+                onMouseLeave={e => { e.currentTarget.style.background = "#fff"; }}>
+                無料で試す →
+              </button>
             </div>
 
-            <ul style={{ listStyle: "none", margin: "0 0 32px", padding: 0, textAlign: "left", display: "flex", flexDirection: "column", gap: 12 }}>
-              {[
-                "献立生成 無制限",
-                "1週間分まとめてプランニング",
-                "レシピ概要・手順つき",
-                "まとめ買いリスト自動生成",
-                "苦手食材・人数設定",
-                "いつでもキャンセル可",
-              ].map((item) => (
-                <li key={item} style={{ display: "flex", alignItems: "center", gap: 10, fontSize: 14, color: "var(--text-secondary)" }}>
-                  <span style={{ color: "#4a7840", fontWeight: 700, fontSize: 16 }}>✓</span>
-                  {item}
-                </li>
-              ))}
-            </ul>
+            {/* スタンダード（おすすめ） */}
+            <div style={{ position: "relative", paddingTop: 18 }}>
+              <div style={{ position: "absolute", top: 0, left: "50%", transform: "translateX(-50%)", zIndex: 1, background: "#4a7840", color: "#fff", fontFamily: "var(--font-heading)", fontWeight: 700, fontSize: 11, letterSpacing: "0.08em", padding: "5px 18px", borderRadius: 20, whiteSpace: "nowrap" }}>
+                いちばん人気
+              </div>
+              <div style={{ background: "#fff", borderRadius: 20, padding: "32px 28px", border: "2px solid var(--accent)", borderTop: "4px solid #4a7840", boxShadow: "0 8px 40px rgba(230,149,26,0.15)", textAlign: "left" }}>
+                <div style={{ fontFamily: "var(--font-heading)", fontWeight: 700, fontSize: 13, color: "var(--accent)", letterSpacing: "0.06em", marginBottom: 8 }}>STANDARD</div>
+                <div style={{ fontFamily: "var(--font-heading)", fontWeight: 800, fontSize: 40, color: "var(--text-primary)", lineHeight: 1, marginBottom: 4 }}>
+                  ¥480<span style={{ fontSize: 14, fontWeight: 400, color: "var(--text-muted)" }}>/月</span>
+                </div>
+                <p style={{ fontSize: 12, color: "var(--text-muted)", marginBottom: 24 }}>無制限 · 1日あたり約16円</p>
+                <ul style={{ listStyle: "none", margin: "0 0 28px", padding: 0, display: "flex", flexDirection: "column", gap: 10 }}>
+                  {["献立生成 無制限", "1週間分プランニング", "レシピ概要・手順つき", "まとめ買いリスト", "苦手食材・人数設定", "いつでも解約OK"].map(f => (
+                    <li key={f} style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 13, color: "var(--text-secondary)" }}>
+                      <span style={{ color: "#4a7840", fontWeight: 700 }}>✓</span>{f}
+                    </li>
+                  ))}
+                </ul>
+                <button onClick={() => router.push("/app")}
+                  style={{ width: "100%", padding: "14px", borderRadius: 12, border: "none", background: "var(--accent)", color: "#fff", fontFamily: "var(--font-heading)", fontWeight: 700, fontSize: 14, cursor: "pointer", boxShadow: "0 4px 20px rgba(230,149,26,0.35)", transition: "transform 0.15s" }}
+                  onMouseEnter={e => e.currentTarget.style.transform = "translateY(-2px)"}
+                  onMouseLeave={e => e.currentTarget.style.transform = ""}>
+                  7日間無料で試す →
+                </button>
+              </div>
+            </div>
 
-            <button
-              onClick={() => router.push("/app")}
-              style={{ width: "100%", padding: "16px", borderRadius: 14, border: "none", background: "var(--accent)", color: "#fff", fontFamily: "var(--font-heading)", fontWeight: 700, fontSize: 16, cursor: "pointer", boxShadow: "0 4px 20px rgba(230,149,26,0.35)", transition: "transform 0.15s" }}
-              onMouseEnter={e => e.currentTarget.style.transform = "translateY(-2px)"}
-              onMouseLeave={e => e.currentTarget.style.transform = ""}
-            >
-              7日間無料で試す →
-            </button>
-            <p style={{ marginTop: 14, fontSize: 12, color: "var(--text-muted)" }}>クレジットカード不要 · いつでも解約OK</p>
+            {/* プレミアム */}
+            <div style={{ background: "#fff", borderRadius: 20, padding: "32px 28px", border: "1.5px solid var(--border)", textAlign: "left" }}>
+              <div style={{ fontFamily: "var(--font-heading)", fontWeight: 700, fontSize: 13, color: "var(--text-muted)", letterSpacing: "0.06em", marginBottom: 8 }}>PREMIUM</div>
+              <div style={{ fontFamily: "var(--font-heading)", fontWeight: 800, fontSize: 40, color: "var(--text-primary)", lineHeight: 1, marginBottom: 4 }}>
+                ¥980<span style={{ fontSize: 14, fontWeight: 400, color: "var(--text-muted)" }}>/月</span>
+              </div>
+              <p style={{ fontSize: 12, color: "var(--text-muted)", marginBottom: 24 }}>無制限 + 料理写真 · 1日あたり約33円</p>
+              <ul style={{ listStyle: "none", margin: "0 0 28px", padding: 0, display: "flex", flexDirection: "column", gap: 10 }}>
+                {["献立生成 無制限", "1週間分プランニング", "レシピ概要・手順つき", "まとめ買いリスト", "苦手食材・人数設定", "料理写真つき生成（月15回）", "いつでも解約OK"].map(f => (
+                  <li key={f} style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 13, color: "var(--text-secondary)" }}>
+                    <span style={{ color: "#4a7840", fontWeight: 700 }}>✓</span>{f}
+                  </li>
+                ))}
+              </ul>
+              <button onClick={() => router.push("/app")}
+                style={{ width: "100%", padding: "13px", borderRadius: 12, border: "1.5px solid var(--accent)", background: "#fff", color: "var(--accent)", fontFamily: "var(--font-heading)", fontWeight: 700, fontSize: 14, cursor: "pointer", transition: "background 0.15s" }}
+                onMouseEnter={e => { e.currentTarget.style.background = "var(--accent-light)"; }}
+                onMouseLeave={e => { e.currentTarget.style.background = "#fff"; }}>
+                無料で試す →
+              </button>
+            </div>
           </div>
-          </div>{/* /relative wrapper */}
+          <p style={{ marginTop: 20, fontSize: 12, color: "var(--text-muted)" }}>クレジットカード不要 · いつでも解約OK</p>
         </div>
       </section>
 
