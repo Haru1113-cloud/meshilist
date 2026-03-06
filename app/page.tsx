@@ -284,15 +284,15 @@ export default function LandingPage() {
           </h2>
           <p style={{ fontSize: 14, color: "var(--text-secondary)", marginBottom: 48 }}>全プラン 7日間無料トライアルつき</p>
 
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", gap: 20, alignItems: "start" }}>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", gap: 20, alignItems: "stretch" }}>
             {/* ライト */}
-            <div style={{ background: "#fff", borderRadius: 20, padding: "32px 28px", border: "1.5px solid var(--border)", textAlign: "left" }}>
+            <div style={{ background: "#fff", borderRadius: 20, padding: "32px 28px", border: "1.5px solid var(--border)", textAlign: "left", display: "flex", flexDirection: "column" }}>
               <div style={{ fontFamily: "var(--font-heading)", fontWeight: 700, fontSize: 13, color: "var(--text-muted)", letterSpacing: "0.06em", marginBottom: 8 }}>LIGHT</div>
               <div style={{ fontFamily: "var(--font-heading)", fontWeight: 800, fontSize: 40, color: "var(--text-primary)", lineHeight: 1, marginBottom: 4 }}>
                 ¥280<span style={{ fontSize: 14, fontWeight: 400, color: "var(--text-muted)" }}>/月</span>
               </div>
               <p style={{ fontSize: 12, color: "var(--text-muted)", marginBottom: 24 }}>月10回まで · 1日あたり約9円</p>
-              <ul style={{ listStyle: "none", margin: "0 0 28px", padding: 0, display: "flex", flexDirection: "column", gap: 10 }}>
+              <ul style={{ listStyle: "none", margin: "0 0 28px", padding: 0, display: "flex", flexDirection: "column", gap: 10, flex: 1 }}>
                 {["献立生成 月10回", "1週間分プランニング", "レシピ概要・手順つき", "まとめ買いリスト", "いつでも解約OK"].map(f => (
                   <li key={f} style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 13, color: "var(--text-secondary)" }}>
                     <span style={{ color: "#4a7840", fontWeight: 700 }}>✓</span>{f}
@@ -308,17 +308,17 @@ export default function LandingPage() {
             </div>
 
             {/* スタンダード（おすすめ） */}
-            <div style={{ position: "relative", paddingTop: 18 }}>
+            <div style={{ position: "relative", paddingTop: 18, display: "flex", flexDirection: "column" }}>
               <div style={{ position: "absolute", top: 0, left: "50%", transform: "translateX(-50%)", zIndex: 1, background: "#4a7840", color: "#fff", fontFamily: "var(--font-heading)", fontWeight: 700, fontSize: 11, letterSpacing: "0.08em", padding: "5px 18px", borderRadius: 20, whiteSpace: "nowrap" }}>
                 いちばん人気
               </div>
-              <div style={{ background: "#fff", borderRadius: 20, padding: "32px 28px", border: "2px solid var(--accent)", borderTop: "4px solid #4a7840", boxShadow: "0 8px 40px rgba(230,149,26,0.15)", textAlign: "left" }}>
+              <div style={{ background: "#fff", borderRadius: 20, padding: "32px 28px", border: "2px solid var(--accent)", borderTop: "4px solid #4a7840", boxShadow: "0 8px 40px rgba(230,149,26,0.15)", textAlign: "left", display: "flex", flexDirection: "column", flex: 1 }}>
                 <div style={{ fontFamily: "var(--font-heading)", fontWeight: 700, fontSize: 13, color: "var(--accent)", letterSpacing: "0.06em", marginBottom: 8 }}>STANDARD</div>
                 <div style={{ fontFamily: "var(--font-heading)", fontWeight: 800, fontSize: 40, color: "var(--text-primary)", lineHeight: 1, marginBottom: 4 }}>
                   ¥480<span style={{ fontSize: 14, fontWeight: 400, color: "var(--text-muted)" }}>/月</span>
                 </div>
                 <p style={{ fontSize: 12, color: "var(--text-muted)", marginBottom: 24 }}>無制限 · 1日あたり約16円</p>
-                <ul style={{ listStyle: "none", margin: "0 0 28px", padding: 0, display: "flex", flexDirection: "column", gap: 10 }}>
+                <ul style={{ listStyle: "none", margin: "0 0 28px", padding: 0, display: "flex", flexDirection: "column", gap: 10, flex: 1 }}>
                   {["献立生成 無制限", "1週間分プランニング", "レシピ概要・手順つき", "まとめ買いリスト", "苦手食材・人数設定", "いつでも解約OK"].map(f => (
                     <li key={f} style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 13, color: "var(--text-secondary)" }}>
                       <span style={{ color: "#4a7840", fontWeight: 700 }}>✓</span>{f}
@@ -335,13 +335,13 @@ export default function LandingPage() {
             </div>
 
             {/* プレミアム */}
-            <div style={{ background: "#fff", borderRadius: 20, padding: "32px 28px", border: "1.5px solid var(--border)", textAlign: "left" }}>
+            <div style={{ background: "#fff", borderRadius: 20, padding: "32px 28px", border: "1.5px solid var(--border)", textAlign: "left", display: "flex", flexDirection: "column" }}>
               <div style={{ fontFamily: "var(--font-heading)", fontWeight: 700, fontSize: 13, color: "var(--text-muted)", letterSpacing: "0.06em", marginBottom: 8 }}>PREMIUM</div>
               <div style={{ fontFamily: "var(--font-heading)", fontWeight: 800, fontSize: 40, color: "var(--text-primary)", lineHeight: 1, marginBottom: 4 }}>
                 ¥980<span style={{ fontSize: 14, fontWeight: 400, color: "var(--text-muted)" }}>/月</span>
               </div>
               <p style={{ fontSize: 12, color: "var(--text-muted)", marginBottom: 24 }}>無制限 + 料理写真 · 1日あたり約33円</p>
-              <ul style={{ listStyle: "none", margin: "0 0 28px", padding: 0, display: "flex", flexDirection: "column", gap: 10 }}>
+              <ul style={{ listStyle: "none", margin: "0 0 28px", padding: 0, display: "flex", flexDirection: "column", gap: 10, flex: 1 }}>
                 {["献立生成 無制限", "1週間分プランニング", "レシピ概要・手順つき", "まとめ買いリスト", "苦手食材・人数設定", "料理写真つき生成（月15回）", "いつでも解約OK"].map(f => (
                   <li key={f} style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 13, color: "var(--text-secondary)" }}>
                     <span style={{ color: "#4a7840", fontWeight: 700 }}>✓</span>{f}
