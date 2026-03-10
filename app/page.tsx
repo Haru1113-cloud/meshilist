@@ -48,7 +48,6 @@ const HERO_RECIPES = [
     name: "豚の生姜焼き",
     sub: "和食 · 主菜",
     cal: 380, protein: 22, fat: 24, carbs: 14,
-    tags: ["豚バラ 200g", "生姜", "キャベツ", "みりん"],
     bg: "linear-gradient(145deg, #fde8c8 0%, #fac97a 100%)",
     emoji: "🍖",
     badge: "今夜のおすすめ",
@@ -58,7 +57,6 @@ const HERO_RECIPES = [
     name: "鶏むね肉の照り焼き",
     sub: "和食 · 主菜",
     cal: 310, protein: 32, fat: 12, carbs: 16,
-    tags: ["鶏むね肉 300g", "醤油", "ブロッコリー", "砂糖"],
     bg: "linear-gradient(145deg, #fef9c3 0%, #fde047 100%)",
     emoji: "🍗",
     badge: "低カロリー",
@@ -68,7 +66,6 @@ const HERO_RECIPES = [
     name: "さばの味噌煮",
     sub: "和食 · 主菜",
     cal: 260, protein: 28, fat: 14, carbs: 10,
-    tags: ["さば 2切れ", "味噌", "生姜", "みりん"],
     bg: "linear-gradient(145deg, #d1fae5 0%, #6ee7b7 100%)",
     emoji: "🐟",
     badge: "DHA豊富",
@@ -253,12 +250,6 @@ export default function LandingPage() {
                       <span style={{ color: "#f97316" }}>F {HERO_RECIPES[heroIdx].fat}g</span>
                       <span style={{ color: "#eab308" }}>C {HERO_RECIPES[heroIdx].carbs}g</span>
                     </div>
-                    {/* Ingredient tags */}
-                    <div style={{ display: "flex", flexWrap: "wrap", gap: 5 }}>
-                      {HERO_RECIPES[heroIdx].tags.map(tag => (
-                        <span key={tag} style={{ background: "var(--bg-subtle)", border: "1px solid var(--border)", borderRadius: 6, padding: "2px 8px", fontSize: 11, color: "var(--text-secondary)" }}>{tag}</span>
-                      ))}
-                    </div>
                   </div>
                 </div>
 
@@ -269,15 +260,6 @@ export default function LandingPage() {
                   ))}
                 </div>
 
-                {/* Shopping list preview */}
-                <div style={{ background: "var(--bg-subtle)", borderRadius: 12, padding: "10px 12px" }}>
-                  <div style={{ fontFamily: "var(--font-heading)", fontWeight: 700, fontSize: 10, color: "var(--text-muted)", letterSpacing: "0.06em", marginBottom: 6 }}>🛒 まとめ買いリスト（自動生成）</div>
-                  <div style={{ display: "flex", flexWrap: "wrap", gap: 5 }}>
-                    {HERO_RECIPES[heroIdx].tags.concat(["醤油", "みりん"]).map(item => (
-                      <span key={item} style={{ background: "#fff", border: "1px solid var(--border)", borderRadius: 6, padding: "2px 7px", fontSize: 10, color: "var(--text-secondary)" }}>{item}</span>
-                    ))}
-                  </div>
-                </div>
               </div>
 
             </div>
