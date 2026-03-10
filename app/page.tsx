@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 
 // ─── Data ────────────────────────────────────────────────────────
@@ -43,6 +43,37 @@ const FAQS = [
   { q: "品数は選べますか？", a: "主菜のみ（1品）から主菜＋副菜3品（4品）まで選べます。疲れた日は1品だけ、余裕があるときは4品と使い分けられます。" },
 ];
 
+const HERO_RECIPES = [
+  {
+    name: "豚の生姜焼き",
+    sub: "和食 · 主菜",
+    cal: 380, protein: 22, fat: 24, carbs: 14,
+    tags: ["豚バラ 200g", "生姜", "キャベツ", "みりん"],
+    bg: "linear-gradient(145deg, #fde8c8 0%, #fac97a 100%)",
+    emoji: "🍖",
+    badge: "今夜のおすすめ",
+    // 実際の生成画像に置き換え可: imgSrc: "/hero-dishes/ginger-pork.jpg"
+  },
+  {
+    name: "鶏むね肉の照り焼き",
+    sub: "和食 · 主菜",
+    cal: 310, protein: 32, fat: 12, carbs: 16,
+    tags: ["鶏むね肉 300g", "醤油", "ブロッコリー", "砂糖"],
+    bg: "linear-gradient(145deg, #fef9c3 0%, #fde047 100%)",
+    emoji: "🍗",
+    badge: "低カロリー",
+  },
+  {
+    name: "さばの味噌煮",
+    sub: "和食 · 主菜",
+    cal: 260, protein: 28, fat: 14, carbs: 10,
+    tags: ["さば 2切れ", "味噌", "生姜", "みりん"],
+    bg: "linear-gradient(145deg, #d1fae5 0%, #6ee7b7 100%)",
+    emoji: "🐟",
+    badge: "DHA豊富",
+  },
+];
+
 const TICKER_ITEMS = [
   "🥗 今夜の夕飯、決まった？", "🛒 買い物リストも自動生成", "🍱 1週間分まとめてプランニング",
   "🥘 家族全員が喜ぶ献立を", "🧅 冷蔵庫の食材で献立を提案", "⏱️ 入力30秒で献立完成",
@@ -58,6 +89,19 @@ function KoocaBowlIcon({ size = 28 }: { size?: number }) {
 export default function LandingPage() {
   const router = useRouter();
   const [openFaq, setOpenFaq] = useState<number | null>(null);
+  const [heroIdx, setHeroIdx] = useState(0);
+  const [heroFading, setHeroFading] = useState(false);
+
+  useEffect(() => {
+    const id = setInterval(() => {
+      setHeroFading(true);
+      setTimeout(() => {
+        setHeroIdx(i => (i + 1) % HERO_RECIPES.length);
+        setHeroFading(false);
+      }, 400);
+    }, 2800);
+    return () => clearInterval(id);
+  }, []);
 
   return (
     <div style={{ minHeight: "100vh", background: "var(--bg)" }}>
@@ -110,7 +154,7 @@ export default function LandingPage() {
                 <span style={{ fontFamily: "var(--font-heading)", fontSize: 11, fontWeight: 700, color: "#2f5228", letterSpacing: "0.08em", textTransform: "uppercase" }}>AI献立生成 — 7日間完全無料</span>
               </div>
 
-              <h1 className="animate-fade-up delay-1" style={{ fontFamily: "var(--font-heading)", fontWeight: 800, fontSize: "clamp(30px, 4vw, 52px)", lineHeight: 1.15, letterSpacing: "-0.03em", color: "var(--text-primary)", marginBottom: 20 }}>
+              <h1 className="animate-fade-up delay-1" style={{ fontFamily: "var(--font-heading)", fontWeight: 800, fontSize: "clamp(30px, 4vw, 52px)", lineHeight: 1.3, letterSpacing: "-0.03em", color: "var(--text-primary)", marginBottom: 20, wordBreak: "keep-all" }}>
                 「今日、<span style={{ color: "var(--accent)" }}>何食べる？</span>」<br />
                 もう悩まなくていい。
               </h1>
@@ -160,48 +204,68 @@ export default function LandingPage() {
               </div>
             </div>
 
-            {/* Right: UI mockup */}
+            {/* Right: animated recipe preview */}
             <div className="animate-fade-up delay-2" style={{ position: "relative" }}>
               {/* Main card */}
-              <div style={{ background: "#fff", borderRadius: 24, padding: "24px", border: "1px solid var(--border)", boxShadow: "0 20px 60px rgba(0,0,0,0.1)", position: "relative", zIndex: 2 }}>
+              <div style={{ background: "#fff", borderRadius: 24, padding: "20px", border: "1px solid var(--border)", boxShadow: "0 20px 60px rgba(0,0,0,0.1)", position: "relative", zIndex: 2, overflow: "hidden" }}>
                 {/* App bar */}
-                <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 20, paddingBottom: 16, borderBottom: "1px solid var(--border)" }}>
-                  <KoocaBowlIcon size={28} />
-                  <span style={{ fontFamily: "var(--font-heading)", fontWeight: 800, fontSize: 15, color: "var(--text-primary)" }}>メシリスト</span>
+                <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 16, paddingBottom: 14, borderBottom: "1px solid var(--border)" }}>
+                  <KoocaBowlIcon size={26} />
+                  <span style={{ fontFamily: "var(--font-heading)", fontWeight: 800, fontSize: 14, color: "var(--text-primary)" }}>メシリスト</span>
                   <div style={{ marginLeft: "auto", background: "#deecd6", borderRadius: 8, padding: "3px 10px", fontSize: 11, fontFamily: "var(--font-heading)", fontWeight: 700, color: "#2f5228" }}>✓ 生成完了</div>
                 </div>
 
-                {/* Dish photos row */}
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8, marginBottom: 16 }}>
-                  {[
-                    { emoji: "🍖", name: "豚の生姜焼き", cal: "380kcal", type: "主菜" },
-                    { emoji: "🥗", name: "ほうれん草のおひたし", cal: "45kcal", type: "副菜1" },
-                    { emoji: "🍜", name: "豚汁", cal: "120kcal", type: "副菜2" },
-                  ].map((d, i) => (
-                    <div key={i} style={{ borderRadius: 12, overflow: "hidden", border: "1px solid var(--border)" }}>
-                      <div style={{ height: 72, background: i === 0 ? "#fdebd6" : i === 1 ? "#deecd6" : "#fdf0d8", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 32 }}>{d.emoji}</div>
-                      <div style={{ padding: "8px 8px 10px" }}>
-                        <div style={{ fontSize: 9, fontFamily: "var(--font-heading)", fontWeight: 700, color: "var(--accent)", letterSpacing: "0.04em", marginBottom: 2 }}>{d.type}</div>
-                        <div style={{ fontSize: 11, fontFamily: "var(--font-heading)", fontWeight: 700, color: "var(--text-primary)", lineHeight: 1.3 }}>{d.name}</div>
-                        <div style={{ fontSize: 10, color: "var(--text-muted)", marginTop: 3 }}>{d.cal}</div>
-                      </div>
+                {/* Animated recipe card */}
+                <div style={{ opacity: heroFading ? 0 : 1, transition: "opacity 0.4s ease", marginBottom: 14 }}>
+                  {/* Dish photo area */}
+                  <div style={{ borderRadius: 16, overflow: "hidden", marginBottom: 12, position: "relative" }}>
+                    <div style={{ height: 160, background: HERO_RECIPES[heroIdx].bg, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 72 }}>
+                      {HERO_RECIPES[heroIdx].emoji}
                     </div>
+                    <div style={{ position: "absolute", top: 10, left: 10, background: "rgba(0,0,0,0.55)", borderRadius: 8, padding: "3px 10px", fontSize: 11, fontFamily: "var(--font-heading)", fontWeight: 700, color: "#fff" }}>
+                      {HERO_RECIPES[heroIdx].sub}
+                    </div>
+                    <div style={{ position: "absolute", top: 10, right: 10, background: "var(--accent)", borderRadius: 8, padding: "3px 10px", fontSize: 11, fontFamily: "var(--font-heading)", fontWeight: 700, color: "#fff" }}>
+                      {HERO_RECIPES[heroIdx].badge}
+                    </div>
+                  </div>
+
+                  {/* Dish info */}
+                  <div style={{ marginBottom: 10 }}>
+                    <div style={{ fontFamily: "var(--font-heading)", fontWeight: 800, fontSize: 17, color: "var(--text-primary)", marginBottom: 6 }}>
+                      🍽️ {HERO_RECIPES[heroIdx].name}
+                    </div>
+                    {/* Nutrition row */}
+                    <div style={{ display: "flex", gap: 10, fontSize: 12, color: "var(--text-secondary)", fontFamily: "var(--font-heading)", fontWeight: 600, marginBottom: 8 }}>
+                      <span>🔥 {HERO_RECIPES[heroIdx].cal}kcal</span>
+                      <span style={{ color: "#3b82f6" }}>P {HERO_RECIPES[heroIdx].protein}g</span>
+                      <span style={{ color: "#f97316" }}>F {HERO_RECIPES[heroIdx].fat}g</span>
+                      <span style={{ color: "#eab308" }}>C {HERO_RECIPES[heroIdx].carbs}g</span>
+                    </div>
+                    {/* Ingredient tags */}
+                    <div style={{ display: "flex", flexWrap: "wrap", gap: 5 }}>
+                      {HERO_RECIPES[heroIdx].tags.map(tag => (
+                        <span key={tag} style={{ background: "var(--bg-subtle)", border: "1px solid var(--border)", borderRadius: 6, padding: "2px 8px", fontSize: 11, color: "var(--text-secondary)" }}>{tag}</span>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Dots indicator */}
+                <div style={{ display: "flex", justifyContent: "center", gap: 6, marginBottom: 12 }}>
+                  {HERO_RECIPES.map((_, i) => (
+                    <div key={i} onClick={() => setHeroIdx(i)} style={{ width: i === heroIdx ? 18 : 6, height: 6, borderRadius: 3, background: i === heroIdx ? "var(--accent)" : "var(--border)", transition: "all 0.3s", cursor: "pointer" }} />
                   ))}
                 </div>
 
                 {/* Shopping list preview */}
-                <div style={{ background: "var(--bg-subtle)", borderRadius: 12, padding: "12px 14px", marginBottom: 12 }}>
-                  <div style={{ fontFamily: "var(--font-heading)", fontWeight: 700, fontSize: 11, color: "var(--text-muted)", letterSpacing: "0.06em", marginBottom: 8 }}>🛒 まとめ買いリスト</div>
-                  <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
-                    {["豚バラ 200g", "ほうれん草", "大根", "玉ねぎ", "生姜", "みりん"].map(item => (
-                      <span key={item} style={{ background: "#fff", border: "1px solid var(--border)", borderRadius: 6, padding: "3px 8px", fontSize: 11, color: "var(--text-secondary)" }}>{item}</span>
+                <div style={{ background: "var(--bg-subtle)", borderRadius: 12, padding: "10px 12px" }}>
+                  <div style={{ fontFamily: "var(--font-heading)", fontWeight: 700, fontSize: 10, color: "var(--text-muted)", letterSpacing: "0.06em", marginBottom: 6 }}>🛒 まとめ買いリスト（自動生成）</div>
+                  <div style={{ display: "flex", flexWrap: "wrap", gap: 5 }}>
+                    {HERO_RECIPES[heroIdx].tags.concat(["醤油", "みりん"]).map(item => (
+                      <span key={item} style={{ background: "#fff", border: "1px solid var(--border)", borderRadius: 6, padding: "2px 7px", fontSize: 10, color: "var(--text-secondary)" }}>{item}</span>
                     ))}
                   </div>
-                </div>
-
-                {/* Generation time badge */}
-                <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 6, fontSize: 12, color: "var(--text-muted)", fontFamily: "var(--font-heading)", fontWeight: 600 }}>
-                  <span>⚡</span> 28秒で生成完了
                 </div>
               </div>
 
@@ -341,52 +405,59 @@ export default function LandingPage() {
             </h2>
           </div>
 
-          {/* Hero testimonial */}
-          <div className="lp-hero-test" style={{ background: "var(--bg-subtle)", borderRadius: 24, padding: "32px 36px", border: "1px solid var(--border)", marginBottom: 20 }}>
-            <div style={{ textAlign: "center" }}>
-              <div style={{ width: 64, height: 64, borderRadius: "50%", background: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 32, border: "2px solid var(--border)", marginBottom: 8 }}>
-                {TESTIMONIALS[0].avatar}
-              </div>
-              <div style={{ fontFamily: "var(--font-heading)", fontWeight: 700, fontSize: 13, color: "var(--text-primary)" }}>{TESTIMONIALS[0].name}</div>
-              <div style={{ fontSize: 11, color: "var(--text-muted)", marginTop: 2 }}>{TESTIMONIALS[0].role}</div>
-            </div>
-            <div>
-              <div style={{ display: "flex", gap: 3, marginBottom: 12 }}>
-                {[1,2,3,4,5].map(s => <span key={s} style={{ color: "#f4b942", fontSize: 16 }}>★</span>)}
-              </div>
-              <p style={{ fontSize: "clamp(15px, 2vw, 18px)", color: "var(--text-primary)", lineHeight: 1.8, fontFamily: "var(--font-heading)", fontWeight: 500, margin: "0 0 12px" }}>
-                「{TESTIMONIALS[0].text}」
-              </p>
-              <span style={{ background: "#deecd6", color: "#2f5228", borderRadius: 20, padding: "4px 12px", fontSize: 12, fontFamily: "var(--font-heading)", fontWeight: 700 }}>
-                ✓ {TESTIMONIALS[0].badge}
-              </span>
-            </div>
-          </div>
-
-          {/* Grid testimonials */}
-          <div className="lp-grid-test">
-            {TESTIMONIALS.slice(1).map((t, i) => (
-              <div key={i} style={{ background: "var(--bg-subtle)", borderRadius: 18, padding: "22px", border: "1px solid var(--border)" }}>
-                <div style={{ display: "flex", gap: 3, marginBottom: 10 }}>
-                  {[1,2,3,4,5].map(s => <span key={s} style={{ color: "#f4b942", fontSize: 13 }}>★</span>)}
-                </div>
-                <p style={{ fontSize: 13, color: "var(--text-secondary)", lineHeight: 1.8, margin: "0 0 14px" }}>
-                  「{t.text}」
-                </p>
-                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 8 }}>
-                  <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                    <div style={{ width: 36, height: 36, borderRadius: "50%", background: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 18, border: "1px solid var(--border)" }}>{t.avatar}</div>
-                    <div>
-                      <div style={{ fontFamily: "var(--font-heading)", fontWeight: 700, fontSize: 13, color: "var(--text-primary)" }}>{t.name}</div>
-                      <div style={{ fontSize: 11, color: "var(--text-muted)" }}>{t.role}</div>
-                    </div>
+          {/* 2-column layout: 2 large left / 2x2 right */}
+          <div style={{ display: "grid", gridTemplateColumns: "minmax(0,1fr) minmax(0,1fr)", gap: 16, alignItems: "start" }}>
+            {/* Left: 2 large cards */}
+            <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+              {TESTIMONIALS.slice(0, 2).map((t, i) => (
+                <div key={i} style={{ background: "var(--bg-subtle)", borderRadius: 20, padding: "24px", border: "1px solid var(--border)" }}>
+                  <div style={{ display: "flex", gap: 3, marginBottom: 10 }}>
+                    {[1,2,3,4,5].map(s => <span key={s} style={{ color: "#f4b942", fontSize: 15 }}>★</span>)}
                   </div>
-                  <span style={{ background: "#deecd6", color: "#2f5228", borderRadius: 20, padding: "3px 10px", fontSize: 11, fontFamily: "var(--font-heading)", fontWeight: 700 }}>
-                    ✓ {t.badge}
-                  </span>
+                  <p style={{ fontSize: "clamp(13px, 1.5vw, 15px)", color: "var(--text-primary)", lineHeight: 1.85, fontFamily: "var(--font-heading)", fontWeight: 500, margin: "0 0 14px" }}>
+                    「{t.text}」
+                  </p>
+                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 8 }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                      <div style={{ width: 40, height: 40, borderRadius: "50%", background: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 20, border: "1px solid var(--border)" }}>{t.avatar}</div>
+                      <div>
+                        <div style={{ fontFamily: "var(--font-heading)", fontWeight: 700, fontSize: 13, color: "var(--text-primary)" }}>{t.name}</div>
+                        <div style={{ fontSize: 11, color: "var(--text-muted)" }}>{t.role}</div>
+                      </div>
+                    </div>
+                    <span style={{ background: "#deecd6", color: "#2f5228", borderRadius: 20, padding: "3px 10px", fontSize: 11, fontFamily: "var(--font-heading)", fontWeight: 700 }}>
+                      ✓ {t.badge}
+                    </span>
+                  </div>
                 </div>
-              </div>
-            ))}
+              ))}
+            </div>
+
+            {/* Right: 2×2 grid */}
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+              {TESTIMONIALS.slice(2).map((t, i) => (
+                <div key={i} style={{ background: "var(--bg-subtle)", borderRadius: 16, padding: "18px", border: "1px solid var(--border)", display: "flex", flexDirection: "column" }}>
+                  <div style={{ display: "flex", gap: 2, marginBottom: 8 }}>
+                    {[1,2,3,4,5].map(s => <span key={s} style={{ color: "#f4b942", fontSize: 12 }}>★</span>)}
+                  </div>
+                  <p style={{ fontSize: 12, color: "var(--text-secondary)", lineHeight: 1.8, margin: "0 0 12px", flex: 1 }}>
+                    「{t.text}」
+                  </p>
+                  <div>
+                    <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
+                      <div style={{ width: 32, height: 32, borderRadius: "50%", background: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 16, border: "1px solid var(--border)", flexShrink: 0 }}>{t.avatar}</div>
+                      <div>
+                        <div style={{ fontFamily: "var(--font-heading)", fontWeight: 700, fontSize: 12, color: "var(--text-primary)" }}>{t.name}</div>
+                        <div style={{ fontSize: 10, color: "var(--text-muted)" }}>{t.role}</div>
+                      </div>
+                    </div>
+                    <span style={{ background: "#deecd6", color: "#2f5228", borderRadius: 20, padding: "2px 9px", fontSize: 10, fontFamily: "var(--font-heading)", fontWeight: 700 }}>
+                      ✓ {t.badge}
+                    </span>
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
         </div>
       </section>
@@ -433,9 +504,10 @@ export default function LandingPage() {
                 {[
                   { text: "献立生成 月10回", ok: true },
                   { text: "料理写真つき生成", ok: true },
-                  { text: "1週間分プランニング", ok: true },
+                  { text: "今夜のみ・3日分プランニング", ok: true },
                   { text: "レシピ概要・手順つき", ok: true },
-                  { text: "まとめ買いリスト", ok: true },
+                  { text: "1週間分プランニング", ok: false },
+                  { text: "まとめ買いリスト", ok: false },
                   { text: "レシピ保存・評価", ok: false },
                 ].map(f => (
                   <li key={f.text} style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 13, color: f.ok ? "var(--text-secondary)" : "var(--text-muted)" }}>
@@ -493,11 +565,21 @@ export default function LandingPage() {
                 ¥980<span style={{ fontSize: 14, fontWeight: 400, color: "var(--text-muted)" }}>/月</span>
               </div>
               <p style={{ fontSize: 12, color: "var(--text-muted)", marginBottom: 6 }}>無制限 · 1日あたり約33円</p>
-              <p style={{ fontSize: 12, color: "var(--text-secondary)", marginBottom: 24, lineHeight: 1.6 }}>料理を「見て楽しむ」レベルへ。高画質写真でテーブルが映える。</p>
+              <p style={{ fontSize: 12, color: "var(--text-secondary)", marginBottom: 24, lineHeight: 1.6 }}>毎日使い込みたい方に。家族の好みを記憶し、栄養まで管理できる上位体験。</p>
               <ul style={{ listStyle: "none", margin: "0 0 28px", padding: 0, display: "flex", flexDirection: "column", gap: 8, flex: 1 }}>
-                {["献立生成 無制限", "料理写真つき生成（高画質）✨", "1週間分プランニング", "レシピ概要・手順つき", "まとめ買いリスト", "レシピ保存・評価 ★"].map(f => (
-                  <li key={f} style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 13, color: "var(--text-secondary)" }}>
-                    <span style={{ color: "#4a7840", fontWeight: 700, fontSize: 14, flexShrink: 0 }}>✓</span>{f}
+                {[
+                  { text: "献立生成 無制限", highlight: false },
+                  { text: "料理写真つき生成（高画質）✨", highlight: false },
+                  { text: "1週間分プランニング", highlight: false },
+                  { text: "レシピ保存・評価 ★", highlight: false },
+                  { text: "まとめ買いリスト", highlight: false },
+                  { text: "家族の好み・アレルギーを記憶 🧠", highlight: true },
+                  { text: "週次栄養バランスレポート 📊", highlight: true },
+                  { text: "月別献立カレンダー表示 📆", highlight: true },
+                  { text: "優先サポート（24h以内対応）⚡", highlight: true },
+                ].map(f => (
+                  <li key={f.text} style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 13, color: f.highlight ? "#7c3aed" : "var(--text-secondary)", fontWeight: f.highlight ? 600 : 400 }}>
+                    <span style={{ color: f.highlight ? "#7c3aed" : "#4a7840", fontWeight: 700, fontSize: 14, flexShrink: 0 }}>✓</span>{f.text}
                   </li>
                 ))}
               </ul>
@@ -517,14 +599,18 @@ export default function LandingPage() {
               {[
                 ["", "LIGHT", "STANDARD", "PREMIUM"],
                 ["献立生成", "月10回", "無制限", "無制限"],
-                ["料理写真", "標準画質", "標準画質", "高画質 ✨"],
+                ["1週間プランニング", "—", "✓", "✓"],
+                ["まとめ買いリスト", "—", "✓", "✓"],
                 ["レシピ保存", "—", "✓", "✓"],
+                ["料理写真画質", "標準", "標準", "高画質 ✨"],
+                ["家族好みの記憶", "—", "—", "✓ 🧠"],
+                ["栄養レポート", "—", "—", "✓ 📊"],
                 ["月額", "¥280", "¥480", "¥980"],
               ].map((row, i) => (
                 row.map((cell, j) => (
                   <div key={`${i}-${j}`} style={{
                     padding: "10px 12px",
-                    borderBottom: i < 4 ? "1px solid var(--border)" : "none",
+                    borderBottom: i < 8 ? "1px solid var(--border)" : "none",
                     borderRight: j < 3 ? "1px solid var(--border)" : "none",
                     background: i === 0 ? "#fff" : j === 2 ? "rgba(230,149,26,0.05)" : "transparent",
                     fontFamily: i === 0 || j === 0 ? "var(--font-heading)" : "inherit",

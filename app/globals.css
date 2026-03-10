@@ -186,4 +186,6 @@ h1, h2, h3, h4,
   .lp-grid-6,
   .lp-grid-test  { grid-template-columns: 1fr !important; }
   .lp-stats      { grid-template-columns: repeat(2, 1fr); }
+  .lp-test-new   { grid-template-columns: 1fr !important; }
+  .lp-test-new-right { grid-template-columns: 1fr !important; }
 }
