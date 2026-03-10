@@ -175,7 +175,7 @@ async function streamMockResponse(text: string): Promise<ReadableStream> {
 }
 
 export async function POST(request: NextRequest) {
-  const { ingredients, familySize, disliked, style, days, deviceId, noKnife, cookTime, dishCount = "3" } =
+  const { ingredients, familySize, disliked, style, days, deviceId, noKnife, cookTime, dishCount = "3", condition = "" } =
     await request.json();
 
   if (!deviceId || !ingredients) {
@@ -228,7 +228,20 @@ export async function POST(request: NextRequest) {
 レンチンパスタのコツ：乾麺を半分に折りタッパーに入れ、水250〜300ml・塩少々を加え、600Wで表記茹で時間+3分加熱。
 レンチンうどんのコツ：冷凍うどん・具材・めんつゆ・水をタッパーに入れ、600Wで4〜5分加熱。` : "";
 
-  const systemPrompt = `あなたは15年以上の経験を持つプロの家庭料理人です。家族のために心のこもった、本格的かつ現実的な献立を提案してください。旬の食材を活かし、栄養バランスと美味しさを両立した愛情のある料理を心がけてください。カップ麺・インスタント食品・冷凍食品は絶対に含めないでください。${noKnifeInstruction}${microwaveInstruction}
+  const conditionInstruction = condition
+    ? (() => {
+        const map: Record<string, string> = {
+          "疲れ気味": "今日のユーザーは疲れ気味です。さっぱり食べやすく、ビタミン・タンパク質を意識した体が喜ぶ料理を提案してください。",
+          "体調不良": "今日のユーザーは体調不良です。消化に良い温かい食事（おかゆ・うどん・煮物など）を優先し、油分・香辛料は控えめにしてください。",
+          "冷え気味": "今日のユーザーは冷えています。生姜・ねぎ・根菜など体を内側から温める食材を積極的に使い、温かい料理を提案してください。",
+          "夏バテ": "今日のユーザーは夏バテ気味です。食欲がなくても食べやすい、さっぱり・薄味・食べやすいボリュームの料理を提案してください。",
+          "がっつり": "今日のユーザーはがっつり食べたい気分です。ボリュームがありタンパク質・エネルギーをしっかり摂れる満足感の高い料理を提案してください。",
+        };
+        return `\n\n【体調への配慮】${map[condition] ?? ""}`;
+      })()
+    : "";
+
+  const systemPrompt = `あなたは15年以上の経験を持つプロの家庭料理人です。家族のために心のこもった、本格的かつ現実的な献立を提案してください。旬の食材を活かし、栄養バランスと美味しさを両立した愛情のある料理を心がけてください。カップ麺・インスタント食品・冷凍食品は絶対に含めないでください。${noKnifeInstruction}${microwaveInstruction}${conditionInstruction}
 
 【バリエーション】丼もの・炒め物・煮物・焼き物・蒸し物・揚げ物・パスタ・汁物など、同じジャンルの料理が夕食に2食以上連続しないようにしてください。特に丼もの（〜丼・〜ご飯・親子丼・牛丼など）が連続することは絶対に避けてください。1週間を通じて和食・洋食・中華がバランスよく混在するようにしてください。
 

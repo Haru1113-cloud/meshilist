@@ -166,3 +166,24 @@ h1, h2, h3, h4,
 ::-webkit-scrollbar { width: 5px; }
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: #c8c0b4; border-radius: 4px; }
+
+/* ── Landing page responsive grids ── */
+.lp-hero        { display: grid; grid-template-columns: minmax(0,1fr) minmax(0,1fr); gap: 56px; align-items: center; }
+.lp-grid-3      { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+.lp-grid-3-20   { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; align-items: stretch; }
+.lp-grid-steps  { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0; position: relative; }
+.lp-grid-6      { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+.lp-grid-test   { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+.lp-stats       { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0; }
+.lp-hero-test   { display: grid; grid-template-columns: auto 1fr; gap: 28px; align-items: center; }
+
+@media (max-width: 720px) {
+  .lp-hero       { grid-template-columns: 1fr; gap: 32px; }
+  .lp-hero-test  { grid-template-columns: 1fr; gap: 16px; }
+  .lp-grid-3,
+  .lp-grid-3-20,
+  .lp-grid-steps,
+  .lp-grid-6,
+  .lp-grid-test  { grid-template-columns: 1fr !important; }
+  .lp-stats      { grid-template-columns: repeat(2, 1fr); }
+}

@@ -56,6 +56,19 @@ const TABS: { key: TabKey; label: string; icon: string }[] = [
   { key: "recipe",   label: "レシピ", icon: "🍳" },
   { key: "shopping", label: "買い物リスト", icon: "🛒" },
 ];
+const CONDITION_OPTIONS = [
+  { value: "疲れ気味", label: "😴 疲れ気味", hint: "さっぱり・栄養重視" },
+  { value: "体調不良", label: "🤧 体調不良", hint: "消化に良いもの" },
+  { value: "冷え気味", label: "❄️ 冷え気味", hint: "体が温まるもの" },
+  { value: "夏バテ",   label: "☀️ 夏バテ",   hint: "さっぱり・食べやすい" },
+  { value: "がっつり", label: "💪 がっつり",  hint: "ボリューム重視" },
+];
+const SPECIAL_SEASONINGS = [
+  "鶏がらスープの素", "鶏ガラスープの素", "オイスターソース", "ナンプラー",
+  "豆板醤", "甜麺醤", "コチュジャン", "XO醤", "バルサミコ酢",
+  "ウスターソース", "ガラムマサラ", "白だし", "コンソメ", "創味シャンタン",
+  "ダシダ", "柚子胡椒", "五香粉", "タヒニ", "アンチョビ",
+];
 
 // ─── Helpers ─────────────────────────────────────────────────────
 function getOrCreateDeviceId(): string {
@@ -77,6 +90,34 @@ function parseOutput(text: string): ParsedOutput {
   if (recipeMatch)   s.recipe   = recipeMatch[1].trim();
   if (shopMatch)     s.shopping = shopMatch[1].trim();
   return s;
+}
+
+// ─── Streak & Badges ─────────────────────────────────────────────
+function calcStreak(records: CookedRecord[]): number {
+  if (records.length === 0) return 0;
+  const today = new Date(); today.setHours(0, 0, 0, 0);
+  const dates = new Set(records.map(r => {
+    const d = new Date(r.cookedAt); d.setHours(0, 0, 0, 0); return d.getTime();
+  }));
+  let streak = 0; let cur = today.getTime();
+  if (!dates.has(cur)) cur -= 86400000;
+  while (dates.has(cur)) { streak++; cur -= 86400000; }
+  return streak;
+}
+
+const BADGES: { id: string; emoji: string; name: string; desc: string; check: (r: CookedRecord[], s: number) => boolean }[] = [
+  { id: "first",    emoji: "🍳", name: "はじめての一品",    desc: "最初の料理を記録",        check: (r)    => r.length >= 1 },
+  { id: "5dishes",  emoji: "⭐", name: "5品達成",            desc: "5品を作って記録",          check: (r)    => r.length >= 5 },
+  { id: "10dishes", emoji: "🏆", name: "料理マスター",       desc: "10品を作って記録",         check: (r)    => r.length >= 10 },
+  { id: "perfect",  emoji: "🤩", name: "パーフェクトシェフ", desc: "最高評価を3品獲得",        check: (r)    => r.filter(x => x.rating === 3).length >= 3 },
+  { id: "streak3",  emoji: "🔥", name: "3日連続",            desc: "3日連続で料理を記録",      check: (_, s) => s >= 3 },
+  { id: "streak7",  emoji: "💪", name: "1週間継続",          desc: "7日連続で料理を記録",      check: (_, s) => s >= 7 },
+  { id: "variety",  emoji: "🌍", name: "バリエーション名人", desc: "10種類以上の料理を記録",   check: (r)    => new Set(r.map(x => x.dishName)).size >= 10 },
+];
+
+function getEarnedBadges(records: CookedRecord[]) {
+  const streak = calcStreak(records);
+  return BADGES.filter(b => b.check(records, streak));
 }
 
 // ─── Sub-renderers ───────────────────────────────────────────────
@@ -315,6 +356,10 @@ function RecipeBlock({ title, body, imageUrl, imageLoading, savedRating, onRate,
     setTimeout(() => setJustSaved(false), 2500);
   };
 
+  // 特殊調味料を抽出
+  const ingredientsText = body.find(l => l.trim().startsWith("材料:")) ?? body.join(" ");
+  const specialFound = SPECIAL_SEASONINGS.filter(s => ingredientsText.includes(s));
+
   return (
     <div style={{ background: "var(--bg-subtle)", borderRadius: 14, overflow: "hidden" }}>
       {/* 料理写真 */}
@@ -332,9 +377,19 @@ function RecipeBlock({ title, body, imageUrl, imageLoading, savedRating, onRate,
 
       <div style={{ padding: "20px 22px" }}>
       <div style={{ marginBottom: 12, paddingBottom: 10, borderBottom: "1px solid var(--border)" }}>
-        <h3 style={{ fontFamily: "var(--font-heading)", fontWeight: 700, fontSize: 15, color: "var(--text-primary)", margin: 0 }}>
+        <h3 style={{ fontFamily: "var(--font-heading)", fontWeight: 700, fontSize: 15, color: "var(--text-primary)", margin: 0, marginBottom: specialFound.length > 0 ? 8 : 0 }}>
           🍽️ {title}
         </h3>
+        {specialFound.length > 0 && (
+          <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 5, marginTop: 6 }}>
+            <span style={{ fontSize: 10, color: "#92400e", fontFamily: "var(--font-heading)", fontWeight: 700, flexShrink: 0 }}>💡 特殊調味料:</span>
+            {specialFound.map(s => (
+              <span key={s} style={{ fontSize: 11, background: "#fef3c7", color: "#92400e", borderRadius: 20, padding: "2px 9px", border: "1px solid #f5d060", fontFamily: "var(--font-body)", fontWeight: 600 }}>
+                {s}
+              </span>
+            ))}
+          </div>
+        )}
       </div>
 
       <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
@@ -489,13 +544,19 @@ function HistoryRecipeDetail({ body }: { body: string[] }) {
   );
 }
 
-function HistoryModal({ records, onClear, onClose }: { records: CookedRecord[]; onClear: () => void; onClose: () => void }) {
+function HistoryModal({ records, streak, earnedBadges, onClear, onClose }: {
+  records: CookedRecord[];
+  streak: number;
+  earnedBadges: typeof BADGES;
+  onClear: () => void;
+  onClose: () => void;
+}) {
   const [expandedId, setExpandedId] = useState<string | null>(null);
   return (
     <div onClick={onClose}
       style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.55)", zIndex: 200, display: "flex", alignItems: "flex-end", justifyContent: "center" }}>
       <div onClick={e => e.stopPropagation()}
-        style={{ background: "#fff", borderRadius: "24px 24px 0 0", width: "100%", maxWidth: 540, maxHeight: "80vh", display: "flex", flexDirection: "column", boxShadow: "0 -8px 40px rgba(0,0,0,0.12)" }}>
+        style={{ background: "#fff", borderRadius: "24px 24px 0 0", width: "100%", maxWidth: 540, maxHeight: "85vh", display: "flex", flexDirection: "column", boxShadow: "0 -8px 40px rgba(0,0,0,0.12)" }}>
         <div style={{ padding: "20px 24px 12px", flexShrink: 0 }}>
           <div style={{ width: 36, height: 4, background: "var(--border)", borderRadius: 4, margin: "0 auto 16px" }} />
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
@@ -509,6 +570,48 @@ function HistoryModal({ records, onClear, onClose }: { records: CookedRecord[]; 
               </button>
             )}
           </div>
+
+          {/* Stats row */}
+          {records.length > 0 && (
+            <div style={{ display: "flex", gap: 10, marginTop: 14 }}>
+              <div style={{ flex: 1, background: "var(--bg-subtle)", borderRadius: 12, padding: "10px 14px", textAlign: "center" }}>
+                <div style={{ fontFamily: "var(--font-heading)", fontWeight: 800, fontSize: 20, color: "var(--accent-dark)" }}>{records.length}</div>
+                <div style={{ fontSize: 10, color: "var(--text-muted)", fontFamily: "var(--font-heading)", fontWeight: 600 }}>累計品数</div>
+              </div>
+              <div style={{ flex: 1, background: streak > 0 ? "#fff7ed" : "var(--bg-subtle)", borderRadius: 12, padding: "10px 14px", textAlign: "center", border: streak >= 3 ? "1.5px solid #f97316" : "none" }}>
+                <div style={{ fontFamily: "var(--font-heading)", fontWeight: 800, fontSize: 20, color: streak >= 3 ? "#ea580c" : "var(--text-secondary)" }}>
+                  {streak > 0 ? `🔥 ${streak}` : "—"}
+                </div>
+                <div style={{ fontSize: 10, color: "var(--text-muted)", fontFamily: "var(--font-heading)", fontWeight: 600 }}>連続日数</div>
+              </div>
+              <div style={{ flex: 1, background: "var(--bg-subtle)", borderRadius: 12, padding: "10px 14px", textAlign: "center" }}>
+                <div style={{ fontFamily: "var(--font-heading)", fontWeight: 800, fontSize: 20, color: "#4a7840" }}>{earnedBadges.length}</div>
+                <div style={{ fontSize: 10, color: "var(--text-muted)", fontFamily: "var(--font-heading)", fontWeight: 600 }}>バッジ</div>
+              </div>
+            </div>
+          )}
+
+          {/* Badges */}
+          {BADGES.length > 0 && (
+            <div style={{ marginTop: 14 }}>
+              <div style={{ fontSize: 11, fontFamily: "var(--font-heading)", fontWeight: 700, color: "var(--text-muted)", letterSpacing: "0.06em", marginBottom: 8 }}>バッジ</div>
+              <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+                {BADGES.map(b => {
+                  const earned = earnedBadges.some(e => e.id === b.id);
+                  return (
+                    <div key={b.id} title={b.desc}
+                      style={{ display: "flex", alignItems: "center", gap: 5, padding: "5px 10px", borderRadius: 20,
+                        background: earned ? "#deecd6" : "var(--bg-subtle)",
+                        border: earned ? "1px solid rgba(74,120,64,0.3)" : "1px solid var(--border)",
+                        opacity: earned ? 1 : 0.4 }}>
+                      <span style={{ fontSize: 14 }}>{b.emoji}</span>
+                      <span style={{ fontSize: 11, fontFamily: "var(--font-heading)", fontWeight: 700, color: earned ? "#2f5228" : "var(--text-muted)" }}>{b.name}</span>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
         </div>
         <div style={{ overflowY: "auto", padding: "0 24px 36px" }}>
           {records.length === 0 ? (
@@ -634,6 +737,58 @@ function ShoppingList({ text, checked, onToggle }: {
   );
 }
 
+// ─── Celebration Modal ───────────────────────────────────────────
+function CelebrationModal({ dishName, imageUrl, onClose, onShare }: {
+  dishName: string;
+  imageUrl?: string | null;
+  onClose: () => void;
+  onShare: (text: string) => void;
+}) {
+  const shareText = `🍳 ${dishName} を作りました！\nメシリストのAI献立でチャレンジ✨\n#メシリスト #今日の夕食 #料理記録`;
+  return (
+    <div onClick={onClose}
+      style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.65)", zIndex: 300, display: "flex", alignItems: "flex-end", justifyContent: "center" }}>
+      <div onClick={e => e.stopPropagation()}
+        style={{ background: "#fff", borderRadius: "24px 24px 0 0", width: "100%", maxWidth: 540, padding: "28px 24px 48px", boxShadow: "0 -8px 40px rgba(0,0,0,0.15)" }}>
+        <div style={{ width: 36, height: 4, background: "var(--border)", borderRadius: 4, margin: "0 auto 24px" }} />
+
+        {/* Header */}
+        <div style={{ textAlign: "center", marginBottom: 20 }}>
+          <div style={{ fontSize: 52, lineHeight: 1, marginBottom: 12 }}>🎉</div>
+          <h3 style={{ fontFamily: "var(--font-heading)", fontWeight: 800, fontSize: 22, color: "var(--text-primary)", marginBottom: 6 }}>完成！最高の一品！</h3>
+          <p style={{ fontSize: 15, color: "var(--accent-dark)", fontFamily: "var(--font-heading)", fontWeight: 700 }}>{dishName}</p>
+        </div>
+
+        {/* Dish image */}
+        {imageUrl && (
+          // eslint-disable-next-line @next/next/no-img-element
+          <div style={{ borderRadius: 16, overflow: "hidden", marginBottom: 16, height: 160 }}>
+            <img src={imageUrl} alt={dishName} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+          </div>
+        )}
+
+        {/* Share card preview */}
+        <div style={{ background: "linear-gradient(135deg, #f5a623 0%, #c87c0a 100%)", borderRadius: 14, padding: "16px 18px", marginBottom: 16 }}>
+          <div style={{ fontFamily: "var(--font-heading)", fontWeight: 700, fontSize: 13, color: "#fff", lineHeight: 1.8, whiteSpace: "pre-wrap" }}>{shareText}</div>
+        </div>
+
+        {/* Buttons */}
+        {"share" in navigator && (
+          <button
+            onClick={() => { onShare(shareText); onClose(); }}
+            style={{ width: "100%", padding: "14px", borderRadius: 14, border: "none", background: "linear-gradient(135deg, #f5a623, #c87c0a)", color: "#fff", fontFamily: "var(--font-heading)", fontWeight: 700, fontSize: 14, cursor: "pointer", marginBottom: 10, display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}>
+            📤 SNSでシェアする
+          </button>
+        )}
+        <button onClick={onClose}
+          style={{ width: "100%", padding: "12px", borderRadius: 12, border: "1px solid var(--border)", background: "none", color: "var(--text-muted)", fontFamily: "var(--font-heading)", fontWeight: 600, fontSize: 13, cursor: "pointer" }}>
+          閉じる
+        </button>
+      </div>
+    </div>
+  );
+}
+
 // ─── Main App ────────────────────────────────────────────────────
 function AppContent() {
   const router = useRouter();
@@ -654,6 +809,7 @@ function AppContent() {
   const [noKnife, setNoKnife] = useState(false);
   const [cookTime, setCookTime] = useState<"quick" | "normal" | "slow">("normal");
   const [dishCount, setDishCount] = useState("3");
+  const [condition, setCondition] = useState("");
 
   // Output state
   const [rawOutput, setRawOutput] = useState("");
@@ -678,6 +834,9 @@ function AppContent() {
 
   // History panel
   const [showHistory, setShowHistory] = useState(false);
+
+  // Celebration after cooking
+  const [showCelebration, setShowCelebration] = useState<{ dishName: string; imageUrl?: string | null } | null>(null);
 
   // UI
   const [showSubscribeModal, setShowSubscribeModal] = useState(false);
@@ -732,6 +891,7 @@ function AppContent() {
         if (p.noKnife !== undefined)    setNoKnife(p.noKnife);
         if (p.cookTime)                 setCookTime(p.cookTime);
         if (p.dishCount)                setDishCount(p.dishCount);
+        if (p.condition !== undefined)  setCondition(p.condition);
       }
       const savedChecked = localStorage.getItem("meshilist_checked");
       if (savedChecked) setCheckedItems(new Set(JSON.parse(savedChecked)));
@@ -753,7 +913,7 @@ function AppContent() {
   // Persist inputs
   useEffect(() => {
     if (!ready) return;
-    localStorage.setItem("meshilist_inputs", JSON.stringify({ ingredients, selectedChips, familySize, disliked, style, noKnife, cookTime, dishCount }));
+    localStorage.setItem("meshilist_inputs", JSON.stringify({ ingredients, selectedChips, familySize, disliked, style, noKnife, cookTime, dishCount, condition }));
   }, [ready, ingredients, selectedChips, familySize, disliked, style, days, noKnife]);
 
   // Parse output when generation finishes
@@ -801,7 +961,7 @@ function AppContent() {
     try {
       const res = await fetch("/api/generate", {
         method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ingredients: allIngredients, familySize, disliked, style, days, deviceId, noKnife, cookTime, dishCount }),
+        body: JSON.stringify({ ingredients: allIngredients, familySize, disliked, style, days, deviceId, noKnife, cookTime, dishCount, condition }),
         signal: abortRef.current.signal,
       });
       if (res.status === 402) { setShowSubscribeModal(true); return; }
@@ -848,6 +1008,9 @@ function AppContent() {
       return next;
     });
     setDishRatings(prev => ({ ...prev, [dishName]: stars }));
+    if (stars === 3) {
+      setShowCelebration({ dishName, imageUrl: imageResults[dishName] ?? null });
+    }
   };
 
   const handleShare = () => {
@@ -975,6 +1138,11 @@ function AppContent() {
                 </span>
               )}
             </button>
+            {(() => { const s = calcStreak(cookedRecords); return s > 0 ? (
+              <div style={{ display: "flex", alignItems: "center", gap: 4, padding: "5px 10px", borderRadius: 7, background: s >= 3 ? "#fff7ed" : "var(--bg-subtle)", border: `1px solid ${s >= 3 ? "#fed7aa" : "var(--border)"}`, fontSize: 12, fontFamily: "var(--font-heading)", fontWeight: 700, color: s >= 3 ? "#ea580c" : "var(--text-secondary)" }}>
+                🔥 {s}日連続
+              </div>
+            ) : null; })()}
           {trialStatus && (
             trialStatus.subscribed ? (
               <div style={{ background: "#deecd6", borderRadius: 8, padding: "4px 12px", fontSize: 12, color: "#2f5228", fontFamily: "var(--font-heading)", fontWeight: 700 }}>
@@ -1031,10 +1199,20 @@ function AppContent() {
 
             {/* Ingredients */}
             <div>
-              <label style={{ display: "block", fontFamily: "var(--font-heading)", fontWeight: 700, fontSize: 13, color: "var(--text-primary)", marginBottom: 10 }}>
-                冷蔵庫にある食材
-                <span style={{ fontFamily: "var(--font-body)", fontWeight: 400, color: "var(--text-muted)", fontSize: 12, marginLeft: 8 }}>チップをタップ or テキスト入力</span>
-              </label>
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 10 }}>
+                <label style={{ fontFamily: "var(--font-heading)", fontWeight: 700, fontSize: 13, color: "var(--text-primary)" }}>
+                  冷蔵庫にある食材
+                  <span style={{ fontFamily: "var(--font-body)", fontWeight: 400, color: "var(--text-muted)", fontSize: 12, marginLeft: 8 }}>チップをタップ or テキスト入力</span>
+                </label>
+                {(selectedChips.length > 0 || ingredients) && (
+                  <button
+                    onClick={() => { setSelectedChips([]); setIngredients(""); }}
+                    style={{ fontSize: 11, color: "var(--text-muted)", background: "none", border: "none", cursor: "pointer", textDecoration: "underline", padding: 0, flexShrink: 0 }}
+                  >
+                    リセット
+                  </button>
+                )}
+              </div>
               <div style={{ display: "flex", flexDirection: "column", gap: 8, marginBottom: 10 }}>
                 {INGREDIENT_CHIPS.map(group => (
                   <div key={group.category}>
@@ -1081,6 +1259,23 @@ function AppContent() {
                   <span style={{ fontFamily: "var(--font-body)", fontWeight: 400, color: "var(--text-muted)", fontSize: 12, marginLeft: 6 }}>任意</span>
                 </label>
                 <input className="field" style={{ borderRadius: 10 }} placeholder="例: 納豆、セロリ" value={disliked} onChange={e => setDisliked(e.target.value)} />
+              </div>
+            </div>
+
+            {/* Condition */}
+            <div>
+              <label style={{ display: "block", fontFamily: "var(--font-heading)", fontWeight: 700, fontSize: 13, color: "var(--text-primary)", marginBottom: 10 }}>
+                今日の体調
+                <span style={{ fontFamily: "var(--font-body)", fontWeight: 400, color: "var(--text-muted)", fontSize: 12, marginLeft: 6 }}>任意</span>
+              </label>
+              <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+                {CONDITION_OPTIONS.map(opt => (
+                  <button key={opt.value} onClick={() => setCondition(v => v === opt.value ? "" : opt.value)}
+                    style={{ padding: "9px 14px", borderRadius: 10, border: `1px solid ${condition === opt.value ? "var(--accent)" : "var(--border)"}`, background: condition === opt.value ? "var(--accent-light)" : "var(--bg-subtle)", color: condition === opt.value ? "var(--accent-dark)" : "var(--text-secondary)", fontFamily: "var(--font-body)", fontSize: 13, cursor: "pointer", transition: "all 0.15s", fontWeight: condition === opt.value ? 700 : 400, display: "flex", flexDirection: "column", alignItems: "center", gap: 1 }}>
+                    <span>{opt.label}</span>
+                    <span style={{ fontSize: 10, opacity: 0.7, fontFamily: "var(--font-body)", fontWeight: 400 }}>{opt.hint}</span>
+                  </button>
+                ))}
               </div>
             </div>
 
@@ -1395,7 +1590,29 @@ function AppContent() {
       )}
 
       {/* ── History Modal ── */}
-      {showHistory && <HistoryModal records={cookedRecords} onClear={() => { setCookedRecords([]); localStorage.removeItem("meshilist_cooked"); }} onClose={() => setShowHistory(false)} />}
+      {showHistory && (
+        <HistoryModal
+          records={cookedRecords}
+          streak={calcStreak(cookedRecords)}
+          earnedBadges={getEarnedBadges(cookedRecords)}
+          onClear={() => { setCookedRecords([]); localStorage.removeItem("meshilist_cooked"); }}
+          onClose={() => setShowHistory(false)}
+        />
+      )}
+
+      {/* ── Celebration Modal ── */}
+      {showCelebration && (
+        <CelebrationModal
+          dishName={showCelebration.dishName}
+          imageUrl={showCelebration.imageUrl}
+          onClose={() => setShowCelebration(null)}
+          onShare={async (text) => {
+            try {
+              await navigator.share({ title: "メシリスト", text });
+            } catch { /* キャンセルor非対応 */ }
+          }}
+        />
+      )}
 
       {/* Subscribe Modal */}
       {showSubscribeModal && (

@@ -101,7 +101,7 @@ export default function LandingPage() {
       {/* ── Hero ── */}
       <section style={{ padding: "72px 24px 56px", background: "#fff" }}>
         <div style={{ maxWidth: 1040, margin: "0 auto" }}>
-          <div style={{ display: "grid", gridTemplateColumns: "minmax(0,1fr) minmax(0,1fr)", gap: 56, alignItems: "center" }}>
+          <div className="lp-hero">
 
             {/* Left: copy */}
             <div>
@@ -219,7 +219,7 @@ export default function LandingPage() {
       {/* ── Stats bar ── */}
       <section style={{ background: "var(--text-primary)", padding: "20px 24px" }}>
         <div style={{ maxWidth: 860, margin: "0 auto" }}>
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 0 }}>
+          <div className="lp-stats">
             {[
               { num: "30秒", label: "平均生成時間" },
               { num: "7日間", label: "完全無料で体験" },
@@ -245,7 +245,7 @@ export default function LandingPage() {
             </h2>
           </div>
 
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", gap: 16 }}>
+          <div className="lp-grid-3">
             {PROBLEMS.map((p, i) => (
               <div key={i} style={{ background: "#fff", borderRadius: 18, padding: "28px 24px", border: "1.5px solid var(--border)", position: "relative", overflow: "hidden" }}>
                 <div style={{ position: "absolute", top: 16, right: 16, background: "var(--bg-subtle)", borderRadius: 8, padding: "3px 8px", fontSize: 10, fontFamily: "var(--font-heading)", fontWeight: 700, color: "var(--text-muted)" }}>{p.time}</div>
@@ -276,7 +276,7 @@ export default function LandingPage() {
             </h2>
           </div>
 
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(230px, 1fr))", gap: 0, position: "relative" }}>
+          <div className="lp-grid-steps">
             {STEPS.map((s, i) => (
               <div key={i} style={{ padding: "0 24px", textAlign: "center", position: "relative" }}>
                 {/* Connector line */}
@@ -315,7 +315,7 @@ export default function LandingPage() {
             </h2>
           </div>
 
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))", gap: 16 }}>
+          <div className="lp-grid-6">
             {FEATURES.map((f, i) => (
               <div key={i} style={{ background: "#fff", borderRadius: 18, padding: "24px", border: "1px solid var(--border)", display: "flex", gap: 16, alignItems: "flex-start" }}>
                 <div style={{ width: 48, height: 48, borderRadius: 14, background: "var(--bg-subtle)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 24, flexShrink: 0, border: "1px solid var(--border)" }}>
@@ -342,7 +342,7 @@ export default function LandingPage() {
           </div>
 
           {/* Hero testimonial */}
-          <div style={{ background: "var(--bg-subtle)", borderRadius: 24, padding: "32px 36px", border: "1px solid var(--border)", marginBottom: 20, display: "grid", gridTemplateColumns: "auto 1fr", gap: 28, alignItems: "center" }}>
+          <div className="lp-hero-test" style={{ background: "var(--bg-subtle)", borderRadius: 24, padding: "32px 36px", border: "1px solid var(--border)", marginBottom: 20 }}>
             <div style={{ textAlign: "center" }}>
               <div style={{ width: 64, height: 64, borderRadius: "50%", background: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 32, border: "2px solid var(--border)", marginBottom: 8 }}>
                 {TESTIMONIALS[0].avatar}
@@ -364,7 +364,7 @@ export default function LandingPage() {
           </div>
 
           {/* Grid testimonials */}
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))", gap: 16 }}>
+          <div className="lp-grid-test">
             {TESTIMONIALS.slice(1).map((t, i) => (
               <div key={i} style={{ background: "var(--bg-subtle)", borderRadius: 18, padding: "22px", border: "1px solid var(--border)" }}>
                 <div style={{ display: "flex", gap: 3, marginBottom: 10 }}>
@@ -417,7 +417,7 @@ export default function LandingPage() {
           <p style={{ fontSize: 14, color: "var(--text-secondary)", marginBottom: 8 }}>全プラン 7日間無料トライアルつき · クレジットカード不要</p>
           <p style={{ fontSize: 13, color: "var(--text-muted)", marginBottom: 48 }}>トライアル中は全機能が使えます。終了後も自動で課金されません。</p>
 
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))", gap: 20, alignItems: "stretch" }}>
+          <div className="lp-grid-3-20">
             {/* ライト */}
             <div style={{ background: "var(--bg-subtle)", borderRadius: 20, padding: "32px 28px", border: "1.5px solid var(--border)", textAlign: "left", display: "flex", flexDirection: "column" }}>
               <div style={{ display: "inline-flex", alignItems: "center", gap: 6, marginBottom: 16 }}>
