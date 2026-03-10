@@ -91,6 +91,7 @@ export default function LandingPage() {
   const [openFaq, setOpenFaq] = useState<number | null>(null);
   const [heroIdx, setHeroIdx] = useState(0);
   const [heroFading, setHeroFading] = useState(false);
+  const [campaign, setCampaign] = useState<{ registered: number; remaining: number; total: number } | null>(null);
 
   useEffect(() => {
     const id = setInterval(() => {
@@ -101,6 +102,13 @@ export default function LandingPage() {
       }, 400);
     }, 2800);
     return () => clearInterval(id);
+  }, []);
+
+  useEffect(() => {
+    fetch("/api/campaign")
+      .then(r => r.json())
+      .then(setCampaign)
+      .catch(() => setCampaign({ registered: 36, remaining: 14, total: 50 })); // fallback
   }, []);
 
   return (
@@ -149,20 +157,60 @@ export default function LandingPage() {
 
             {/* Left: copy */}
             <div>
-              <div className="animate-fade-up" style={{ display: "inline-flex", alignItems: "center", gap: 6, background: "#deecd6", borderRadius: 20, padding: "5px 14px", marginBottom: 24 }}>
-                <span style={{ fontSize: 13 }}>🌿</span>
-                <span style={{ fontFamily: "var(--font-heading)", fontSize: 11, fontWeight: 700, color: "#2f5228", letterSpacing: "0.08em", textTransform: "uppercase" }}>AI献立生成 — 7日間完全無料</span>
+              <div className="animate-fade-up" style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 24 }}>
+                <div style={{ display: "inline-flex", alignItems: "center", gap: 6, background: "#deecd6", borderRadius: 20, padding: "5px 14px" }}>
+                  <span style={{ fontSize: 13 }}>🌿</span>
+                  <span style={{ fontFamily: "var(--font-heading)", fontSize: 11, fontWeight: 700, color: "#2f5228", letterSpacing: "0.08em", textTransform: "uppercase" }}>AI献立生成 — 毎日ちがうご飯が、30秒で</span>
+                </div>
+                <div style={{ display: "inline-flex", alignItems: "center", gap: 6, background: "#fff3d6", borderRadius: 20, padding: "5px 14px", border: "1px solid #f5d060" }}>
+                  <span style={{ fontSize: 13 }}>🎁</span>
+                  <span style={{ fontFamily: "var(--font-heading)", fontSize: 11, fontWeight: 700, color: "#a07010", letterSpacing: "0.06em" }}>先着50名キャンペーン実施中</span>
+                </div>
               </div>
 
-              <h1 className="animate-fade-up delay-1" style={{ fontFamily: "var(--font-heading)", fontWeight: 800, fontSize: "clamp(30px, 4vw, 52px)", lineHeight: 1.3, letterSpacing: "-0.03em", color: "var(--text-primary)", marginBottom: 20, wordBreak: "keep-all" }}>
-                「今日、<span style={{ color: "var(--accent)" }}>何食べる？</span>」<br />
-                もう悩まなくていい。
+              <h1 className="animate-fade-up delay-1" style={{ fontFamily: "var(--font-heading)", fontWeight: 800, fontSize: "clamp(28px, 4vw, 52px)", lineHeight: 1.3, letterSpacing: "-0.03em", color: "var(--text-primary)", marginBottom: 20 }}>
+                <span style={{ whiteSpace: "nowrap" }}>「また<span style={{ color: "var(--accent)" }}>同じか</span>」を、</span><br />
+                卒業する。
               </h1>
 
-              <p className="animate-fade-up delay-2" style={{ fontSize: "clamp(14px, 1.8vw, 17px)", color: "var(--text-secondary)", lineHeight: 1.85, marginBottom: 32 }}>
-                食材を入力するだけで、AIが今夜の献立からレシピ・買い物リストまで自動生成。<br />
-                毎日の献立疲れを、まるごとなくします。
+              <p className="animate-fade-up delay-2" style={{ fontSize: "clamp(14px, 1.8vw, 17px)", color: "var(--text-secondary)", lineHeight: 1.85, marginBottom: 20 }}>
+                献立を決める疲れを、まるごとAIに渡そう。<br />
+                食材を入れるだけで、今夜の献立・レシピ・買い物リストが揃う。
               </p>
+
+              {/* Campaign callout */}
+              <div className="animate-fade-up delay-2" style={{ background: "#fffbf0", border: "1.5px solid #f5d060", borderRadius: 14, padding: "14px 18px", marginBottom: 24 }}>
+                <div style={{ display: "flex", alignItems: "flex-start", gap: 10 }}>
+                  <span style={{ fontSize: 22, flexShrink: 0 }}>🎁</span>
+                  <div>
+                    <div style={{ fontFamily: "var(--font-heading)", fontWeight: 800, fontSize: 14, color: "#92400e", marginBottom: 4 }}>
+                      先着50名限定 — 生成クレジット＋30回プレゼント
+                    </div>
+                    <p style={{ fontSize: 12, color: "#a07010", lineHeight: 1.6, margin: 0 }}>
+                      今登録した方に、通常の生成回数に加えて<strong>+30回分のクレジット</strong>を無料でプレゼント。<br />
+                      さらに献立をXにシェアすると、<strong>無料期間がもう7日延長</strong>されます。
+                    </p>
+                  </div>
+                </div>
+                {/* 残り枠バー */}
+                {campaign && (
+                  <div style={{ marginTop: 12 }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 4 }}>
+                      <span style={{ fontSize: 11, fontFamily: "var(--font-heading)", fontWeight: 700, color: "#a07010" }}>残り枠</span>
+                      {campaign.remaining <= 0
+                        ? <span style={{ fontSize: 12, fontFamily: "var(--font-heading)", fontWeight: 800, color: "#c2410c" }}>受付終了</span>
+                        : <span style={{ fontSize: 12, fontFamily: "var(--font-heading)", fontWeight: 800, color: "#c2410c" }}>残り{campaign.remaining}名</span>
+                      }
+                    </div>
+                    <div style={{ height: 6, background: "#fde68a", borderRadius: 4, overflow: "hidden" }}>
+                      <div style={{ width: `${Math.min((campaign.registered / campaign.total) * 100, 100)}%`, height: "100%", background: "linear-gradient(90deg, #f59e0b, #c2410c)", borderRadius: 4, transition: "width 0.8s ease" }} />
+                    </div>
+                    <div style={{ fontSize: 10, color: "#a07010", marginTop: 4, fontFamily: "var(--font-heading)", fontWeight: 600 }}>
+                      {campaign.total}名中、すでに{campaign.registered}名が登録済み
+                    </div>
+                  </div>
+                )}
+              </div>
 
               {/* Trust pills */}
               <div className="animate-fade-up delay-2" style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 32 }}>
@@ -269,11 +317,6 @@ export default function LandingPage() {
                 </div>
               </div>
 
-              {/* Floating badge */}
-              <div style={{ position: "absolute", top: -16, right: -16, background: "var(--accent)", borderRadius: 14, padding: "10px 16px", boxShadow: "0 4px 20px rgba(230,149,26,0.4)", zIndex: 3 }}>
-                <div style={{ fontFamily: "var(--font-heading)", fontWeight: 800, fontSize: 13, color: "#fff" }}>7日間</div>
-                <div style={{ fontFamily: "var(--font-heading)", fontWeight: 700, fontSize: 11, color: "rgba(255,255,255,0.85)" }}>完全無料</div>
-              </div>
             </div>
 
           </div>
@@ -305,7 +348,7 @@ export default function LandingPage() {
           <div style={{ textAlign: "center", marginBottom: 52 }}>
             <p className="label" style={{ marginBottom: 12 }}>こんなこと、ありませんか？</p>
             <h2 style={{ fontFamily: "var(--font-heading)", fontWeight: 800, fontSize: "clamp(22px, 4vw, 34px)", color: "var(--text-primary)", letterSpacing: "-0.03em" }}>
-              献立を決める時間が<br />毎日ストレスになっていませんか？
+              気づいたら、また同じメニュー。<br />その繰り返し、抜け出せていますか？
             </h2>
           </div>
 
@@ -323,8 +366,8 @@ export default function LandingPage() {
           <div style={{ marginTop: 32, background: "#fff", borderRadius: 16, padding: "20px 24px", border: "1.5px solid #4a7840", display: "flex", alignItems: "center", gap: 16 }}>
             <span style={{ fontSize: 32, flexShrink: 0 }}>💡</span>
             <div>
-              <p style={{ fontFamily: "var(--font-heading)", fontWeight: 700, fontSize: 15, color: "#2f5228", margin: "0 0 4px" }}>メシリストが、その悩みをまるごと解決します。</p>
-              <p style={{ fontSize: 13, color: "var(--text-secondary)", margin: 0 }}>食材を入れるだけで、今夜から献立決めに悩む時間がゼロになります。</p>
+              <p style={{ fontFamily: "var(--font-heading)", fontWeight: 700, fontSize: 15, color: "#2f5228", margin: "0 0 4px" }}>その「決める疲れ」を、AIに渡してしまおう。</p>
+              <p style={{ fontSize: 13, color: "var(--text-secondary)", margin: 0 }}>食材を入れるだけで、毎日ちがう献立・レシピ・買い物リストが揃います。</p>
             </div>
           </div>
         </div>
@@ -406,15 +449,15 @@ export default function LandingPage() {
           </div>
 
           {/* 2-column layout: 2 large left / 2x2 right */}
-          <div style={{ display: "grid", gridTemplateColumns: "minmax(0,1fr) minmax(0,1fr)", gap: 16, alignItems: "start" }}>
-            {/* Left: 2 large cards */}
+          <div style={{ display: "grid", gridTemplateColumns: "minmax(0,1fr) minmax(0,1fr)", gap: 16 }}>
+            {/* Left: 2 large cards — flex:1で等高 */}
             <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
               {TESTIMONIALS.slice(0, 2).map((t, i) => (
-                <div key={i} style={{ background: "var(--bg-subtle)", borderRadius: 20, padding: "24px", border: "1px solid var(--border)" }}>
+                <div key={i} style={{ background: "var(--bg-subtle)", borderRadius: 20, padding: "24px", border: "1px solid var(--border)", flex: 1, display: "flex", flexDirection: "column" }}>
                   <div style={{ display: "flex", gap: 3, marginBottom: 10 }}>
                     {[1,2,3,4,5].map(s => <span key={s} style={{ color: "#f4b942", fontSize: 15 }}>★</span>)}
                   </div>
-                  <p style={{ fontSize: "clamp(13px, 1.5vw, 15px)", color: "var(--text-primary)", lineHeight: 1.85, fontFamily: "var(--font-heading)", fontWeight: 500, margin: "0 0 14px" }}>
+                  <p style={{ fontSize: "clamp(13px, 1.5vw, 15px)", color: "var(--text-primary)", lineHeight: 1.85, fontFamily: "var(--font-heading)", fontWeight: 500, margin: "0 0 14px", flex: 1 }}>
                     「{t.text}」
                   </p>
                   <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 8 }}>
@@ -434,7 +477,7 @@ export default function LandingPage() {
             </div>
 
             {/* Right: 2×2 grid */}
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, alignContent: "start" }}>
               {TESTIMONIALS.slice(2).map((t, i) => (
                 <div key={i} style={{ background: "var(--bg-subtle)", borderRadius: 16, padding: "18px", border: "1px solid var(--border)", display: "flex", flexDirection: "column" }}>
                   <div style={{ display: "flex", gap: 2, marginBottom: 8 }}>
@@ -443,8 +486,8 @@ export default function LandingPage() {
                   <p style={{ fontSize: 12, color: "var(--text-secondary)", lineHeight: 1.8, margin: "0 0 12px", flex: 1 }}>
                     「{t.text}」
                   </p>
-                  <div>
-                    <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
+                  <div style={{ marginTop: "auto" }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6 }}>
                       <div style={{ width: 32, height: 32, borderRadius: "50%", background: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 16, border: "1px solid var(--border)", flexShrink: 0 }}>{t.avatar}</div>
                       <div>
                         <div style={{ fontFamily: "var(--font-heading)", fontWeight: 700, fontSize: 12, color: "var(--text-primary)" }}>{t.name}</div>
@@ -576,7 +619,6 @@ export default function LandingPage() {
                   { text: "家族の好み・アレルギーを記憶 🧠", highlight: true },
                   { text: "週次栄養バランスレポート 📊", highlight: true },
                   { text: "月別献立カレンダー表示 📆", highlight: true },
-                  { text: "優先サポート（24h以内対応）⚡", highlight: true },
                 ].map(f => (
                   <li key={f.text} style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 13, color: f.highlight ? "#7c3aed" : "var(--text-secondary)", fontWeight: f.highlight ? 600 : 400 }}>
                     <span style={{ color: f.highlight ? "#7c3aed" : "#4a7840", fontWeight: 700, fontSize: 14, flexShrink: 0 }}>✓</span>{f.text}
@@ -666,8 +708,8 @@ export default function LandingPage() {
             <span style={{ fontFamily: "var(--font-heading)", fontSize: 13, fontWeight: 700, color: "var(--accent-dark)", letterSpacing: "0.14em" }}>コツコツツクル。</span>
           </div>
           <h2 style={{ fontFamily: "var(--font-heading)", fontWeight: 800, fontSize: "clamp(24px, 4vw, 38px)", letterSpacing: "-0.03em", color: "var(--text-primary)", marginBottom: 16 }}>
-            今夜から、献立で<br />
-            <span style={{ color: "var(--accent)" }}>悩む時間</span>をなくそう。
+            「また同じか」を、<br />
+            今夜から<span style={{ color: "var(--accent)" }}>卒業</span>しよう。
           </h2>
           <p style={{ fontSize: 15, color: "var(--text-secondary)", marginBottom: 12 }}>
             7日間無料、クレジットカード不要。<br />まず試してみてください。

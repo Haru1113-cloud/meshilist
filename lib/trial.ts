@@ -143,3 +143,7 @@ export function getDeviceBySubscriptionId(subscriptionId: string): string | null
   }
   return null;
 }
+
+export function getUserCount(): number {
+  return Object.keys(store).length;
+}
