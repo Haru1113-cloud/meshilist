@@ -35,7 +35,7 @@ const TESTIMONIALS = [
 ];
 
 const FAQS = [
-  { q: "無料トライアルにクレジットカードは必要ですか？", a: "不要です。登録なしで7日間無料でお使いいただけます。期間終了後も自動で課金されることはありません。" },
+  { q: "登録にクレジットカードは必要ですか？", a: "不要です。登録なしですぐにお使いいただけます。お支払いはプランを選択した後のみ発生します。" },
   { q: "サブスクはいつでも解約できますか？", a: "はい、いつでも解約できます。解約後も当月末まで利用可能です。違約金等は一切ありません。" },
   { q: "どんな食材でも対応できますか？", a: "基本的な食材であれば対応しています。冷蔵庫にあるものを自由に入力してください。珍しい食材でも柔軟に対応します。" },
   { q: "アレルギー対応はできますか？", a: "苦手食材・アレルギー食材を設定するとそれを除いた献立を提案します。家族全員が安心して食べられる献立を生成します。" },
@@ -149,7 +149,7 @@ export default function LandingPage() {
             <div>
               <div className="animate-fade-up" style={{ display: "inline-flex", alignItems: "center", gap: 6, background: "#deecd6", borderRadius: 20, padding: "5px 14px", marginBottom: 24 }}>
                 <span style={{ fontSize: 13 }}>🌿</span>
-                <span style={{ fontFamily: "var(--font-heading)", fontSize: 11, fontWeight: 700, color: "#2f5228", letterSpacing: "0.08em", textTransform: "uppercase" }}>AI献立生成 — 7日間完全無料</span>
+                <span style={{ fontFamily: "var(--font-heading)", fontSize: 11, fontWeight: 700, color: "#2f5228", letterSpacing: "0.08em", textTransform: "uppercase" }}>AI献立生成 — 毎日ちがうご飯が、30秒で</span>
               </div>
 
               <h1 className="animate-fade-up delay-1" style={{ fontFamily: "var(--font-heading)", fontWeight: 800, fontSize: "clamp(28px, 4vw, 52px)", lineHeight: 1.3, letterSpacing: "-0.03em", color: "var(--text-primary)", marginBottom: 20 }}>
@@ -157,14 +157,29 @@ export default function LandingPage() {
                 もう悩まなくていい。
               </h1>
 
-              <p className="animate-fade-up delay-2" style={{ fontSize: "clamp(14px, 1.8vw, 17px)", color: "var(--text-secondary)", lineHeight: 1.85, marginBottom: 32 }}>
+              <p className="animate-fade-up delay-2" style={{ fontSize: "clamp(14px, 1.8vw, 17px)", color: "var(--text-secondary)", lineHeight: 1.85, marginBottom: 20 }}>
                 食材を入力するだけで、AIが今夜の献立からレシピ・買い物リストまで自動生成。<br />
                 毎日の献立疲れを、まるごとなくします。
               </p>
 
+              {/* Campaign callout */}
+              <div className="animate-fade-up delay-2" style={{ background: "#fffbf0", border: "1.5px solid #f5d060", borderRadius: 14, padding: "14px 18px", marginBottom: 24 }}>
+                <div style={{ display: "flex", alignItems: "flex-start", gap: 10 }}>
+                  <span style={{ fontSize: 20, flexShrink: 0 }}>🎁</span>
+                  <div>
+                    <div style={{ fontFamily: "var(--font-heading)", fontWeight: 800, fontSize: 13, color: "#92400e", marginBottom: 3 }}>
+                      先着50名限定 — 登録で生成クレジット＋30回プレゼント
+                    </div>
+                    <p style={{ fontSize: 12, color: "#a07010", lineHeight: 1.6, margin: 0 }}>
+                      今登録した方に、通常の生成回数に加えて<strong>+10回分のクレジット</strong>を無料でプレゼント。
+                    </p>
+                  </div>
+                </div>
+              </div>
+
               {/* Trust pills */}
               <div className="animate-fade-up delay-2" style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 32 }}>
-                {["✓ クレジットカード不要", "✓ 7日間完全無料", "✓ いつでも解約OK", "✓ 登録不要"].map(t => (
+                {["✓ クレジットカード不要", "✓ いつでも解約OK", "✓ 登録不要"].map(t => (
                   <span key={t} style={{ background: "#f0ede7", borderRadius: 20, padding: "5px 12px", fontSize: 12, fontFamily: "var(--font-heading)", fontWeight: 600, color: "var(--text-secondary)" }}>{t}</span>
                 ))}
               </div>
@@ -174,7 +189,7 @@ export default function LandingPage() {
                   style={{ padding: "15px 36px", borderRadius: 14, border: "none", background: "var(--accent)", color: "#fff", fontFamily: "var(--font-heading)", fontWeight: 700, fontSize: 16, cursor: "pointer", boxShadow: "0 4px 20px rgba(230,149,26,0.35)" }}
                   onMouseEnter={e => { e.currentTarget.style.transform = "translateY(-2px)"; e.currentTarget.style.boxShadow = "0 10px 30px rgba(230,149,26,0.45)"; }}
                   onMouseLeave={e => { e.currentTarget.style.transform = ""; e.currentTarget.style.boxShadow = "0 4px 20px rgba(230,149,26,0.35)"; }}>
-                  今すぐ無料で試す →
+                  今すぐ試す →
                 </button>
                 <button className="press-btn" onClick={() => document.getElementById("pricing")?.scrollIntoView({ behavior: "smooth" })}
                   style={{ padding: "15px 24px", borderRadius: 14, border: "1.5px solid var(--border)", background: "#fff", color: "var(--text-primary)", fontFamily: "var(--font-heading)", fontWeight: 600, fontSize: 14, cursor: "pointer" }}
@@ -274,7 +289,7 @@ export default function LandingPage() {
           <div className="lp-stats">
             {[
               { num: "30秒", label: "平均生成時間" },
-              { num: "7日間", label: "完全無料で体験" },
+              { num: "先着50名", label: "クレジット+10回プレゼント" },
               { num: "¥280〜", label: "月額プランから" },
               { num: "0円", label: "クレジットカード登録不要" },
             ].map((s, i) => (
@@ -352,7 +367,7 @@ export default function LandingPage() {
               onMouseLeave={e => { e.currentTarget.style.transform = ""; }}>
               まず試してみる（無料） →
             </button>
-            <p style={{ fontSize: 11, color: "var(--text-muted)", marginTop: 10 }}>クレジットカード不要 · 7日間完全無料</p>
+            <p style={{ fontSize: 11, color: "var(--text-muted)", marginTop: 10 }}>クレジットカード不要 · 先着50名クレジット+10回プレゼント中</p>
           </div>
         </div>
       </section>
@@ -454,7 +469,7 @@ export default function LandingPage() {
       <section style={{ padding: "56px 24px", background: "#deecd6" }}>
         <div style={{ maxWidth: 600, margin: "0 auto", textAlign: "center" }}>
           <p style={{ fontFamily: "var(--font-heading)", fontWeight: 800, fontSize: "clamp(18px, 3vw, 26px)", color: "#2f5228", marginBottom: 16, letterSpacing: "-0.02em" }}>
-            今夜から試してみませんか？<br />7日間、完全無料です。
+            今夜から試してみませんか？<br />先着50名、クレジット＋30回プレゼント中。
           </p>
           <button className="press-btn" onClick={() => router.push("/app")}
             style={{ padding: "14px 40px", borderRadius: 14, border: "none", background: "#4a7840", color: "#fff", fontFamily: "var(--font-heading)", fontWeight: 700, fontSize: 15, cursor: "pointer", boxShadow: "0 4px 20px rgba(74,120,64,0.3)" }}
@@ -473,8 +488,8 @@ export default function LandingPage() {
           <h2 style={{ fontFamily: "var(--font-heading)", fontWeight: 800, fontSize: "clamp(22px, 4vw, 34px)", color: "var(--text-primary)", letterSpacing: "-0.03em", marginBottom: 12 }}>
             あなたに合ったプランを
           </h2>
-          <p style={{ fontSize: 14, color: "var(--text-secondary)", marginBottom: 8 }}>全プラン 7日間無料トライアルつき · クレジットカード不要</p>
-          <p style={{ fontSize: 13, color: "var(--text-muted)", marginBottom: 48 }}>トライアル中は全機能が使えます。終了後も自動で課金されません。</p>
+          <p style={{ fontSize: 14, color: "var(--text-secondary)", marginBottom: 8 }}>クレジットカード不要 · いつでも解約OK</p>
+          <p style={{ fontSize: 13, color: "var(--text-muted)", marginBottom: 48 }}>先着50名限定で、登録時に生成クレジット＋30回をプレゼント中。</p>
 
           <div className="lp-grid-3-20">
             {/* ライト */}
@@ -508,7 +523,7 @@ export default function LandingPage() {
                 style={{ width: "100%", padding: "13px", borderRadius: 12, border: "1.5px solid var(--accent)", background: "#fff", color: "var(--accent)", fontFamily: "var(--font-heading)", fontWeight: 700, fontSize: 14, cursor: "pointer", transition: "background 0.15s" }}
                 onMouseEnter={e => { e.currentTarget.style.background = "var(--accent-light)"; }}
                 onMouseLeave={e => { e.currentTarget.style.background = "#fff"; }}>
-                7日間無料で試す →
+                今すぐ試す →
               </button>
             </div>
 
@@ -538,7 +553,7 @@ export default function LandingPage() {
                   style={{ width: "100%", padding: "14px", borderRadius: 12, border: "none", background: "var(--accent)", color: "#fff", fontFamily: "var(--font-heading)", fontWeight: 700, fontSize: 14, cursor: "pointer", boxShadow: "0 4px 20px rgba(230,149,26,0.35)", transition: "transform 0.15s" }}
                   onMouseEnter={e => e.currentTarget.style.transform = "translateY(-2px)"}
                   onMouseLeave={e => e.currentTarget.style.transform = ""}>
-                  7日間無料で試す →
+                  今すぐ試す →
                 </button>
               </div>
             </div>
@@ -574,7 +589,7 @@ export default function LandingPage() {
                 style={{ width: "100%", padding: "13px", borderRadius: 12, border: "1.5px solid var(--accent)", background: "#fff", color: "var(--accent)", fontFamily: "var(--font-heading)", fontWeight: 700, fontSize: 14, cursor: "pointer", transition: "background 0.15s" }}
                 onMouseEnter={e => { e.currentTarget.style.background = "var(--accent-light)"; }}
                 onMouseLeave={e => { e.currentTarget.style.background = "#fff"; }}>
-                7日間無料で試す →
+                今すぐ試す →
               </button>
             </div>
           </div>
@@ -657,10 +672,10 @@ export default function LandingPage() {
             今夜から<span style={{ color: "var(--accent)" }}>卒業</span>しよう。
           </h2>
           <p style={{ fontSize: 15, color: "var(--text-secondary)", marginBottom: 12 }}>
-            7日間無料、クレジットカード不要。<br />まず試してみてください。
+            クレジットカード不要。<br />先着50名にクレジット＋30回をプレゼント中です。
           </p>
           <div style={{ display: "flex", flexWrap: "wrap", gap: 8, justifyContent: "center", marginBottom: 28 }}>
-            {["✓ クレカ不要", "✓ 7日間無料", "✓ いつでも解約OK"].map(t => (
+            {["✓ クレカ不要", "✓ 先着50名クレジット+10回", "✓ いつでも解約OK"].map(t => (
               <span key={t} style={{ background: "var(--bg-subtle)", borderRadius: 20, padding: "5px 12px", fontSize: 12, fontFamily: "var(--font-heading)", fontWeight: 600, color: "var(--text-secondary)" }}>{t}</span>
             ))}
           </div>
