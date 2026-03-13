@@ -174,14 +174,7 @@ export default function LandingPage() {
                 </div>
               </div>
 
-              {/* Trust pills */}
-              <div className="animate-fade-up delay-2" style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 32 }}>
-                {["✓ クレジットカード不要", "✓ いつでも解約OK", "✓ 登録不要"].map(t => (
-                  <span key={t} style={{ background: "#f0ede7", borderRadius: 20, padding: "5px 12px", fontSize: 12, fontFamily: "var(--font-heading)", fontWeight: 600, color: "var(--text-secondary)" }}>{t}</span>
-                ))}
-              </div>
-
-              <div className="animate-fade-up delay-3" style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
+<div className="animate-fade-up delay-3" style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
                 <button className="press-btn" onClick={() => router.push("/app")}
                   style={{ padding: "15px 36px", borderRadius: 14, border: "none", background: "var(--accent)", color: "#fff", fontFamily: "var(--font-heading)", fontWeight: 700, fontSize: 16, cursor: "pointer", boxShadow: "0 4px 20px rgba(230,149,26,0.35)" }}
                   onMouseEnter={e => { e.currentTarget.style.transform = "translateY(-2px)"; e.currentTarget.style.boxShadow = "0 10px 30px rgba(230,149,26,0.45)"; }}
