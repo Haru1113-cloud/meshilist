@@ -187,7 +187,9 @@ h1, h2, h3, h4,
   .lp-grid-steps,
   .lp-grid-6,
   .lp-grid-test  { grid-template-columns: 1fr !important; }
-  .lp-stats      { grid-template-columns: repeat(2, 1fr); }
+  .lp-stats      { grid-template-columns: 1fr; }
+  .lp-stats > div { border-right: none !important; border-bottom: 1px solid rgba(255,255,255,0.1); }
+  .lp-stats > div:last-child { border-bottom: none; }
   .lp-test-new   { grid-template-columns: 1fr !important; }
   .lp-test-new-right { grid-template-columns: 1fr !important; }
   .lp-testimonials { grid-template-columns: 1fr !important; }
