@@ -114,6 +114,20 @@ export default function LandingPage() {
             </div>
           </a>
           <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            <button onClick={() => document.getElementById("pricing")?.scrollIntoView({ behavior: "smooth" })}
+              style={{ padding: "8px 14px", borderRadius: 10, fontSize: 13, fontFamily: "var(--font-heading)", fontWeight: 600, color: "var(--text-secondary)", textDecoration: "none", border: "1px solid transparent", background: "none", cursor: "pointer" }}
+              onMouseEnter={e => (e.currentTarget.style.color = "var(--accent)")}
+              onMouseLeave={e => (e.currentTarget.style.color = "var(--text-secondary)")}
+            >
+              料金表
+            </button>
+            <button onClick={() => document.getElementById("faq")?.scrollIntoView({ behavior: "smooth" })}
+              style={{ padding: "8px 14px", borderRadius: 10, fontSize: 13, fontFamily: "var(--font-heading)", fontWeight: 600, color: "var(--text-secondary)", textDecoration: "none", border: "1px solid transparent", background: "none", cursor: "pointer" }}
+              onMouseEnter={e => (e.currentTarget.style.color = "var(--accent)")}
+              onMouseLeave={e => (e.currentTarget.style.color = "var(--text-secondary)")}
+            >
+              よくある質問
+            </button>
             <a href="/recipes" style={{ padding: "8px 14px", borderRadius: 10, fontSize: 13, fontFamily: "var(--font-heading)", fontWeight: 600, color: "var(--text-secondary)", textDecoration: "none", border: "1px solid var(--border)", background: "#fff" }}
               onMouseEnter={e => (e.currentTarget.style.borderColor = "var(--accent)")}
               onMouseLeave={e => (e.currentTarget.style.borderColor = "var(--border)")}
@@ -599,7 +613,7 @@ export default function LandingPage() {
       </section>
 
       {/* ── FAQ ── */}
-      <section style={{ padding: "80px 24px", background: "var(--bg-subtle)" }}>
+      <section id="faq" style={{ padding: "80px 24px", background: "var(--bg-subtle)" }}>
         <div style={{ maxWidth: 660, margin: "0 auto" }}>
           <div style={{ textAlign: "center", marginBottom: 48 }}>
             <p className="label" style={{ marginBottom: 12 }}>FAQ</p>
