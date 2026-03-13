@@ -268,23 +268,6 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* ── Stats bar ── */}
-      <section style={{ background: "var(--text-primary)", padding: "20px 24px" }}>
-        <div style={{ maxWidth: 860, margin: "0 auto" }}>
-          <div className="lp-stats">
-            {[
-              { num: "30秒", label: "平均生成時間" },
-              { num: "先着30名", label: "10回分クレジット無料" },
-              { num: "¥280〜", label: "月額プランから" },
-            ].map((s, i) => (
-              <div key={i} style={{ textAlign: "center", padding: "8px 12px", borderRight: i < 2 ? "1px solid rgba(255,255,255,0.1)" : "none" }}>
-                <div style={{ fontFamily: "var(--font-heading)", fontWeight: 800, fontSize: "clamp(18px, 2.5vw, 28px)", color: "var(--accent)", letterSpacing: "-0.03em" }}>{s.num}</div>
-                <div style={{ fontSize: 11, color: "rgba(255,255,255,0.55)", fontFamily: "var(--font-heading)", fontWeight: 600, marginTop: 2 }}>{s.label}</div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
 
       {/* ── Problem ── */}
       <section style={{ padding: "80px 24px", background: "var(--bg-subtle)" }}>
