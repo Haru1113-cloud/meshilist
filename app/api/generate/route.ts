@@ -367,8 +367,8 @@ ${dishTableHeader}
 食材カテゴリ別（肉類・魚介類・野菜・調味料など）に整理してください。${familySize}人分の正確な量を記載してください。`;
 
   const stream = client.messages.stream({
-    model: "claude-opus-4-6",
-    max_tokens: 8192,
+    model: "claude-sonnet-4-6",
+    max_tokens: 4096,
     system: systemPrompt,
     messages: [{ role: "user", content: userPrompt }],
   });
