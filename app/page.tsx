@@ -168,10 +168,10 @@ export default function LandingPage() {
                   <span style={{ fontSize: 20, flexShrink: 0 }}>🎁</span>
                   <div>
                     <div style={{ fontFamily: "var(--font-heading)", fontWeight: 800, fontSize: 13, color: "#92400e", marginBottom: 3 }}>
-                      先着50名限定 — 登録で生成クレジット＋30回プレゼント
+                      先着30名様限定 — 10回分のクレジットを無料プレゼント
                     </div>
                     <p style={{ fontSize: 12, color: "#a07010", lineHeight: 1.6, margin: 0 }}>
-                      今登録した方に、通常の生成回数に加えて<strong>+10回分のクレジット</strong>を無料でプレゼント。
+                      先着30名様限定で、<strong>10回分のクレジット</strong>を無料でプレゼント。
                     </p>
                   </div>
                 </div>
@@ -289,7 +289,7 @@ export default function LandingPage() {
           <div className="lp-stats">
             {[
               { num: "30秒", label: "平均生成時間" },
-              { num: "先着50名", label: "クレジット+10回プレゼント" },
+              { num: "先着30名", label: "10回分クレジット無料" },
               { num: "¥280〜", label: "月額プランから" },
               { num: "0円", label: "クレジットカード登録不要" },
             ].map((s, i) => (
@@ -367,7 +367,7 @@ export default function LandingPage() {
               onMouseLeave={e => { e.currentTarget.style.transform = ""; }}>
               まず試してみる（無料） →
             </button>
-            <p style={{ fontSize: 11, color: "var(--text-muted)", marginTop: 10 }}>クレジットカード不要 · 先着50名クレジット+10回プレゼント中</p>
+            <p style={{ fontSize: 11, color: "var(--text-muted)", marginTop: 10 }}>クレジットカード不要 · 先着30名様に10回分クレジット無料プレゼント中</p>
           </div>
         </div>
       </section>
@@ -409,7 +409,7 @@ export default function LandingPage() {
           </div>
 
           {/* 2-column layout: 2 large left / 2x2 right */}
-          <div style={{ display: "grid", gridTemplateColumns: "minmax(0,1fr) minmax(0,1fr)", gap: 16 }}>
+          <div className="lp-testimonials" style={{ display: "grid", gridTemplateColumns: "minmax(0,1fr) minmax(0,1fr)", gap: 16 }}>
             {/* Left: 2 large cards — flex:1で等高 */}
             <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
               {TESTIMONIALS.slice(0, 2).map((t, i) => (
@@ -437,7 +437,7 @@ export default function LandingPage() {
             </div>
 
             {/* Right: 2×2 grid */}
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, alignContent: "start" }}>
+            <div className="lp-testimonials-right" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, alignContent: "start" }}>
               {TESTIMONIALS.slice(2).map((t, i) => (
                 <div key={i} style={{ background: "var(--bg-subtle)", borderRadius: 16, padding: "18px", border: "1px solid var(--border)", display: "flex", flexDirection: "column" }}>
                   <div style={{ display: "flex", gap: 2, marginBottom: 8 }}>
@@ -469,7 +469,7 @@ export default function LandingPage() {
       <section style={{ padding: "56px 24px", background: "#deecd6" }}>
         <div style={{ maxWidth: 600, margin: "0 auto", textAlign: "center" }}>
           <p style={{ fontFamily: "var(--font-heading)", fontWeight: 800, fontSize: "clamp(18px, 3vw, 26px)", color: "#2f5228", marginBottom: 16, letterSpacing: "-0.02em" }}>
-            今夜から試してみませんか？<br />先着50名、クレジット＋30回プレゼント中。
+            今夜から試してみませんか？<br />先着30名様に10回分のクレジットを無料プレゼント中。
           </p>
           <button className="press-btn" onClick={() => router.push("/app")}
             style={{ padding: "14px 40px", borderRadius: 14, border: "none", background: "#4a7840", color: "#fff", fontFamily: "var(--font-heading)", fontWeight: 700, fontSize: 15, cursor: "pointer", boxShadow: "0 4px 20px rgba(74,120,64,0.3)" }}
@@ -489,7 +489,7 @@ export default function LandingPage() {
             あなたに合ったプランを
           </h2>
           <p style={{ fontSize: 14, color: "var(--text-secondary)", marginBottom: 8 }}>クレジットカード不要 · いつでも解約OK</p>
-          <p style={{ fontSize: 13, color: "var(--text-muted)", marginBottom: 48 }}>先着50名限定で、登録時に生成クレジット＋30回をプレゼント中。</p>
+          <p style={{ fontSize: 13, color: "var(--text-muted)", marginBottom: 48 }}>先着30名様限定、登録時に10回分のクレジットを無料でプレゼント中。</p>
 
           <div className="lp-grid-3-20">
             {/* ライト */}
@@ -540,10 +540,10 @@ export default function LandingPage() {
                 <div style={{ fontFamily: "var(--font-heading)", fontWeight: 800, fontSize: 40, color: "var(--text-primary)", lineHeight: 1, marginBottom: 4 }}>
                   ¥480<span style={{ fontSize: 14, fontWeight: 400, color: "var(--text-muted)" }}>/月</span>
                 </div>
-                <p style={{ fontSize: 12, color: "var(--text-muted)", marginBottom: 6 }}>無制限 · 1日あたり約16円</p>
+                <p style={{ fontSize: 12, color: "var(--text-muted)", marginBottom: 6 }}>月30回 · 1日あたり約16円</p>
                 <p style={{ fontSize: 12, color: "var(--text-secondary)", marginBottom: 24, lineHeight: 1.6 }}>毎日使いたい方に。作った料理を保存して自分だけのレシピ帳に。</p>
                 <ul style={{ listStyle: "none", margin: "0 0 28px", padding: 0, display: "flex", flexDirection: "column", gap: 8, flex: 1 }}>
-                  {["献立生成 無制限", "料理写真つき生成", "1週間分プランニング", "レシピ概要・手順つき", "まとめ買いリスト", "レシピ保存・評価 ★"].map(f => (
+                  {["献立生成 月30回", "料理写真つき生成", "1週間分プランニング", "レシピ概要・手順つき", "まとめ買いリスト", "レシピ保存・評価 ★"].map(f => (
                     <li key={f} style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 13, color: "var(--text-secondary)" }}>
                       <span style={{ color: "#4a7840", fontWeight: 700, fontSize: 14, flexShrink: 0 }}>✓</span>{f}
                     </li>
@@ -600,7 +600,7 @@ export default function LandingPage() {
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr 1fr", gap: 0, fontSize: 12 }}>
               {[
                 ["", "LIGHT", "STANDARD", "PREMIUM"],
-                ["献立生成", "月10回", "無制限", "無制限"],
+                ["献立生成", "月10回", "月30回", "無制限"],
                 ["1週間プランニング", "—", "✓", "✓"],
                 ["まとめ買いリスト", "—", "✓", "✓"],
                 ["レシピ保存", "—", "✓", "✓"],
@@ -672,10 +672,10 @@ export default function LandingPage() {
             今夜から<span style={{ color: "var(--accent)" }}>卒業</span>しよう。
           </h2>
           <p style={{ fontSize: 15, color: "var(--text-secondary)", marginBottom: 12 }}>
-            クレジットカード不要。<br />先着50名にクレジット＋30回をプレゼント中です。
+            クレジットカード不要。<br />先着30名様に10回分のクレジットを無料でプレゼント中です。
           </p>
           <div style={{ display: "flex", flexWrap: "wrap", gap: 8, justifyContent: "center", marginBottom: 28 }}>
-            {["✓ クレカ不要", "✓ 先着50名クレジット+10回", "✓ いつでも解約OK"].map(t => (
+            {["✓ クレカ不要", "✓ 先着30名様10回分無料", "✓ いつでも解約OK"].map(t => (
               <span key={t} style={{ background: "var(--bg-subtle)", borderRadius: 20, padding: "5px 12px", fontSize: 12, fontFamily: "var(--font-heading)", fontWeight: 600, color: "var(--text-secondary)" }}>{t}</span>
             ))}
           </div>

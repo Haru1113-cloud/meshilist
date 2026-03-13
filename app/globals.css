@@ -176,6 +176,8 @@ h1, h2, h3, h4,
 .lp-grid-test   { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
 .lp-stats       { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0; }
 .lp-hero-test   { display: grid; grid-template-columns: auto 1fr; gap: 28px; align-items: center; }
+.lp-testimonials { display: grid; grid-template-columns: minmax(0,1fr) minmax(0,1fr); gap: 16px; }
+.lp-testimonials-right { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; align-content: start; }
 
 @media (max-width: 720px) {
   .lp-hero       { grid-template-columns: 1fr; gap: 32px; }
@@ -188,4 +190,6 @@ h1, h2, h3, h4,
   .lp-stats      { grid-template-columns: repeat(2, 1fr); }
   .lp-test-new   { grid-template-columns: 1fr !important; }
   .lp-test-new-right { grid-template-columns: 1fr !important; }
+  .lp-testimonials { grid-template-columns: 1fr !important; }
+  .lp-testimonials-right { grid-template-columns: 1fr !important; }
 }
