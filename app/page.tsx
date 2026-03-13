@@ -149,7 +149,17 @@ export default function LandingPage() {
                 <span style={{ fontFamily: "var(--font-heading)", fontSize: 11, fontWeight: 700, color: "#2f5228", letterSpacing: "0.08em", textTransform: "uppercase" }}>AI献立生成 — 毎日ちがうご飯が、30秒で</span>
               </div>
 
-              <h1 className="animate-fade-up delay-1" style={{ fontFamily: "var(--font-heading)", fontWeight: 800, fontSize: "clamp(28px, 4vw, 52px)", lineHeight: 1.3, letterSpacing: "-0.03em", color: "var(--text-primary)", marginBottom: 20 }}>
+              {/* Campaign callout */}
+              <div className="animate-fade-up delay-1" style={{ background: "#fffbf0", border: "1.5px solid #f5d060", borderRadius: 14, padding: "14px 18px", marginBottom: 24 }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                  <span style={{ fontSize: 20, flexShrink: 0 }}>🎁</span>
+                  <div style={{ fontFamily: "var(--font-heading)", fontWeight: 800, fontSize: 13, color: "#92400e" }}>
+                    先着30名様限定 — 10回分のクレジットを無料プレゼント
+                  </div>
+                </div>
+              </div>
+
+              <h1 className="animate-fade-up delay-2" style={{ fontFamily: "var(--font-heading)", fontWeight: 800, fontSize: "clamp(28px, 4vw, 52px)", lineHeight: 1.3, letterSpacing: "-0.03em", color: "var(--text-primary)", marginBottom: 20 }}>
                 <span style={{ whiteSpace: "nowrap" }}>「今日、<span style={{ color: "var(--accent)" }}>何食べる？</span>」</span><br />
                 もう悩まなくていい。
               </h1>
@@ -158,18 +168,6 @@ export default function LandingPage() {
                 食材を入力するだけで、AIが今夜の献立からレシピ・買い物リストまで自動生成。<br />
                 毎日の献立疲れを、まるごとなくします。
               </p>
-
-              {/* Campaign callout */}
-              <div className="animate-fade-up delay-2" style={{ background: "#fffbf0", border: "1.5px solid #f5d060", borderRadius: 14, padding: "14px 18px", marginBottom: 24 }}>
-                <div style={{ display: "flex", alignItems: "flex-start", gap: 10 }}>
-                  <span style={{ fontSize: 20, flexShrink: 0 }}>🎁</span>
-                  <div>
-                    <div style={{ fontFamily: "var(--font-heading)", fontWeight: 800, fontSize: 13, color: "#92400e" }}>
-                      先着30名様限定 — 10回分のクレジットを無料プレゼント
-                    </div>
-                  </div>
-                </div>
-              </div>
 
 <div className="animate-fade-up delay-3" style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
                 <button className="press-btn" onClick={() => router.push("/app")}
@@ -279,7 +277,7 @@ export default function LandingPage() {
               { num: "先着30名", label: "10回分クレジット無料" },
               { num: "¥280〜", label: "月額プランから" },
             ].map((s, i) => (
-              <div key={i} style={{ textAlign: "center", padding: "8px 12px", borderRight: i < 3 ? "1px solid rgba(255,255,255,0.1)" : "none" }}>
+              <div key={i} style={{ textAlign: "center", padding: "8px 12px", borderRight: i < 2 ? "1px solid rgba(255,255,255,0.1)" : "none" }}>
                 <div style={{ fontFamily: "var(--font-heading)", fontWeight: 800, fontSize: "clamp(18px, 2.5vw, 28px)", color: "var(--accent)", letterSpacing: "-0.03em" }}>{s.num}</div>
                 <div style={{ fontSize: 11, color: "rgba(255,255,255,0.55)", fontFamily: "var(--font-heading)", fontWeight: 600, marginTop: 2 }}>{s.label}</div>
               </div>
