@@ -167,12 +167,9 @@ export default function LandingPage() {
                 <div style={{ display: "flex", alignItems: "flex-start", gap: 10 }}>
                   <span style={{ fontSize: 20, flexShrink: 0 }}>🎁</span>
                   <div>
-                    <div style={{ fontFamily: "var(--font-heading)", fontWeight: 800, fontSize: 13, color: "#92400e", marginBottom: 3 }}>
+                    <div style={{ fontFamily: "var(--font-heading)", fontWeight: 800, fontSize: 13, color: "#92400e" }}>
                       先着30名様限定 — 10回分のクレジットを無料プレゼント
                     </div>
-                    <p style={{ fontSize: 12, color: "#a07010", lineHeight: 1.6, margin: 0 }}>
-                      先着30名様限定で、<strong>10回分のクレジット</strong>を無料でプレゼント。
-                    </p>
                   </div>
                 </div>
               </div>
