@@ -281,7 +281,6 @@ export default function LandingPage() {
               { num: "30秒", label: "平均生成時間" },
               { num: "先着30名", label: "10回分クレジット無料" },
               { num: "¥280〜", label: "月額プランから" },
-              { num: "0円", label: "クレジットカード登録不要" },
             ].map((s, i) => (
               <div key={i} style={{ textAlign: "center", padding: "8px 12px", borderRight: i < 3 ? "1px solid rgba(255,255,255,0.1)" : "none" }}>
                 <div style={{ fontFamily: "var(--font-heading)", fontWeight: 800, fontSize: "clamp(18px, 2.5vw, 28px)", color: "var(--accent)", letterSpacing: "-0.03em" }}>{s.num}</div>
