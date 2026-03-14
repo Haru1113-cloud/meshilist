@@ -34,9 +34,12 @@ export default function CancelPage() {
     if (!deviceId) return;
     setLoading(true);
     try {
-      // Redirect to Stripe billing portal would go here in production.
-      // For now we simulate cancellation via a placeholder.
-      await new Promise(r => setTimeout(r, 1000));
+      const res = await fetch("/api/cancel-subscription", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ deviceId }),
+      });
+      if (!res.ok) throw new Error("cancel failed");
       setStep("done");
     } catch {
       setStep("error");

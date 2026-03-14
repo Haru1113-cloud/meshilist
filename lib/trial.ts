@@ -137,6 +137,10 @@ export function setSubscription(
   }
 }
 
+export function getSubscriptionId(deviceId: string): string | null {
+  return store[deviceId]?.subscriptionId ?? null;
+}
+
 export function getDeviceBySubscriptionId(subscriptionId: string): string | null {
   for (const [deviceId, record] of Object.entries(store)) {
     if (record.subscriptionId === subscriptionId) return deviceId;
