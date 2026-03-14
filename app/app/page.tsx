@@ -1152,7 +1152,7 @@ function AppContent() {
               <button onClick={() => setShowSubscribeModal(true)} style={{ background: "var(--accent)", color: "#fff", border: "none", borderRadius: 8, padding: "6px 14px", fontSize: 12, fontFamily: "var(--font-heading)", fontWeight: 700, cursor: "pointer" }}>
                 プランに登録
               </button>
-            )
+            ) : null
           )}
           </div>
         </div>
