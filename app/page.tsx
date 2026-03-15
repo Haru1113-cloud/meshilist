@@ -97,9 +97,10 @@ async function goToStripe(planId: "light" | "standard" | "premium") {
       method: "POST", headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ deviceId, planId }),
     });
-    const { url } = await res.json();
-    if (url) window.location.href = url;
-  } catch { alert("エラーが発生しました。もう一度お試しください。"); }
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`);
+    if (data.url) window.location.href = data.url;
+  } catch (e) { alert("エラーが発生しました。もう一度お試しください。\n" + (e instanceof Error ? e.message : "")); }
 }
 
 export default function LandingPage() {
