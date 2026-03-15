@@ -797,7 +797,7 @@ function AppContent() {
 
   const [ready, setReady] = useState(false);
   const [deviceId, setDeviceId] = useState("");
-  const [trialStatus, setTrialStatus] = useState<{ trialActive: boolean; daysLeft: number; subscribed: boolean; plan: string | null; generationsLeft: number | null; imageGenerationsLeft: number | null } | null>(null);
+  const [trialStatus, setTrialStatus] = useState<{ trialActive: boolean; daysLeft: number; subscribed: boolean; plan: string | null; generationsLeft: number | null; imageGenerationsLeft: number | null; freeCreditsLeft: number; freeCreditsTotal: number } | null>(null);
 
   // Input state
   const [ingredients, setIngredients] = useState("");
@@ -1162,6 +1162,51 @@ function AppContent() {
       {checkoutSuccess && (
         <div style={{ background: "var(--accent)", color: "#fff", textAlign: "center", padding: "12px", fontSize: 14, fontFamily: "var(--font-heading)", fontWeight: 600 }}>
           ご登録ありがとうございます！サブスクリプションが有効になりました 🎉
+        </div>
+      )}
+
+      {/* ── Credit counter bar (free trial only) ── */}
+      {trialStatus && !trialStatus.subscribed && (
+        <div style={{
+          background: trialStatus.freeCreditsLeft === 0 ? "#fff1f0" : trialStatus.freeCreditsLeft === 1 ? "#fff7ed" : "#f0fdf4",
+          borderBottom: `1px solid ${trialStatus.freeCreditsLeft === 0 ? "#fca5a5" : trialStatus.freeCreditsLeft === 1 ? "#fcd34d" : "#86efac"}`,
+          padding: "10px 20px",
+        }}>
+          <div style={{ maxWidth: 820, margin: "0 auto", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+              <span style={{ fontSize: 16 }}>🍽️</span>
+              <div>
+                <span style={{ fontFamily: "var(--font-heading)", fontWeight: 800, fontSize: 13, color: trialStatus.freeCreditsLeft === 0 ? "#dc2626" : "var(--text-primary)" }}>
+                  無料クレジット
+                </span>
+                <span style={{ fontFamily: "var(--font-heading)", fontSize: 12, color: "var(--text-muted)", marginLeft: 8 }}>
+                  残り <strong style={{ fontSize: 15, color: trialStatus.freeCreditsLeft === 0 ? "#dc2626" : trialStatus.freeCreditsLeft === 1 ? "#d97706" : "#16a34a" }}>{trialStatus.freeCreditsLeft}</strong> / {trialStatus.freeCreditsTotal} 回
+                </span>
+              </div>
+              {/* Dot indicators */}
+              <div style={{ display: "flex", gap: 4, marginLeft: 4 }}>
+                {Array.from({ length: trialStatus.freeCreditsTotal }).map((_, i) => (
+                  <div key={i} style={{
+                    width: 10, height: 10, borderRadius: "50%",
+                    background: i < trialStatus.freeCreditsLeft
+                      ? (trialStatus.freeCreditsLeft === 1 ? "#f59e0b" : "#22c55e")
+                      : "#e5e7eb",
+                    transition: "background 0.3s",
+                  }} />
+                ))}
+              </div>
+            </div>
+            {trialStatus.freeCreditsLeft === 0 ? (
+              <button onClick={() => setShowSubscribeModal(true)}
+                style={{ padding: "7px 16px", borderRadius: 8, border: "none", background: "var(--accent)", color: "#fff", fontFamily: "var(--font-heading)", fontWeight: 700, fontSize: 12, cursor: "pointer", flexShrink: 0 }}>
+                プランに登録して続ける →
+              </button>
+            ) : trialStatus.freeCreditsLeft === 1 ? (
+              <span style={{ fontFamily: "var(--font-heading)", fontSize: 11, color: "#d97706", fontWeight: 600, flexShrink: 0 }}>
+                ⚠️ あと1回で終了
+              </span>
+            ) : null}
+          </div>
         </div>
       )}
 

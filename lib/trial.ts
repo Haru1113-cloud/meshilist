@@ -1,4 +1,5 @@
-const TRIAL_DAYS = 7;
+const FREE_CREDITS = 5;
+const CAMPAIGN_LIMIT = 30;
 const LIGHT_MONTHLY_LIMIT = 10;
 const PREMIUM_IMAGE_MONTHLY_LIMIT = 15;
 
@@ -6,6 +7,7 @@ export type PlanType = "light" | "standard" | "premium";
 
 interface UserRecord {
   trialStartedAt: string;
+  freeCreditsLeft: number;
   subscriptionId?: string;
   subscriptionStatus?: "active" | "canceled";
   plan?: PlanType;
@@ -24,7 +26,10 @@ function currentMonth(): string {
 
 export function initUser(deviceId: string): void {
   if (!(deviceId in store)) {
-    store[deviceId] = { trialStartedAt: new Date().toISOString() };
+    store[deviceId] = {
+      trialStartedAt: new Date().toISOString(),
+      freeCreditsLeft: FREE_CREDITS,
+    };
   }
 }
 
@@ -35,11 +40,22 @@ export function getTrialStatus(deviceId: string): {
   plan: PlanType | null;
   generationsLeft: number | null; // null = unlimited
   imageGenerationsLeft: number | null;
+  freeCreditsLeft: number;
+  freeCreditsTotal: number;
 } {
   const record = store[deviceId];
 
   if (!record) {
-    return { trialActive: false, daysLeft: 0, subscribed: false, plan: null, generationsLeft: null, imageGenerationsLeft: null };
+    return {
+      trialActive: false,
+      daysLeft: 0,
+      subscribed: false,
+      plan: null,
+      generationsLeft: null,
+      imageGenerationsLeft: null,
+      freeCreditsLeft: 0,
+      freeCreditsTotal: FREE_CREDITS,
+    };
   }
 
   const subscribed = record.subscriptionStatus === "active";
@@ -60,15 +76,30 @@ export function getTrialStatus(deviceId: string): {
       imageGenerationsLeft = Math.max(0, PREMIUM_IMAGE_MONTHLY_LIMIT - count);
     }
 
-    return { trialActive: true, daysLeft: 999, subscribed: true, plan, generationsLeft, imageGenerationsLeft };
+    return {
+      trialActive: true,
+      daysLeft: 999,
+      subscribed: true,
+      plan,
+      generationsLeft,
+      imageGenerationsLeft,
+      freeCreditsLeft: 0,
+      freeCreditsTotal: FREE_CREDITS,
+    };
   }
 
-  const started = new Date(record.trialStartedAt).getTime();
-  const now = Date.now();
-  const elapsed = Math.floor((now - started) / (1000 * 60 * 60 * 24));
-  const daysLeft = Math.max(0, TRIAL_DAYS - elapsed);
+  const creditsLeft = record.freeCreditsLeft ?? 0;
 
-  return { trialActive: daysLeft > 0, daysLeft, subscribed: false, plan: null, generationsLeft: null, imageGenerationsLeft: null };
+  return {
+    trialActive: creditsLeft > 0,
+    daysLeft: creditsLeft, // compat: use creditsLeft as daysLeft
+    subscribed: false,
+    plan: null,
+    generationsLeft: null,
+    imageGenerationsLeft: null,
+    freeCreditsLeft: creditsLeft,
+    freeCreditsTotal: FREE_CREDITS,
+  };
 }
 
 export function canGenerate(deviceId: string): boolean {
@@ -82,7 +113,7 @@ export function canGenerate(deviceId: string): boolean {
 
 export function canGenerateImage(deviceId: string): boolean {
   const status = getTrialStatus(deviceId);
-  return status.trialActive; // all active users (trial + any plan) get images
+  return status.trialActive;
 }
 
 export function getImageQuality(deviceId: string): "low" | "high" {
@@ -92,20 +123,29 @@ export function getImageQuality(deviceId: string): "low" | "high" {
 
 export function canSave(deviceId: string): boolean {
   const status = getTrialStatus(deviceId);
-  if (!status.subscribed) return status.trialActive; // trial: all features
+  if (!status.subscribed) return status.trialActive;
   return status.plan === "standard" || status.plan === "premium";
 }
 
 export function incrementGeneration(deviceId: string): void {
   if (!(deviceId in store)) return;
   const record = store[deviceId];
-  if (record.plan !== "light") return;
-  const month = currentMonth();
-  if (record.generationMonth !== month) {
-    record.generationCount = 1;
-    record.generationMonth = month;
-  } else {
-    record.generationCount = (record.generationCount ?? 0) + 1;
+
+  // 有料プランのライトは月間カウント
+  if (record.plan === "light" && record.subscriptionStatus === "active") {
+    const month = currentMonth();
+    if (record.generationMonth !== month) {
+      record.generationCount = 1;
+      record.generationMonth = month;
+    } else {
+      record.generationCount = (record.generationCount ?? 0) + 1;
+    }
+    return;
+  }
+
+  // 無料トライアルはクレジットを消費
+  if (!record.subscriptionStatus || record.subscriptionStatus !== "active") {
+    record.freeCreditsLeft = Math.max(0, (record.freeCreditsLeft ?? 0) - 1);
   }
 }
 
@@ -128,7 +168,7 @@ export function setSubscription(
   plan?: PlanType
 ): void {
   if (!(deviceId in store)) {
-    store[deviceId] = { trialStartedAt: new Date().toISOString() };
+    store[deviceId] = { trialStartedAt: new Date().toISOString(), freeCreditsLeft: 0 };
   }
   store[deviceId].subscriptionId = subscriptionId;
   store[deviceId].subscriptionStatus = status;
@@ -151,3 +191,5 @@ export function getDeviceBySubscriptionId(subscriptionId: string): string | null
 export function getUserCount(): number {
   return Object.keys(store).length;
 }
+
+export { CAMPAIGN_LIMIT, FREE_CREDITS };

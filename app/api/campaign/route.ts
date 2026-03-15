@@ -1,7 +1,5 @@
 import { NextResponse } from "next/server";
-import { getUserCount } from "@/lib/trial";
-
-const CAMPAIGN_LIMIT = 50;
+import { getUserCount, CAMPAIGN_LIMIT } from "@/lib/trial";
 
 export async function GET() {
   const count = getUserCount();
