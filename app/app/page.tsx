@@ -951,9 +951,20 @@ function AppContent() {
     ...ingredients.split(/[,、，\s]+/).filter(Boolean),
   ].filter((v, i, a) => a.indexOf(v) === i).join("、");
 
+  const goToStripeFromApp = async (planId: "light" | "standard" | "premium" = "standard") => {
+    try {
+      const res = await fetch("/api/checkout", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ deviceId, planId }),
+      });
+      const { url } = await res.json();
+      if (url) window.location.href = url;
+    } catch { alert("エラーが発生しました。"); }
+  };
+
   const handleGenerate = async () => {
     if (!trialStatus) return;
-    if (!trialStatus.trialActive && !trialStatus.subscribed) { setShowSubscribeModal(true); return; }
+    if (!trialStatus.trialActive && !trialStatus.subscribed) { goToStripeFromApp(); return; }
     if (trialStatus.subscribed && trialStatus.plan === "light" && (trialStatus.generationsLeft ?? 0) <= 0) { setShowSubscribeModal(true); return; }
     if (!allIngredients.trim()) { alert("食材を入力してください"); return; }
 
@@ -976,7 +987,7 @@ function AppContent() {
         body: JSON.stringify({ ingredients: allIngredients, familySize, disliked, style, days, deviceId, noKnife, cookTime, dishCount, condition }),
         signal: abortRef.current.signal,
       });
-      if (res.status === 402) { setShowSubscribeModal(true); return; }
+      if (res.status === 402) { goToStripeFromApp(); return; }
       if (!res.ok || !res.body) throw new Error("failed");
 
       const reader = res.body.getReader();
