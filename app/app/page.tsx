@@ -794,6 +794,7 @@ function AppContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const checkoutSuccess = searchParams.get("checkout") === "success";
+  const planParam = searchParams.get("plan") as "light" | "standard" | "premium" | null;
 
   const [ready, setReady] = useState(false);
   const [deviceId, setDeviceId] = useState("");
@@ -910,6 +911,16 @@ function AppContent() {
       body: JSON.stringify({ deviceId: id }),
     }).then(r => r.json()).then(setTrialStatus).catch(() => {});
   }, []);
+
+  // Auto-redirect to Stripe when coming from pricing page (?plan=xxx)
+  useEffect(() => {
+    if (!planParam || !deviceId || !trialStatus) return;
+    setSelectedPlan(planParam);
+    fetch("/api/checkout", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ deviceId, planId: planParam }),
+    }).then(r => r.json()).then(d => { if (d.url) window.location.href = d.url; }).catch(() => {});
+  }, [planParam, deviceId, trialStatus]);
 
   // Persist inputs
   useEffect(() => {

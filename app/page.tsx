@@ -163,17 +163,7 @@ export default function LandingPage() {
                 <span style={{ fontFamily: "var(--font-heading)", fontSize: 11, fontWeight: 700, color: "#2f5228", letterSpacing: "0.08em", textTransform: "uppercase" }}>AI献立生成 — 毎日ちがうご飯が、30秒で</span>
               </div>
 
-              {/* Campaign callout */}
-              <div className="animate-fade-up delay-1" style={{ background: "#fffbf0", border: "1.5px solid #f5d060", borderRadius: 14, padding: "14px 18px", marginBottom: 24 }}>
-                <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                  <span style={{ fontSize: 20, flexShrink: 0 }}>🎁</span>
-                  <div style={{ fontFamily: "var(--font-heading)", fontWeight: 800, fontSize: 13, color: "#92400e" }}>
-                    まず1回、無料でお試し
-                  </div>
-                </div>
-              </div>
-
-              <h1 className="animate-fade-up delay-2" style={{ fontFamily: "var(--font-heading)", fontWeight: 800, fontSize: "clamp(28px, 4vw, 52px)", lineHeight: 1.3, letterSpacing: "-0.03em", color: "var(--text-primary)", marginBottom: 20 }}>
+              <h1 className="animate-fade-up delay-1" style={{ fontFamily: "var(--font-heading)", fontWeight: 800, fontSize: "clamp(28px, 4vw, 52px)", lineHeight: 1.3, letterSpacing: "-0.03em", color: "var(--text-primary)", marginBottom: 20 }}>
                 <span style={{ whiteSpace: "nowrap" }}>「今日、<span style={{ color: "var(--accent)" }}>何食べる？</span>」</span><br />
                 もう悩まなくていい。
               </h1>
@@ -348,7 +338,7 @@ export default function LandingPage() {
               onMouseLeave={e => { e.currentTarget.style.transform = ""; }}>
               まず試してみる（無料） →
             </button>
-            <p style={{ fontSize: 11, color: "var(--text-muted)", marginTop: 10 }}>クレジットカード不要 · 登録不要・まず1回無料で試せる</p>
+            <p style={{ fontSize: 11, color: "var(--text-muted)", marginTop: 10 }}>まず3回、無料でお試しいただけます</p>
           </div>
         </div>
       </section>
@@ -458,7 +448,7 @@ export default function LandingPage() {
             onMouseLeave={e => { e.currentTarget.style.transform = ""; }}>
             無料で献立を生成する →
           </button>
-          <p style={{ fontSize: 12, color: "#4a7840", marginTop: 12 }}>クレジットカード不要 · 登録不要 · いつでも解約OK</p>
+          <p style={{ fontSize: 12, color: "#4a7840", marginTop: 12 }}>まず3回無料 · いつでも解約OK</p>
         </div>
       </section>
 
@@ -469,8 +459,7 @@ export default function LandingPage() {
           <h2 style={{ fontFamily: "var(--font-heading)", fontWeight: 800, fontSize: "clamp(22px, 4vw, 34px)", color: "var(--text-primary)", letterSpacing: "-0.03em", marginBottom: 12 }}>
             あなたに合ったプランを
           </h2>
-          <p style={{ fontSize: 14, color: "var(--text-secondary)", marginBottom: 8 }}>クレジットカード不要 · いつでも解約OK</p>
-          <p style={{ fontSize: 13, color: "var(--text-muted)", marginBottom: 48 }}>登録不要。まず1回、無料でお試しいただけます。</p>
+          <p style={{ fontSize: 13, color: "var(--text-muted)", marginBottom: 48 }}>まず3回無料でお試しいただけます。気に入ったらプランへ。いつでも解約OK。</p>
 
           <div className="lp-grid-3-20">
             {/* ライト */}
@@ -500,11 +489,11 @@ export default function LandingPage() {
                   </li>
                 ))}
               </ul>
-              <button onClick={() => router.push("/app")}
+              <button onClick={() => router.push("/app?plan=light")}
                 style={{ width: "100%", padding: "13px", borderRadius: 12, border: "1.5px solid var(--accent)", background: "#fff", color: "var(--accent)", fontFamily: "var(--font-heading)", fontWeight: 700, fontSize: 14, cursor: "pointer", transition: "background 0.15s" }}
                 onMouseEnter={e => { e.currentTarget.style.background = "var(--accent-light)"; }}
                 onMouseLeave={e => { e.currentTarget.style.background = "#fff"; }}>
-                今すぐ試す →
+                ¥280/月で使い始める →
               </button>
             </div>
 
@@ -530,11 +519,11 @@ export default function LandingPage() {
                     </li>
                   ))}
                 </ul>
-                <button onClick={() => router.push("/app")}
+                <button onClick={() => router.push("/app?plan=standard")}
                   style={{ width: "100%", padding: "14px", borderRadius: 12, border: "none", background: "var(--accent)", color: "#fff", fontFamily: "var(--font-heading)", fontWeight: 700, fontSize: 14, cursor: "pointer", boxShadow: "0 4px 20px rgba(230,149,26,0.35)", transition: "transform 0.15s" }}
                   onMouseEnter={e => e.currentTarget.style.transform = "translateY(-2px)"}
                   onMouseLeave={e => e.currentTarget.style.transform = ""}>
-                  今すぐ試す →
+                  スタンダードで始める →
                 </button>
               </div>
             </div>
@@ -566,11 +555,11 @@ export default function LandingPage() {
                   </li>
                 ))}
               </ul>
-              <button onClick={() => router.push("/app")}
+              <button onClick={() => router.push("/app?plan=premium")}
                 style={{ width: "100%", padding: "13px", borderRadius: 12, border: "1.5px solid var(--accent)", background: "#fff", color: "var(--accent)", fontFamily: "var(--font-heading)", fontWeight: 700, fontSize: 14, cursor: "pointer", transition: "background 0.15s" }}
                 onMouseEnter={e => { e.currentTarget.style.background = "var(--accent-light)"; }}
                 onMouseLeave={e => { e.currentTarget.style.background = "#fff"; }}>
-                今すぐ試す →
+                プレミアムを試してみる →
               </button>
             </div>
           </div>
@@ -653,10 +642,10 @@ export default function LandingPage() {
             今夜から<span style={{ color: "var(--accent)" }}>卒業</span>しよう。
           </h2>
           <p style={{ fontSize: 15, color: "var(--text-secondary)", marginBottom: 12 }}>
-            クレジットカード不要。<br />まず1回、無料でお試しいただけます。
+            まず3回、無料でお試しいただけます。<br />気に入ったらそのままプランへ。
           </p>
           <div style={{ display: "flex", flexWrap: "wrap", gap: 8, justifyContent: "center", marginBottom: 28 }}>
-            {["✓ クレカ不要", "✓ 1回無料お試し", "✓ いつでも解約OK"].map(t => (
+            {["✓ 3回無料お試し", "✓ いつでも解約OK"].map(t => (
               <span key={t} style={{ background: "var(--bg-subtle)", borderRadius: 20, padding: "5px 12px", fontSize: 12, fontFamily: "var(--font-heading)", fontWeight: 600, color: "var(--text-secondary)" }}>{t}</span>
             ))}
           </div>
