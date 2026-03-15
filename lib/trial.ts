@@ -1,4 +1,4 @@
-const FREE_CREDITS = 5;
+const FREE_CREDITS = 1;
 const CAMPAIGN_LIMIT = 30;
 const LIGHT_MONTHLY_LIMIT = 10;
 const PREMIUM_IMAGE_MONTHLY_LIMIT = 15;
@@ -175,6 +175,13 @@ export function setSubscription(
   if (plan) {
     store[deviceId].plan = plan;
   }
+}
+
+export function addFreeCredits(deviceId: string, amount: number): void {
+  if (!(deviceId in store)) {
+    store[deviceId] = { trialStartedAt: new Date().toISOString(), freeCreditsLeft: 0 };
+  }
+  store[deviceId].freeCreditsLeft = (store[deviceId].freeCreditsLeft ?? 0) + amount;
 }
 
 export function getSubscriptionId(deviceId: string): string | null {

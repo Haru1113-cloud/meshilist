@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import Stripe from "stripe";
-import { setSubscription, getDeviceBySubscriptionId, PlanType } from "@/lib/trial";
+import { setSubscription, getDeviceBySubscriptionId, addFreeCredits, PlanType } from "@/lib/trial";
 
 export async function POST(request: NextRequest) {
   const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
@@ -24,6 +24,12 @@ export async function POST(request: NextRequest) {
       const session = event.data.object as Stripe.Checkout.Session;
       const deviceId = session.metadata?.deviceId;
       const planId = session.metadata?.planId as PlanType | undefined;
+      // Single credit purchase
+      if (deviceId && session.mode === "payment" && session.metadata?.planId === "credits") {
+        addFreeCredits(deviceId, 5);
+        break;
+      }
+      // Subscription
       if (deviceId && session.subscription) {
         setSubscription(deviceId, session.subscription as string, "active", planId);
       }

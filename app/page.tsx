@@ -168,7 +168,7 @@ export default function LandingPage() {
                 <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
                   <span style={{ fontSize: 20, flexShrink: 0 }}>🎁</span>
                   <div style={{ fontFamily: "var(--font-heading)", fontWeight: 800, fontSize: 13, color: "#92400e" }}>
-                    先着30名様限定 — 5回分のクレジットを無料プレゼント
+                    まず1回、無料でお試し
                   </div>
                 </div>
               </div>
@@ -348,7 +348,7 @@ export default function LandingPage() {
               onMouseLeave={e => { e.currentTarget.style.transform = ""; }}>
               まず試してみる（無料） →
             </button>
-            <p style={{ fontSize: 11, color: "var(--text-muted)", marginTop: 10 }}>クレジットカード不要 · 先着30名様に5回分クレジット無料プレゼント中</p>
+            <p style={{ fontSize: 11, color: "var(--text-muted)", marginTop: 10 }}>クレジットカード不要 · 登録不要・まず1回無料で試せる</p>
           </div>
         </div>
       </section>
@@ -450,7 +450,7 @@ export default function LandingPage() {
       <section style={{ padding: "56px 24px", background: "#deecd6" }}>
         <div style={{ maxWidth: 600, margin: "0 auto", textAlign: "center" }}>
           <p style={{ fontFamily: "var(--font-heading)", fontWeight: 800, fontSize: "clamp(18px, 3vw, 26px)", color: "#2f5228", marginBottom: 16, letterSpacing: "-0.02em" }}>
-            今夜から試してみませんか？<br />先着30名様に5回分のクレジットを無料プレゼント中。
+            今夜から試してみませんか？<br />登録不要、まず1回無料でお試しいただけます。
           </p>
           <button className="press-btn" onClick={() => router.push("/app")}
             style={{ padding: "14px 40px", borderRadius: 14, border: "none", background: "#4a7840", color: "#fff", fontFamily: "var(--font-heading)", fontWeight: 700, fontSize: 15, cursor: "pointer", boxShadow: "0 4px 20px rgba(74,120,64,0.3)" }}
@@ -470,7 +470,7 @@ export default function LandingPage() {
             あなたに合ったプランを
           </h2>
           <p style={{ fontSize: 14, color: "var(--text-secondary)", marginBottom: 8 }}>クレジットカード不要 · いつでも解約OK</p>
-          <p style={{ fontSize: 13, color: "var(--text-muted)", marginBottom: 48 }}>先着30名様限定、登録時に5回分のクレジットを無料でプレゼント中。</p>
+          <p style={{ fontSize: 13, color: "var(--text-muted)", marginBottom: 48 }}>登録不要。まず1回、無料でお試しいただけます。</p>
 
           <div className="lp-grid-3-20">
             {/* ライト */}
@@ -653,10 +653,10 @@ export default function LandingPage() {
             今夜から<span style={{ color: "var(--accent)" }}>卒業</span>しよう。
           </h2>
           <p style={{ fontSize: 15, color: "var(--text-secondary)", marginBottom: 12 }}>
-            クレジットカード不要。<br />先着30名様に5回分のクレジットを無料でプレゼント中です。
+            クレジットカード不要。<br />まず1回、無料でお試しいただけます。
           </p>
           <div style={{ display: "flex", flexWrap: "wrap", gap: 8, justifyContent: "center", marginBottom: 28 }}>
-            {["✓ クレカ不要", "✓ 先着30名様5回分無料", "✓ いつでも解約OK"].map(t => (
+            {["✓ クレカ不要", "✓ 1回無料お試し", "✓ いつでも解約OK"].map(t => (
               <span key={t} style={{ background: "var(--bg-subtle)", borderRadius: 20, padding: "5px 12px", fontSize: 12, fontFamily: "var(--font-heading)", fontWeight: 600, color: "var(--text-secondary)" }}>{t}</span>
             ))}
           </div>

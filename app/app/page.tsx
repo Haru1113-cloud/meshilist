@@ -840,6 +840,7 @@ function AppContent() {
 
   // UI
   const [showSubscribeModal, setShowSubscribeModal] = useState(false);
+  const [showPostGenModal, setShowPostGenModal] = useState(false);
   const [selectedPlan, setSelectedPlan] = useState<"light" | "standard" | "premium">("standard");
   const [copied, setCopied] = useState(false);
   const [showTip, setShowTip] = useState(false);
@@ -995,6 +996,17 @@ function AppContent() {
     } finally {
       setGenerating(false);
       setTimeout(() => outputRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }), 100);
+      // trial status を再取得
+      fetch("/api/trial", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ deviceId }),
+      }).then(r => r.json()).then(status => {
+        setTrialStatus(status);
+        // 無料クレジットを使い切ったら少し待ってモーダル表示
+        if (!status.subscribed && status.freeCreditsLeft === 0) {
+          setTimeout(() => setShowPostGenModal(true), 1800);
+        }
+      }).catch(() => {});
     }
   };
 
@@ -1180,7 +1192,10 @@ function AppContent() {
                   無料クレジット
                 </span>
                 <span style={{ fontFamily: "var(--font-heading)", fontSize: 12, color: "var(--text-muted)", marginLeft: 8 }}>
-                  残り <strong style={{ fontSize: 15, color: trialStatus.freeCreditsLeft === 0 ? "#dc2626" : trialStatus.freeCreditsLeft === 1 ? "#d97706" : "#16a34a" }}>{trialStatus.freeCreditsLeft}</strong> / {trialStatus.freeCreditsTotal} 回
+                  {trialStatus.freeCreditsLeft > 0
+                    ? <>無料お試し — あと <strong style={{ fontSize: 15, color: "#16a34a" }}>{trialStatus.freeCreditsLeft}</strong> 回</>
+                    : <strong style={{ color: "#dc2626" }}>無料お試し終了</strong>
+                  }
                 </span>
               </div>
               {/* Dot indicators */}
@@ -1653,6 +1668,63 @@ function AppContent() {
             } catch { /* キャンセルor非対応 */ }
           }}
         />
+      )}
+
+      {/* ── Post-generation upgrade modal ── */}
+      {showPostGenModal && (
+        <div onClick={() => setShowPostGenModal(false)}
+          style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.6)", zIndex: 110, display: "flex", alignItems: "center", justifyContent: "center", padding: 16 }}>
+          <div onClick={e => e.stopPropagation()}
+            style={{ background: "#fff", borderRadius: 24, padding: "32px 24px", maxWidth: 420, width: "100%", boxShadow: "0 20px 80px rgba(0,0,0,0.2)", textAlign: "center" }}>
+
+            <div style={{ fontSize: 48, marginBottom: 12 }}>🎉</div>
+            <h2 style={{ fontFamily: "var(--font-heading)", fontWeight: 800, fontSize: 20, color: "var(--text-primary)", letterSpacing: "-0.02em", marginBottom: 8 }}>
+              この献立、いかがでしたか？
+            </h2>
+            <p style={{ fontSize: 13, color: "var(--text-secondary)", lineHeight: 1.7, marginBottom: 24 }}>
+              無料お試しはここまでです。<br />続けるには以下から選んでください。
+            </p>
+
+            {/* Option A: クレジット単品 */}
+            <div onClick={() => {
+              setShowPostGenModal(false);
+              fetch("/api/checkout", {
+                method: "POST", headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ deviceId, planId: "credits" }),
+              }).then(r => r.json()).then(d => { if (d.url) window.location.href = d.url; });
+            }}
+              style={{ borderRadius: 14, padding: "16px 20px", marginBottom: 10, border: "2px solid var(--accent)", background: "var(--accent-light)", cursor: "pointer", textAlign: "left" }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                <div>
+                  <div style={{ fontFamily: "var(--font-heading)", fontWeight: 800, fontSize: 14, color: "var(--text-primary)" }}>
+                    🎟️ クレジット単品購入
+                  </div>
+                  <div style={{ fontSize: 12, color: "var(--text-secondary)", marginTop: 2 }}>5回分 — 期限なし・サブスク不要</div>
+                </div>
+                <div style={{ fontFamily: "var(--font-heading)", fontWeight: 800, fontSize: 22, color: "var(--accent)" }}>¥400</div>
+              </div>
+            </div>
+
+            {/* Option B: サブスク */}
+            <div onClick={() => { setShowPostGenModal(false); setShowSubscribeModal(true); }}
+              style={{ borderRadius: 14, padding: "16px 20px", marginBottom: 20, border: "1.5px solid var(--border)", background: "#fff", cursor: "pointer", textAlign: "left" }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                <div>
+                  <div style={{ fontFamily: "var(--font-heading)", fontWeight: 800, fontSize: 14, color: "var(--text-primary)" }}>
+                    🔄 月額プラン
+                  </div>
+                  <div style={{ fontSize: 12, color: "var(--text-secondary)", marginTop: 2 }}>¥280〜 / 月 — 無制限で使いたい方に</div>
+                </div>
+                <span style={{ fontSize: 18 }}>→</span>
+              </div>
+            </div>
+
+            <button onClick={() => setShowPostGenModal(false)}
+              style={{ width: "100%", padding: "11px", borderRadius: 10, border: "1px solid var(--border)", background: "none", color: "var(--text-muted)", fontFamily: "var(--font-heading)", fontWeight: 600, fontSize: 13, cursor: "pointer" }}>
+              結果だけ確認する
+            </button>
+          </div>
+        </div>
       )}
 
       {/* Subscribe Modal */}
