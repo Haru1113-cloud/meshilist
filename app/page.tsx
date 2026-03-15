@@ -152,7 +152,7 @@ export default function LandingPage() {
       </div>
 
       {/* ── Hero ── */}
-      <section style={{ padding: "72px 24px 56px", background: "#fff" }}>
+      <section className="hero-section" style={{ padding: "72px 24px 56px", background: "#fff" }}>
         <div style={{ maxWidth: 1040, margin: "0 auto" }}>
           <div className="lp-hero">
 

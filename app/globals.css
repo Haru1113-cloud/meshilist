@@ -186,6 +186,8 @@ h1, h2, h3, h4,
 .lp-testimonials-right { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; align-content: start; }
 
 @media (max-width: 720px) {
+  .hero-section { padding-top: 32px !important; padding-bottom: 32px !important; }
+
   .lp-hero       { grid-template-columns: 1fr; gap: 32px; }
   .lp-hero-test  { grid-template-columns: 1fr; gap: 16px; }
   .lp-grid-3,
