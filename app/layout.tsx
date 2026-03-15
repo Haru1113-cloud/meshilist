@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Montserrat, Noto_Sans_JP, Pacifico } from "next/font/google";
 import "./globals.css";
 
@@ -19,6 +19,11 @@ const pacifico = Pacifico({
   subsets: ["latin"],
   weight: ["400"],
 });
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+};
 
 export const metadata: Metadata = {
   title: "メシリスト — 今夜の献立、AIに決めてもらおう",

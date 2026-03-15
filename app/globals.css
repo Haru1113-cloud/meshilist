@@ -167,6 +167,12 @@ h1, h2, h3, h4,
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: #c8c0b4; border-radius: 4px; }
 
+/* ── Nav responsive ── */
+.nav-links { display: flex; align-items: center; gap: 4px; flex-shrink: 0; flex-wrap: nowrap; }
+@media (max-width: 600px) {
+  .nav-links .nav-text-link { display: none; }
+}
+
 /* ── Landing page responsive grids ── */
 .lp-hero        { display: grid; grid-template-columns: minmax(0,1fr) minmax(0,1fr); gap: 56px; align-items: center; }
 .lp-grid-3      { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }

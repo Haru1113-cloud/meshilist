@@ -103,8 +103,8 @@ export default function LandingPage() {
 
       {/* ── Nav ── */}
       <nav style={{ position: "sticky", top: 0, zIndex: 50, background: "rgba(245,243,238,0.92)", backdropFilter: "blur(12px)", borderBottom: "1px solid var(--border)", padding: "0 24px" }}>
-        <div style={{ maxWidth: 1080, margin: "0 auto", height: 60, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-          <a href="/" style={{ display: "flex", alignItems: "center", gap: 8, textDecoration: "none" }}>
+        <div style={{ maxWidth: 1080, margin: "0 auto", minHeight: 60, display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "nowrap", overflow: "hidden" }}>
+          <a href="/" style={{ display: "flex", alignItems: "center", gap: 8, textDecoration: "none", flexShrink: 0 }}>
             <KoocaBowlIcon size={34} />
             <div style={{ display: "flex", flexDirection: "column", lineHeight: 1.1 }}>
               <span style={{ fontFamily: "var(--font-heading)", fontWeight: 800, fontSize: 17, color: "var(--text-primary)", letterSpacing: "-0.03em" }}>
@@ -113,22 +113,22 @@ export default function LandingPage() {
               <span style={{ fontFamily: "var(--font-pacifico)", fontSize: 10, color: "var(--text-muted)" }}>by kooca</span>
             </div>
           </a>
-          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-            <button onClick={() => document.getElementById("pricing")?.scrollIntoView({ behavior: "smooth" })}
+          <div className="nav-links">
+            <button className="nav-text-link" onClick={() => document.getElementById("pricing")?.scrollIntoView({ behavior: "smooth" })}
               style={{ padding: "8px 14px", borderRadius: 10, fontSize: 13, fontFamily: "var(--font-heading)", fontWeight: 600, color: "var(--text-secondary)", textDecoration: "none", border: "1px solid transparent", background: "none", cursor: "pointer" }}
               onMouseEnter={e => (e.currentTarget.style.color = "var(--accent)")}
               onMouseLeave={e => (e.currentTarget.style.color = "var(--text-secondary)")}
             >
               料金表
             </button>
-            <button onClick={() => document.getElementById("faq")?.scrollIntoView({ behavior: "smooth" })}
+            <button className="nav-text-link" onClick={() => document.getElementById("faq")?.scrollIntoView({ behavior: "smooth" })}
               style={{ padding: "8px 14px", borderRadius: 10, fontSize: 13, fontFamily: "var(--font-heading)", fontWeight: 600, color: "var(--text-secondary)", textDecoration: "none", border: "1px solid transparent", background: "none", cursor: "pointer" }}
               onMouseEnter={e => (e.currentTarget.style.color = "var(--accent)")}
               onMouseLeave={e => (e.currentTarget.style.color = "var(--text-secondary)")}
             >
               よくある質問
             </button>
-            <a href="/recipes" style={{ padding: "8px 14px", borderRadius: 10, fontSize: 13, fontFamily: "var(--font-heading)", fontWeight: 600, color: "var(--text-secondary)", textDecoration: "none", border: "1px solid var(--border)", background: "#fff" }}
+            <a className="nav-text-link" href="/recipes" style={{ padding: "8px 14px", borderRadius: 10, fontSize: 13, fontFamily: "var(--font-heading)", fontWeight: 600, color: "var(--text-secondary)", textDecoration: "none", border: "1px solid var(--border)", background: "#fff" }}
               onMouseEnter={e => (e.currentTarget.style.borderColor = "var(--accent)")}
               onMouseLeave={e => (e.currentTarget.style.borderColor = "var(--border)")}
             >
