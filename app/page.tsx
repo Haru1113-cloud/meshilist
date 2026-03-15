@@ -82,6 +82,26 @@ function KoocaBowlIcon({ size = 28 }: { size?: number }) {
   return <img src="/kooca-bowl-transparent.png" alt="kooca" width={size} style={{ display: "block" }} />;
 }
 
+function getOrCreateDeviceId(): string {
+  try {
+    let id = localStorage.getItem("meshilist_device_id");
+    if (!id) { id = crypto.randomUUID(); localStorage.setItem("meshilist_device_id", id); }
+    return id;
+  } catch { return "unknown"; }
+}
+
+async function goToStripe(planId: "light" | "standard" | "premium") {
+  const deviceId = getOrCreateDeviceId();
+  try {
+    const res = await fetch("/api/checkout", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ deviceId, planId }),
+    });
+    const { url } = await res.json();
+    if (url) window.location.href = url;
+  } catch { alert("エラーが発生しました。もう一度お試しください。"); }
+}
+
 export default function LandingPage() {
   const router = useRouter();
   const [openFaq, setOpenFaq] = useState<number | null>(null);
@@ -489,7 +509,7 @@ export default function LandingPage() {
                   </li>
                 ))}
               </ul>
-              <button onClick={() => router.push("/app?plan=light")}
+              <button onClick={() => goToStripe("light")}
                 style={{ width: "100%", padding: "13px", borderRadius: 12, border: "1.5px solid var(--accent)", background: "#fff", color: "var(--accent)", fontFamily: "var(--font-heading)", fontWeight: 700, fontSize: 14, cursor: "pointer", transition: "background 0.15s" }}
                 onMouseEnter={e => { e.currentTarget.style.background = "var(--accent-light)"; }}
                 onMouseLeave={e => { e.currentTarget.style.background = "#fff"; }}>
@@ -519,7 +539,7 @@ export default function LandingPage() {
                     </li>
                   ))}
                 </ul>
-                <button onClick={() => router.push("/app?plan=standard")}
+                <button onClick={() => goToStripe("standard")}
                   style={{ width: "100%", padding: "14px", borderRadius: 12, border: "none", background: "var(--accent)", color: "#fff", fontFamily: "var(--font-heading)", fontWeight: 700, fontSize: 14, cursor: "pointer", boxShadow: "0 4px 20px rgba(230,149,26,0.35)", transition: "transform 0.15s" }}
                   onMouseEnter={e => e.currentTarget.style.transform = "translateY(-2px)"}
                   onMouseLeave={e => e.currentTarget.style.transform = ""}>
@@ -555,7 +575,7 @@ export default function LandingPage() {
                   </li>
                 ))}
               </ul>
-              <button onClick={() => router.push("/app?plan=premium")}
+              <button onClick={() => goToStripe("premium")}
                 style={{ width: "100%", padding: "13px", borderRadius: 12, border: "1.5px solid var(--accent)", background: "#fff", color: "var(--accent)", fontFamily: "var(--font-heading)", fontWeight: 700, fontSize: 14, cursor: "pointer", transition: "background 0.15s" }}
                 onMouseEnter={e => { e.currentTarget.style.background = "var(--accent-light)"; }}
                 onMouseLeave={e => { e.currentTarget.style.background = "#fff"; }}>
