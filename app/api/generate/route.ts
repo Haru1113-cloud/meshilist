@@ -1,5 +1,15 @@
 import { NextRequest } from "next/server";
 import { initUser, canGenerate, incrementGeneration } from "@/lib/trial";
+import { Ratelimit } from "@upstash/ratelimit";
+import { Redis } from "@upstash/redis";
+
+const ratelimit = new Ratelimit({
+  redis: new Redis({
+    url: process.env.KV_REST_API_URL!,
+    token: process.env.KV_REST_API_TOKEN!,
+  }),
+  limiter: Ratelimit.slidingWindow(10, "1 h"),
+});
 
 const MOCK_OUTPUT_WEEK = `### 📅 献立表
 | 日 | 朝食 | 昼食 | 夕食 |
@@ -180,6 +190,11 @@ export async function POST(request: NextRequest) {
 
   if (!deviceId || !ingredients) {
     return new Response("Missing required fields", { status: 400 });
+  }
+
+  const { success } = await ratelimit.limit(deviceId);
+  if (!success) {
+    return new Response("Too many requests", { status: 429 });
   }
 
   await initUser(deviceId);
