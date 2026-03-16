@@ -44,6 +44,11 @@ function currentMonth(): string {
   return new Date().toISOString().slice(0, 7);
 }
 
+function isAdmin(deviceId: string): boolean {
+  const adminId = process.env.ADMIN_DEVICE_ID;
+  return !!adminId && deviceId === adminId;
+}
+
 export function initUser(deviceId: string): void {
   const store = loadStore();
   if (!(deviceId in store)) {
@@ -112,6 +117,7 @@ export function getTrialStatus(deviceId: string): {
 }
 
 export function canGenerate(deviceId: string): boolean {
+  if (isAdmin(deviceId)) return true;
   const status = getTrialStatus(deviceId);
   if (!status.trialActive) return false;
   if (status.subscribed && status.plan === "light") {
@@ -121,6 +127,7 @@ export function canGenerate(deviceId: string): boolean {
 }
 
 export function canGenerateImage(deviceId: string): boolean {
+  if (isAdmin(deviceId)) return true;
   return getTrialStatus(deviceId).trialActive;
 }
 
@@ -135,6 +142,7 @@ export function canSave(deviceId: string): boolean {
 }
 
 export function incrementGeneration(deviceId: string): void {
+  if (isAdmin(deviceId)) return;
   const store = loadStore();
   if (!(deviceId in store)) return;
   const record = store[deviceId];
@@ -155,6 +163,7 @@ export function incrementGeneration(deviceId: string): void {
 }
 
 export function incrementImageGeneration(deviceId: string): void {
+  if (isAdmin(deviceId)) return;
   const store = loadStore();
   if (!(deviceId in store)) return;
   const record = store[deviceId];
