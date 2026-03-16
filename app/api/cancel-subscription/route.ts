@@ -9,7 +9,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "deviceId required" }, { status: 400 });
   }
 
-  const subscriptionId = getSubscriptionId(deviceId);
+  const subscriptionId = await getSubscriptionId(deviceId);
   if (!subscriptionId) {
     return NextResponse.json({ error: "no_subscription" }, { status: 404 });
   }

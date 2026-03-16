@@ -26,12 +26,12 @@ export async function POST(request: NextRequest) {
       const planId = session.metadata?.planId as PlanType | undefined;
       // Single credit purchase
       if (deviceId && session.mode === "payment" && session.metadata?.planId === "credits") {
-        addFreeCredits(deviceId, 5);
+        await addFreeCredits(deviceId, 5);
         break;
       }
       // Subscription
       if (deviceId && session.subscription) {
-        setSubscription(deviceId, session.subscription as string, "active", planId);
+        await setSubscription(deviceId, session.subscription as string, "active", planId);
       }
       break;
     }
@@ -40,9 +40,9 @@ export async function POST(request: NextRequest) {
       const subscription = event.data.object as Stripe.Subscription;
       const deviceId =
         subscription.metadata?.deviceId ||
-        getDeviceBySubscriptionId(subscription.id);
+        await getDeviceBySubscriptionId(subscription.id);
       if (deviceId) {
-        setSubscription(deviceId, subscription.id, "canceled");
+        await setSubscription(deviceId, subscription.id, "canceled");
       }
       break;
     }

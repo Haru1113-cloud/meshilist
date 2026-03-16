@@ -182,13 +182,13 @@ export async function POST(request: NextRequest) {
     return new Response("Missing required fields", { status: 400 });
   }
 
-  initUser(deviceId);
+  await initUser(deviceId);
 
-  if (!canGenerate(deviceId)) {
+  if (!await canGenerate(deviceId)) {
     return new Response("Trial expired", { status: 402 });
   }
 
-  incrementGeneration(deviceId);
+  await incrementGeneration(deviceId);
 
   // APIキー未設定の場合はモック献立を返す
   const apiKey = process.env.ANTHROPIC_API_KEY;

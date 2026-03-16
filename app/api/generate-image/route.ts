@@ -8,7 +8,7 @@ export async function POST(request: NextRequest) {
     return Response.json({ error: "Missing dish name" }, { status: 400 });
   }
 
-  if (!deviceId || !canGenerateImage(deviceId)) {
+  if (!deviceId || !await canGenerateImage(deviceId)) {
     return Response.json({ url: "" });
   }
 
@@ -18,7 +18,7 @@ export async function POST(request: NextRequest) {
     return Response.json({ url: "" });
   }
 
-  const quality = getImageQuality(deviceId);
+  const quality = await getImageQuality(deviceId);
   const { default: OpenAI } = await import("openai");
   const client = new OpenAI({ apiKey });
 
@@ -33,7 +33,7 @@ export async function POST(request: NextRequest) {
       quality,
     });
 
-    incrementImageGeneration(deviceId);
+    await incrementImageGeneration(deviceId);
 
     const url = response.data?.[0]?.url ?? "";
     const b64 = (response.data?.[0] as { b64_json?: string })?.b64_json;

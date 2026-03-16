@@ -1,12 +1,14 @@
-import fs from "fs";
-import path from "path";
+import { Redis } from "@upstash/redis";
 
 const FREE_CREDITS = 3;
 const CAMPAIGN_LIMIT = 30;
 const LIGHT_MONTHLY_LIMIT = 10;
 const PREMIUM_IMAGE_MONTHLY_LIMIT = 15;
 
-const DATA_PATH = path.join(process.cwd(), "data", "users.json");
+const redis = new Redis({
+  url: process.env.KV_REST_API_URL!,
+  token: process.env.KV_REST_API_TOKEN!,
+});
 
 export type PlanType = "light" | "standard" | "premium";
 
@@ -22,24 +24,6 @@ interface UserRecord {
   imageMonth?: string;
 }
 
-function loadStore(): Record<string, UserRecord> {
-  try {
-    const raw = fs.readFileSync(DATA_PATH, "utf-8");
-    return JSON.parse(raw);
-  } catch {
-    return {};
-  }
-}
-
-function saveStore(store: Record<string, UserRecord>): void {
-  try {
-    fs.mkdirSync(path.dirname(DATA_PATH), { recursive: true });
-    fs.writeFileSync(DATA_PATH, JSON.stringify(store, null, 2));
-  } catch (e) {
-    console.error("Failed to save store:", e);
-  }
-}
-
 function currentMonth(): string {
   return new Date().toISOString().slice(0, 7);
 }
@@ -49,22 +33,29 @@ function isAdmin(deviceId: string): boolean {
   return !!adminId && deviceId === adminId;
 }
 
-export function initUser(deviceId: string): void {
-  const store = loadStore();
-  if (!(deviceId in store)) {
-    store[deviceId] = {
+async function getUser(deviceId: string): Promise<UserRecord | null> {
+  return redis.get<UserRecord>(`user:${deviceId}`);
+}
+
+async function setUser(deviceId: string, record: UserRecord): Promise<void> {
+  await redis.set(`user:${deviceId}`, record);
+}
+
+export async function initUser(deviceId: string): Promise<void> {
+  const existing = await getUser(deviceId);
+  if (!existing) {
+    await setUser(deviceId, {
       trialStartedAt: new Date().toISOString(),
       freeCreditsLeft: FREE_CREDITS,
-    };
-    saveStore(store);
-  } else if (store[deviceId].freeCreditsLeft === undefined) {
-    // 既存ユーザーのマイグレーション
-    store[deviceId].freeCreditsLeft = FREE_CREDITS;
-    saveStore(store);
+    });
+    await redis.incr("user_count");
+  } else if (existing.freeCreditsLeft === undefined) {
+    existing.freeCreditsLeft = FREE_CREDITS;
+    await setUser(deviceId, existing);
   }
 }
 
-export function getTrialStatus(deviceId: string): {
+export async function getTrialStatus(deviceId: string): Promise<{
   trialActive: boolean;
   daysLeft: number;
   subscribed: boolean;
@@ -73,9 +64,8 @@ export function getTrialStatus(deviceId: string): {
   imageGenerationsLeft: number | null;
   freeCreditsLeft: number;
   freeCreditsTotal: number;
-} {
-  const store = loadStore();
-  const record = store[deviceId];
+}> {
+  const record = await getUser(deviceId);
 
   if (!record) {
     return {
@@ -116,9 +106,9 @@ export function getTrialStatus(deviceId: string): {
   };
 }
 
-export function canGenerate(deviceId: string): boolean {
+export async function canGenerate(deviceId: string): Promise<boolean> {
   if (isAdmin(deviceId)) return true;
-  const status = getTrialStatus(deviceId);
+  const status = await getTrialStatus(deviceId);
   if (!status.trialActive) return false;
   if (status.subscribed && status.plan === "light") {
     return (status.generationsLeft ?? 0) > 0;
@@ -126,26 +116,25 @@ export function canGenerate(deviceId: string): boolean {
   return true;
 }
 
-export function canGenerateImage(deviceId: string): boolean {
+export async function canGenerateImage(deviceId: string): Promise<boolean> {
   if (isAdmin(deviceId)) return true;
-  return getTrialStatus(deviceId).trialActive;
+  return (await getTrialStatus(deviceId)).trialActive;
 }
 
-export function getImageQuality(deviceId: string): "low" | "high" {
-  return getTrialStatus(deviceId).plan === "premium" ? "high" : "low";
+export async function getImageQuality(deviceId: string): Promise<"low" | "high"> {
+  return (await getTrialStatus(deviceId)).plan === "premium" ? "high" : "low";
 }
 
-export function canSave(deviceId: string): boolean {
-  const status = getTrialStatus(deviceId);
+export async function canSave(deviceId: string): Promise<boolean> {
+  const status = await getTrialStatus(deviceId);
   if (!status.subscribed) return status.trialActive;
   return status.plan === "standard" || status.plan === "premium";
 }
 
-export function incrementGeneration(deviceId: string): void {
+export async function incrementGeneration(deviceId: string): Promise<void> {
   if (isAdmin(deviceId)) return;
-  const store = loadStore();
-  if (!(deviceId in store)) return;
-  const record = store[deviceId];
+  const record = await getUser(deviceId);
+  if (!record) return;
 
   if (record.plan === "light" && record.subscriptionStatus === "active") {
     const month = currentMonth();
@@ -159,14 +148,14 @@ export function incrementGeneration(deviceId: string): void {
     record.freeCreditsLeft = Math.max(0, (record.freeCreditsLeft ?? 0) - 1);
   }
 
-  saveStore(store);
+  await setUser(deviceId, record);
 }
 
-export function incrementImageGeneration(deviceId: string): void {
+export async function incrementImageGeneration(deviceId: string): Promise<void> {
   if (isAdmin(deviceId)) return;
-  const store = loadStore();
-  if (!(deviceId in store)) return;
-  const record = store[deviceId];
+  const record = await getUser(deviceId);
+  if (!record) return;
+
   const month = currentMonth();
   if (record.imageMonth !== month) {
     record.imageCount = 1;
@@ -174,47 +163,48 @@ export function incrementImageGeneration(deviceId: string): void {
   } else {
     record.imageCount = (record.imageCount ?? 0) + 1;
   }
-  saveStore(store);
+
+  await setUser(deviceId, record);
 }
 
-export function setSubscription(
+export async function setSubscription(
   deviceId: string,
   subscriptionId: string,
   status: "active" | "canceled",
   plan?: PlanType
-): void {
-  const store = loadStore();
-  if (!(deviceId in store)) {
-    store[deviceId] = { trialStartedAt: new Date().toISOString(), freeCreditsLeft: 0 };
+): Promise<void> {
+  let record = await getUser(deviceId);
+  if (!record) {
+    record = { trialStartedAt: new Date().toISOString(), freeCreditsLeft: 0 };
+    await redis.incr("user_count");
   }
-  store[deviceId].subscriptionId = subscriptionId;
-  store[deviceId].subscriptionStatus = status;
-  if (plan) store[deviceId].plan = plan;
-  saveStore(store);
+  record.subscriptionId = subscriptionId;
+  record.subscriptionStatus = status;
+  if (plan) record.plan = plan;
+  await setUser(deviceId, record);
+  await redis.set(`sub:${subscriptionId}`, deviceId);
 }
 
-export function addFreeCredits(deviceId: string, amount: number): void {
-  const store = loadStore();
-  if (!(deviceId in store)) {
-    store[deviceId] = { trialStartedAt: new Date().toISOString(), freeCreditsLeft: 0 };
+export async function addFreeCredits(deviceId: string, amount: number): Promise<void> {
+  let record = await getUser(deviceId);
+  if (!record) {
+    record = { trialStartedAt: new Date().toISOString(), freeCreditsLeft: 0 };
+    await redis.incr("user_count");
   }
-  store[deviceId].freeCreditsLeft = (store[deviceId].freeCreditsLeft ?? 0) + amount;
-  saveStore(store);
+  record.freeCreditsLeft = (record.freeCreditsLeft ?? 0) + amount;
+  await setUser(deviceId, record);
 }
 
-export function getSubscriptionId(deviceId: string): string | null {
-  return loadStore()[deviceId]?.subscriptionId ?? null;
+export async function getSubscriptionId(deviceId: string): Promise<string | null> {
+  return (await getUser(deviceId))?.subscriptionId ?? null;
 }
 
-export function getDeviceBySubscriptionId(subscriptionId: string): string | null {
-  for (const [deviceId, record] of Object.entries(loadStore())) {
-    if (record.subscriptionId === subscriptionId) return deviceId;
-  }
-  return null;
+export async function getDeviceBySubscriptionId(subscriptionId: string): Promise<string | null> {
+  return redis.get<string>(`sub:${subscriptionId}`);
 }
 
-export function getUserCount(): number {
-  return Object.keys(loadStore()).length;
+export async function getUserCount(): Promise<number> {
+  return (await redis.get<number>("user_count")) ?? 0;
 }
 
 export { CAMPAIGN_LIMIT, FREE_CREDITS };

@@ -8,8 +8,8 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Missing deviceId" }, { status: 400 });
   }
 
-  initUser(deviceId);
-  const status = getTrialStatus(deviceId);
+  await initUser(deviceId);
+  const status = await getTrialStatus(deviceId);
 
   return NextResponse.json(status);
 }
