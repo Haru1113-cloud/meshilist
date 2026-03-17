@@ -1051,8 +1051,8 @@ function AppContent() {
     if (!parsedOutput) return;
     const dishNames = parsedOutput.recipe
       .match(/\*\*(.+?)\*\*/g)?.map(s => s.replace(/\*\*/g, "")) ?? [];
-    const menuLine = dishNames.slice(0, 5).join("・") + (dishNames.length > 5 ? "など" : "");
-    const text = `🍽️ 今週のAI献立\n${menuLine}\n\nAIが瞬時に献立を生成✨\nhttps://meshilist.com\n#メシリスト #AI献立 #今日の献立`;
+    const menuLine = dishNames.slice(0, 3).join("・") + (dishNames.length > 3 ? "など" : "");
+    const text = `「今日何作ろう」をAIが即解決🤖\n\n${menuLine}\n\n食材を入れるだけで献立＋レシピ＋買い物リストが自動生成✨\n無料で試せます👇\nhttps://meshilist.com\n\n#今日の献立 #献立決め #時短料理 #共働き飯 #子育てごはん #AI献立`;
     setShareMenuText(text);
     setShareImageDataUrl(null);
     setShareImageFile(null);
