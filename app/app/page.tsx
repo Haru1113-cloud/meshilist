@@ -1052,7 +1052,7 @@ function AppContent() {
     const dishNames = parsedOutput.recipe
       .match(/\*\*(.+?)\*\*/g)?.map(s => s.replace(/\*\*/g, "")) ?? [];
     const menuLine = dishNames.slice(0, 5).join("・") + (dishNames.length > 5 ? "など" : "");
-    const text = `🍽️ 今週のAI献立\n${menuLine}\n\nメシリストでかんたん献立生成✨\n#メシリスト #AI献立 #今日の献立`;
+    const text = `🍽️ 今週のAI献立\n${menuLine}\n\nAIが瞬時に献立を生成✨\nhttps://meshilist.com\n#メシリスト #AI献立 #今日の献立`;
     setShareMenuText(text);
     setShareImageDataUrl(null);
     setShareImageFile(null);
@@ -1073,8 +1073,9 @@ function AppContent() {
     window.open(`https://twitter.com/intent/tweet?text=${text}`, "_blank");
   };
   const handleShareLine = () => {
+    const url = encodeURIComponent("https://meshilist.com");
     const text = encodeURIComponent(shareMenuText);
-    window.open(`https://social-plugins.line.me/lineit/share?text=${text}`, "_blank");
+    window.open(`https://social-plugins.line.me/lineit/share?url=${url}&text=${text}`, "_blank");
   };
   const handleShareNative = async () => {
     try {
