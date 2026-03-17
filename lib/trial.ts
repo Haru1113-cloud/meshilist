@@ -29,8 +29,8 @@ function currentMonth(): string {
 }
 
 function isAdmin(deviceId: string): boolean {
-  const adminId = process.env.ADMIN_DEVICE_ID;
-  return !!adminId && deviceId === adminId;
+  const adminIds = (process.env.ADMIN_DEVICE_ID ?? "").split(",").map(s => s.trim()).filter(Boolean);
+  return adminIds.includes(deviceId);
 }
 
 async function getUser(deviceId: string): Promise<UserRecord | null> {
