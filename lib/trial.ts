@@ -121,8 +121,8 @@ export async function canGenerateImage(deviceId: string): Promise<boolean> {
   return (await getTrialStatus(deviceId)).trialActive;
 }
 
-export async function getImageQuality(deviceId: string): Promise<"low" | "high"> {
-  return (await getTrialStatus(deviceId)).plan === "premium" ? "high" : "low";
+export async function getImageQuality(deviceId: string): Promise<"low" | "medium"> {
+  return (await getTrialStatus(deviceId)).plan === "premium" ? "medium" : "low";
 }
 
 export async function canSave(deviceId: string): Promise<boolean> {

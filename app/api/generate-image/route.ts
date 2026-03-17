@@ -18,7 +18,7 @@ export async function POST(request: NextRequest) {
     return Response.json({ url: "" });
   }
 
-  const quality = await getImageQuality(deviceId);
+  const quality: "low" | "medium" | "high" = await getImageQuality(deviceId);
   const { default: OpenAI } = await import("openai");
   const client = new OpenAI({ apiKey });
 
