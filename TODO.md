@@ -18,19 +18,21 @@
 
 ---
 
-## 待機中 ⏳
+## 2026-03-17 やったこと ✅
 
-- [ ] Stripe本人確認（免許証）審査待ち（数時間〜1日）
-- [ ] meshilist.com のDNS反映待ち（数分〜数時間）
+### ドメイン反映
+- お名前.comのネームサーバーを `01.dnsv.jp` ～ `04.dnsv.jp` に変更 → DNS反映完了
+- Vercel Valid Configuration 確認済み
+
+### 本番課金テスト
+- `NEXT_PUBLIC_BASE_URL` を `https://meshilist.com` に更新 → Redeploy
+- Stripe Price IDを正しいアカウントのものに修正
+- 実カードで課金テスト成功 ✅
+- Webhook動作・プラン反映確認済み ✅
 
 ---
 
 ## まだやること 📋
-
-### 🔴 優先度高
-- [ ] DNS反映後、VercelのDomainsで「Refresh」を押してValid Configurationになるか確認
-- [ ] DNS反映後、Vercel環境変数の `NEXT_PUBLIC_BASE_URL` を `https://meshilist.com` に変更してredeploy
-- [ ] Stripe本人確認承認後、実際に課金テストを実施（本番カードで）
 
 ### 🟡 優先度中
 - [ ] Stripe WebhookのURLを `https://meshilist.com/api/webhook` に更新（任意）
