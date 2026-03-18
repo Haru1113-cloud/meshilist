@@ -1,6 +1,8 @@
 import { NextRequest } from "next/server";
 import { canGenerateImage, getImageQuality, incrementImageGeneration } from "@/lib/trial";
 
+export const maxDuration = 60;
+
 export async function POST(request: NextRequest) {
   const { dish, deviceId } = await request.json();
 
