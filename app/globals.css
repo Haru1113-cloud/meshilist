@@ -208,7 +208,7 @@ h1, h2, h3, h4,
 .result-back-short { display: none; }
 .result-back-full  { display: inline; }
 @media (max-width: 480px) {
-  .result-btn-label  { display: none; }
+  .result-btn-label-copy { display: none; }
   .result-back-full  { display: none; }
   .result-back-short { display: inline; }
 }

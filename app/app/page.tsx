@@ -1474,11 +1474,11 @@ function AppContent() {
                   </button>
                   <button onClick={handleShare}
                     style={{ padding: "6px 10px", borderRadius: 8, border: "1px solid var(--border)", background: "var(--bg-subtle)", color: "var(--text-secondary)", fontFamily: "var(--font-heading)", fontWeight: 600, fontSize: 12, cursor: "pointer", display: "flex", alignItems: "center", gap: 4, whiteSpace: "nowrap" }}>
-                    📤<span className="result-btn-label"> シェア</span>
+                    📤 シェア
                   </button>
                   <button onClick={handleCopy}
                     style={{ padding: "6px 10px", borderRadius: 8, border: "1px solid var(--border)", background: copied ? "var(--accent-light)" : "var(--bg-subtle)", color: copied ? "var(--accent-dark)" : "var(--text-secondary)", fontFamily: "var(--font-heading)", fontWeight: 600, fontSize: 12, cursor: "pointer", transition: "all 0.15s", whiteSpace: "nowrap" }}>
-                    {copied ? "✓" : "📋"}<span className="result-btn-label">{copied ? " 済" : " コピー"}</span>
+                    {copied ? "✓" : "📋"}<span className="result-btn-label-copy">{copied ? " 済" : " コピー"}</span>
                   </button>
                 </div>
               )}
