@@ -849,6 +849,7 @@ function AppContent() {
 
   const abortRef = useRef<AbortController | null>(null);
   const outputRef = useRef<HTMLDivElement>(null);
+  const scrollRef = useRef<HTMLDivElement>(null);
   const wakeLockRef = useRef<WakeLockSentinel | null>(null);
   const [wakeLockOn, setWakeLockOn] = useState(false);
 
@@ -900,6 +901,16 @@ function AppContent() {
       if (savedChecked) setCheckedItems(new Set(JSON.parse(savedChecked)));
       const savedCooked = localStorage.getItem("meshilist_cooked");
       if (savedCooked) setCookedRecords(JSON.parse(savedCooked));
+      // リフレッシュ後に生成済み献立を復元
+      const savedOutput = localStorage.getItem("meshilist_raw_output");
+      if (savedOutput) {
+        setRawOutput(savedOutput);
+        setView("result");
+        // ローディングスピナーが永久に出ないよう全dish名をnullで初期化
+        const nullResults: Record<string, null> = {};
+        for (const m of savedOutput.matchAll(/\*\*(.+?)\*\*/g)) nullResults[m[1]] = null;
+        setImageResults(nullResults);
+      }
     } catch {}
 
     const hasVisited = localStorage.getItem("meshilist_visited");
@@ -937,6 +948,32 @@ function AppContent() {
       setParsedOutput(null);
     }
   }, [generating, rawOutput]);
+
+  // 生成済み献立をlocalStorageに保存（リフレッシュ後に復元するため）
+  useEffect(() => {
+    if (rawOutput) localStorage.setItem("meshilist_raw_output", rawOutput);
+  }, [rawOutput]);
+
+  // iOS Safariのプルトゥリフレッシュを防止
+  useEffect(() => {
+    let startY = 0;
+    const onStart = (e: TouchEvent) => { startY = e.touches[0].clientY; };
+    const onMove = (e: TouchEvent) => {
+      if (e.touches[0].clientY <= startY) return;
+      const el = scrollRef.current;
+      if (el && el.contains(e.target as Node)) {
+        if (el.scrollTop === 0) e.preventDefault();
+      } else if ((document.documentElement.scrollTop || document.body.scrollTop) === 0) {
+        e.preventDefault();
+      }
+    };
+    document.addEventListener("touchstart", onStart, { passive: true });
+    document.addEventListener("touchmove", onMove, { passive: false });
+    return () => {
+      document.removeEventListener("touchstart", onStart);
+      document.removeEventListener("touchmove", onMove);
+    };
+  }, []);
 
   const toggleCheckedItem = (item: string) => {
     setCheckedItems(prev => {
@@ -980,7 +1017,9 @@ function AppContent() {
     pendingImagesRef.current = new Set();
     imagePromisesRef.current = [];
     localStorage.removeItem("meshilist_checked");
+    localStorage.removeItem("meshilist_raw_output");
     abortRef.current = new AbortController();
+    let accumulated = "";
 
     try {
       const res = await fetch("/api/generate", {
@@ -994,7 +1033,6 @@ function AppContent() {
       const reader = res.body.getReader();
       const decoder = new TextDecoder();
       let done = false;
-      let accumulated = "";
       while (!done) {
         const { value, done: d } = await reader.read();
         done = d;
@@ -1018,6 +1056,17 @@ function AppContent() {
       if (e instanceof Error && e.name !== "AbortError") alert("エラーが発生しました。もう一度お試しください。");
     } finally {
       setGenerating(false);
+      // 画像がトリガーされなかったdishのスピナーをクリア
+      const recipeSection = accumulated.match(/###\s*🍳[^\n]*\n([\s\S]*?)(?=###\s*📅|###\s*🛒|$)/);
+      if (recipeSection) {
+        setImageResults(prev => {
+          const next = { ...prev };
+          for (const m of recipeSection[1].matchAll(/\*\*(.+?)\*\*/g)) {
+            if (!(m[1] in next)) next[m[1]] = null;
+          }
+          return next;
+        });
+      }
       setTimeout(() => outputRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }), 100);
       // trial status を再取得
       fetch("/api/trial", {
@@ -1457,7 +1506,7 @@ function AppContent() {
 
             {/* Header */}
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "12px 20px", borderBottom: "1px solid var(--border)", background: "rgba(245,243,238,0.96)", backdropFilter: "blur(8px)", flexShrink: 0 }}>
-              <button onClick={() => setView("form")}
+              <button onClick={() => { setView("form"); localStorage.removeItem("meshilist_raw_output"); }}
                 style={{ display: "flex", alignItems: "center", gap: 5, padding: "6px 12px", borderRadius: 8, border: "1px solid var(--border)", background: "var(--bg-subtle)", color: "var(--text-secondary)", fontFamily: "var(--font-heading)", fontWeight: 600, fontSize: 12, cursor: "pointer", whiteSpace: "nowrap", flexShrink: 0 }}>
                 <span className="result-back-full">← 条件を変える</span>
                 <span className="result-back-short">← 戻る</span>
@@ -1538,7 +1587,7 @@ function AppContent() {
                 </div>
 
                 {/* Tab content */}
-                <div style={{ padding: "24px", flex: 1, overflowY: "auto" }}>
+                <div ref={scrollRef} style={{ padding: "24px", flex: 1, overflowY: "auto" }}>
                   {activeTab === "schedule" && parsedOutput.schedule && (
                     <ScheduleSection text={parsedOutput.schedule} />
                   )}
