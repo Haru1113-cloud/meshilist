@@ -357,113 +357,141 @@ function RecipeBlock({ title, body, imageUrl, imageLoading, savedRating, onRate,
     setTimeout(() => setJustSaved(false), 2500);
   };
 
-  // 特殊調味料を抽出
-  const ingredientsText = body.find(l => l.trim().startsWith("材料:")) ?? body.join(" ");
-  const specialFound = SPECIAL_SEASONINGS.filter(s => ingredientsText.includes(s));
+  // 各セクションをパース
+  const nutritionLine = body.find(l => l.trim().startsWith("📊")) ?? "";
+  const ingredientsLine = body.find(l => l.trim().startsWith("材料:")) ?? "";
+  const ingredients = ingredientsLine
+    ? ingredientsLine.replace(/^材料:\s*/, "").split(/[・,、]/).map(s => s.trim()).filter(Boolean)
+    : [];
+  const steps = body.filter(l => /^\d+\./.test(l.trim())).map(l => l.trim().replace(/^\d+\.\s*/, ""));
+  const tipLine = body.find(l => l.trim().startsWith("💡"))?.replace(/^💡\s*(コツ[：:]?\s*)?/, "") ?? "";
+  const specialFound = SPECIAL_SEASONINGS.filter(s => ingredientsLine.includes(s));
+
+  // 食材名と分量を分離
+  const parseIngredient = (s: string) => {
+    const m = s.match(/^(.*?)(\d+(?:[./]\d+)?(?:g|ml|kg|L|cc|枚|個|本|缶|束|房|かけ|切れ|丁|袋|パック|カップ|合|玉|片)|[大小]さじ\d+(?:[./]\d+)?|適量|少々|少量|ひとつまみ|お好みで|適宜)$/);
+    if (m?.[1]) return { name: m[1].trim(), amount: m[2] };
+    return { name: s.trim(), amount: "" };
+  };
 
   return (
-    <div style={{ background: "var(--bg-subtle)", borderRadius: 14, overflow: "hidden" }}>
+    <div style={{ background: "#fff", borderRadius: 16, overflow: "hidden", border: "1px solid var(--border)", boxShadow: "0 2px 12px rgba(0,0,0,0.06)" }}>
+
       {/* 料理写真 */}
       {imageLoading && (
-        <div style={{ height: 160, background: "#f0ebe0", display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}>
+        <div style={{ height: 180, background: "#f0ebe0", display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}>
           <span className="animate-spin-sm" style={{ width: 16, height: 16, borderRadius: "50%", border: "2px solid rgba(0,0,0,0.1)", borderTopColor: "var(--accent)", display: "inline-block" }} />
           <span style={{ fontSize: 12, color: "var(--text-muted)", fontFamily: "var(--font-heading)", fontWeight: 600 }}>写真生成中...</span>
         </div>
       )}
       {imageUrl && !imageLoading && (
         // eslint-disable-next-line @next/next/no-img-element
-        <img src={imageUrl} alt={title} style={{ width: "100%", maxHeight: 280, objectFit: "cover", display: "block" }} />
+        <img src={imageUrl} alt={title} style={{ width: "100%", height: 200, objectFit: "cover", display: "block" }} />
       )}
-      {/* 調理過程イラスト（Nano Banana Pro） */}
 
-      <div style={{ padding: "20px 22px" }}>
-      <div style={{ marginBottom: 12, paddingBottom: 10, borderBottom: "1px solid var(--border)" }}>
-        <h3 style={{ fontFamily: "var(--font-heading)", fontWeight: 700, fontSize: 15, color: "var(--text-primary)", margin: 0, marginBottom: specialFound.length > 0 ? 8 : 0 }}>
-          🍽️ {title}
+      {/* タイトル */}
+      <div style={{ padding: "14px 18px 12px", borderBottom: "1px solid var(--border)" }}>
+        <h3 style={{ fontFamily: "var(--font-heading)", fontWeight: 800, fontSize: 16, color: "var(--text-primary)", margin: 0, lineHeight: 1.4 }}>
+          {title}
         </h3>
         {specialFound.length > 0 && (
-          <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 5, marginTop: 6 }}>
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 5, marginTop: 8 }}>
             <span style={{ fontSize: 10, color: "#92400e", fontFamily: "var(--font-heading)", fontWeight: 700, flexShrink: 0 }}>💡 特殊調味料:</span>
             {specialFound.map(s => (
-              <span key={s} style={{ fontSize: 11, background: "#fef3c7", color: "#92400e", borderRadius: 20, padding: "2px 9px", border: "1px solid #f5d060", fontFamily: "var(--font-body)", fontWeight: 600 }}>
-                {s}
-              </span>
+              <span key={s} style={{ fontSize: 11, background: "#fef3c7", color: "#92400e", borderRadius: 20, padding: "2px 9px", border: "1px solid #f5d060", fontFamily: "var(--font-body)", fontWeight: 600 }}>{s}</span>
             ))}
           </div>
         )}
       </div>
 
-      <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-          {body.map((line, j) => {
-            const t = line.trim();
-            if (!t) return <div key={j} style={{ height: 6 }} />;
-            // Skip markdown separators and table separator rows
-            if (t === "---" || /^\|[-| ]+\|$/.test(t)) return null;
-            if (t.startsWith("📊")) return <RecipeNutritionPanel key={j} line={t} />;
-            if (t === "材料:" || t === "手順:" || t.startsWith("材料") || t.startsWith("手順")) {
-              return <div key={j} style={{ fontFamily: "var(--font-heading)", fontWeight: 700, fontSize: 12, color: "var(--accent-dark)", marginTop: 8, letterSpacing: "0.04em", textTransform: "uppercase" }}>{t}</div>;
-            }
-            if (/^\d+\./.test(t)) {
-              return <div key={j} style={{ fontSize: 13, color: "var(--text-secondary)", lineHeight: 1.7, paddingLeft: 4, display: "flex", gap: 6 }}>
-                <span style={{ color: "var(--accent)", fontWeight: 700, flexShrink: 0 }}>{t.match(/^\d+/)?.[0]}.</span>
-                <span>{t.replace(/^\d+\.\s*/, "")}</span>
-              </div>;
-            }
-            // Table row → render as simple line
-            if (t.startsWith("|") && t.endsWith("|")) {
-              const cells = t.split("|").map(c => c.trim()).filter(Boolean);
-              return <div key={j} style={{ fontSize: 13, color: "var(--text-secondary)", lineHeight: 1.7 }}>{cells.join("　")}</div>;
-            }
-            // Strip italic/bold markdown markers
-            const cleaned = t.replace(/^\*+|\*+$/g, "").trim();
-            return <div key={j} style={{ fontSize: 13, color: "var(--text-secondary)", lineHeight: 1.7 }}>{cleaned}</div>;
-          })}
+      {/* 栄養情報 */}
+      {nutritionLine && <RecipeNutritionPanel line={nutritionLine} />}
+
+      {/* 材料 ｜ 作り方 2カラム */}
+      <div style={{ display: "flex", alignItems: "stretch", borderBottom: "1px solid var(--border)" }}>
+        {/* 材料 */}
+        <div style={{ flex: "0 0 42%", padding: "14px 14px 16px", borderRight: "1px solid var(--border)" }}>
+          <div style={{ fontFamily: "var(--font-heading)", fontWeight: 800, fontSize: 11, color: "var(--accent-dark)", letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 10 }}>材料</div>
+          <div style={{ display: "flex", flexDirection: "column", gap: 7 }}>
+            {ingredients.map((ing, i) => {
+              const { name, amount } = parseIngredient(ing);
+              return (
+                <div key={i} style={{ display: "flex", alignItems: "baseline", gap: 4, paddingBottom: 7, borderBottom: i < ingredients.length - 1 ? "1px dotted #e0d8cc" : "none" }}>
+                  <span style={{ fontSize: 12, color: "var(--text-primary)", flex: 1, lineHeight: 1.3 }}>{name}</span>
+                  {amount && <span style={{ fontSize: 11, color: "var(--text-muted)", fontFamily: "var(--font-heading)", fontWeight: 600, flexShrink: 0 }}>{amount}</span>}
+                </div>
+              );
+            })}
+          </div>
         </div>
 
-        {/* ── 作った！評価エリア ── */}
-        <div style={{ borderTop: "1px solid var(--border)", marginTop: 16, paddingTop: 14, display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 10 }}>
-          {canSave === false ? (
-            <button onClick={onUpgrade}
-              style={{ display: "flex", alignItems: "center", gap: 6, padding: "8px 16px", borderRadius: 20, border: "1px dashed #d4a017", background: "#fffbf0", color: "#a07010", fontFamily: "var(--font-heading)", fontWeight: 700, fontSize: 12, cursor: "pointer" }}>
-              🔒 スタンダード以上で保存できます
-            </button>
-          ) : justSaved ? (
-            <div style={{ display: "flex", alignItems: "center", gap: 6, color: "#4a7840", fontFamily: "var(--font-heading)", fontWeight: 700, fontSize: 13 }}>
-              <span>✓</span> 記録を保存しました！
-            </div>
-          ) : savedRating ? (
-            <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-              <span style={{ fontSize: 22 }}>{RATING_OPTIONS.find(r => r.value === savedRating)?.emoji}</span>
-              <span style={{ fontSize: 13, color: "var(--text-secondary)", fontFamily: "var(--font-heading)", fontWeight: 600 }}>
-                {RATING_OPTIONS.find(r => r.value === savedRating)?.label}で保存済み
-              </span>
-              <button onClick={() => setRatingOpen(true)} style={{ fontSize: 11, color: "var(--text-muted)", background: "none", border: "none", cursor: "pointer", textDecoration: "underline", padding: 0 }}>変更</button>
-            </div>
-          ) : ratingOpen ? (
-            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-              <span style={{ fontSize: 12, color: "var(--text-secondary)", fontFamily: "var(--font-heading)", fontWeight: 600 }}>どうでしたか？</span>
-              {RATING_OPTIONS.map(opt => (
-                <button key={opt.value} onClick={() => handleRate(opt.value)}
-                  style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 2, padding: "6px 10px", borderRadius: 10, border: "1px solid var(--border)", background: "#fff", cursor: "pointer", transition: "all 0.15s" }}
-                  onMouseEnter={e => { e.currentTarget.style.background = "var(--bg-subtle)"; e.currentTarget.style.transform = "scale(1.1)"; }}
-                  onMouseLeave={e => { e.currentTarget.style.background = "#fff"; e.currentTarget.style.transform = ""; }}
-                >
-                  <span style={{ fontSize: 22 }}>{opt.emoji}</span>
-                  <span style={{ fontSize: 10, color: "var(--text-muted)", fontFamily: "var(--font-heading)", fontWeight: 600 }}>{opt.label}</span>
-                </button>
-              ))}
-              <button onClick={() => setRatingOpen(false)} style={{ fontSize: 11, color: "var(--text-muted)", background: "none", border: "none", cursor: "pointer", padding: 0 }}>✕</button>
-            </div>
-          ) : (
-            <button onClick={() => setRatingOpen(true)}
-              style={{ display: "flex", alignItems: "center", gap: 6, padding: "8px 16px", borderRadius: 20, border: "1px solid var(--border)", background: "#fff", color: "var(--text-secondary)", fontFamily: "var(--font-heading)", fontWeight: 700, fontSize: 12, cursor: "pointer", transition: "all 0.15s" }}
-              onMouseEnter={e => { e.currentTarget.style.background = "var(--bg-subtle)"; }}
-              onMouseLeave={e => { e.currentTarget.style.background = "#fff"; }}
-            >
-              <span>✓</span> 作った！
-            </button>
-          )}
+        {/* 作り方 */}
+        <div style={{ flex: 1, padding: "14px 14px 16px" }}>
+          <div style={{ fontFamily: "var(--font-heading)", fontWeight: 800, fontSize: 11, color: "var(--accent-dark)", letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 10 }}>作り方</div>
+          <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+            {steps.map((step, i) => (
+              <div key={i} style={{ display: "flex", gap: 8, alignItems: "flex-start" }}>
+                <span style={{ width: 20, height: 20, borderRadius: "50%", background: "var(--accent)", color: "#fff", fontFamily: "var(--font-heading)", fontWeight: 800, fontSize: 11, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, marginTop: 1 }}>
+                  {i + 1}
+                </span>
+                <span style={{ fontSize: 12, color: "var(--text-secondary)", lineHeight: 1.65, flex: 1 }}>{step}</span>
+              </div>
+            ))}
+          </div>
         </div>
+      </div>
+
+      {/* ポイント */}
+      {tipLine && (
+        <div style={{ padding: "12px 18px", background: "#fffbf0", borderBottom: "1px solid #f0e0a0" }}>
+          <div style={{ fontFamily: "var(--font-heading)", fontWeight: 800, fontSize: 11, color: "#92400e", letterSpacing: "0.08em", marginBottom: 5 }}>💡 ポイント</div>
+          <div style={{ fontSize: 12, color: "#78350f", lineHeight: 1.75 }}>{tipLine}</div>
+        </div>
+      )}
+
+      {/* 作った！評価エリア */}
+      <div style={{ padding: "12px 18px", display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 10 }}>
+        {canSave === false ? (
+          <button onClick={onUpgrade}
+            style={{ display: "flex", alignItems: "center", gap: 6, padding: "8px 16px", borderRadius: 20, border: "1px dashed #d4a017", background: "#fffbf0", color: "#a07010", fontFamily: "var(--font-heading)", fontWeight: 700, fontSize: 12, cursor: "pointer" }}>
+            🔒 スタンダード以上で保存できます
+          </button>
+        ) : justSaved ? (
+          <div style={{ display: "flex", alignItems: "center", gap: 6, color: "#4a7840", fontFamily: "var(--font-heading)", fontWeight: 700, fontSize: 13 }}>
+            <span>✓</span> 記録を保存しました！
+          </div>
+        ) : savedRating ? (
+          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+            <span style={{ fontSize: 22 }}>{RATING_OPTIONS.find(r => r.value === savedRating)?.emoji}</span>
+            <span style={{ fontSize: 13, color: "var(--text-secondary)", fontFamily: "var(--font-heading)", fontWeight: 600 }}>
+              {RATING_OPTIONS.find(r => r.value === savedRating)?.label}で保存済み
+            </span>
+            <button onClick={() => setRatingOpen(true)} style={{ fontSize: 11, color: "var(--text-muted)", background: "none", border: "none", cursor: "pointer", textDecoration: "underline", padding: 0 }}>変更</button>
+          </div>
+        ) : ratingOpen ? (
+          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            <span style={{ fontSize: 12, color: "var(--text-secondary)", fontFamily: "var(--font-heading)", fontWeight: 600 }}>どうでしたか？</span>
+            {RATING_OPTIONS.map(opt => (
+              <button key={opt.value} onClick={() => handleRate(opt.value)}
+                style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 2, padding: "6px 10px", borderRadius: 10, border: "1px solid var(--border)", background: "#fff", cursor: "pointer", transition: "all 0.15s" }}
+                onMouseEnter={e => { e.currentTarget.style.background = "var(--bg-subtle)"; e.currentTarget.style.transform = "scale(1.1)"; }}
+                onMouseLeave={e => { e.currentTarget.style.background = "#fff"; e.currentTarget.style.transform = ""; }}
+              >
+                <span style={{ fontSize: 22 }}>{opt.emoji}</span>
+                <span style={{ fontSize: 10, color: "var(--text-muted)", fontFamily: "var(--font-heading)", fontWeight: 600 }}>{opt.label}</span>
+              </button>
+            ))}
+            <button onClick={() => setRatingOpen(false)} style={{ fontSize: 11, color: "var(--text-muted)", background: "none", border: "none", cursor: "pointer", padding: 0 }}>✕</button>
+          </div>
+        ) : (
+          <button onClick={() => setRatingOpen(true)}
+            style={{ display: "flex", alignItems: "center", gap: 6, padding: "8px 16px", borderRadius: 20, border: "1px solid var(--border)", background: "#fff", color: "var(--text-secondary)", fontFamily: "var(--font-heading)", fontWeight: 700, fontSize: 12, cursor: "pointer", transition: "all 0.15s" }}
+            onMouseEnter={e => { e.currentTarget.style.background = "var(--bg-subtle)"; }}
+            onMouseLeave={e => { e.currentTarget.style.background = "#fff"; }}
+          >
+            <span>✓</span> 作った！
+          </button>
+        )}
       </div>
     </div>
   );
