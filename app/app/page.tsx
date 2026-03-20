@@ -868,8 +868,7 @@ function AppContent() {
     })
       .then(r => r.json())
       .then(d => {
-        const mime = d.format === "jpeg" ? "image/jpeg" : "image/png";
-        const url = d.url || (d.b64 ? `data:${mime};base64,${d.b64}` : null) || null;
+        const url = d.url || (d.b64 ? `data:image/png;base64,${d.b64}` : null) || null;
         setImageResults(prev => ({ ...prev, [dish]: url }));
       })
       .catch(() => {
