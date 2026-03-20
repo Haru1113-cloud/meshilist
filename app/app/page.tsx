@@ -62,6 +62,7 @@ const CONDITION_OPTIONS = [
   { value: "冷え気味", label: "❄️ 冷え気味", hint: "体が温まるもの" },
   { value: "夏バテ",   label: "☀️ 夏バテ",   hint: "さっぱり・食べやすい" },
   { value: "がっつり", label: "💪 がっつり",  hint: "ボリューム重視" },
+  { value: "ダイエット中", label: "🥗 ダイエット中", hint: "カロリー控えめ" },
 ];
 const SPECIAL_SEASONINGS = [
   "鶏がらスープの素", "鶏ガラスープの素", "オイスターソース", "ナンプラー",
