@@ -38,19 +38,24 @@ export async function POST(request: NextRequest) {
     : `Professional food photography of Japanese home-cooked "${dish}". Beautifully plated in an artisan ceramic dish on a rustic wooden table. Warm golden-hour side lighting creating depth and highlights. Visible steam rising gently. Glossy sauce glistening. Vibrant fresh colors — golden-brown crust, rich caramelized tones, bright green garnish. Shallow depth of field with soft bokeh background. Shot with a 50mm lens, f/1.8. Michelin-quality food styling. Utterly mouth-watering and irresistible. No text, no watermark.`;
 
   try {
-    const response = await client.images.generate({
+    // output_format: "jpeg" + output_compression: 75 でレスポンスサイズをPNG比 1/5〜1/8 に削減
+    // モバイル回線でもタイムアウトしないようにする
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const response = await (client.images.generate as any)({
       model: "gpt-image-1",
       prompt,
       n: 1,
       size: "1024x1024",
       quality,
-    });
+      output_format: "jpeg",
+      output_compression: 75,
+    }) as { data?: { url?: string; b64_json?: string }[] };
 
     await incrementImageGeneration(deviceId);
 
     const url = response.data?.[0]?.url ?? "";
-    const b64 = (response.data?.[0] as { b64_json?: string })?.b64_json;
-    if (!url && b64) return Response.json({ b64 });
+    const b64 = response.data?.[0]?.b64_json;
+    if (!url && b64) return Response.json({ b64, format: "jpeg" });
     return Response.json({ url });
   } catch (e) {
     console.error("generate-image error:", e);
