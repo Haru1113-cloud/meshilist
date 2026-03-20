@@ -1044,6 +1044,7 @@ function AppContent() {
             const recipeMatch = accumulated.match(/###\s*🍳[^\n]*\n([\s\S]*?)(?=###\s*📅|###\s*🛒|$)/);
             if (recipeMatch) {
               for (const match of recipeMatch[1].matchAll(/\*\*(.+?)\*\*/g)) {
+                if (pendingImagesRef.current.size >= 3) break;
                 triggerImageGen(match[1]);
               }
             }
