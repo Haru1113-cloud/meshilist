@@ -10,7 +10,18 @@ export async function POST(request: NextRequest) {
     return Response.json({ error: "Missing dish name" }, { status: 400 });
   }
 
-  if (!deviceId || !await canGenerateImage(deviceId)) {
+  let canGen = false;
+  let quality: "low" | "medium" | "high" = "low";
+  try {
+    canGen = await canGenerateImage(deviceId);
+    quality = await getImageQuality(deviceId);
+  } catch {
+    // Redis unavailable (e.g. no internet in local dev) — allow with low quality
+    canGen = true;
+    quality = "low";
+  }
+
+  if (!deviceId || !canGen) {
     return Response.json({ url: "" });
   }
 
@@ -19,8 +30,6 @@ export async function POST(request: NextRequest) {
     await new Promise((r) => setTimeout(r, 500));
     return Response.json({ url: "" });
   }
-
-  const quality: "low" | "medium" | "high" = await getImageQuality(deviceId);
   const { default: OpenAI } = await import("openai");
   const client = new OpenAI({ apiKey });
 
