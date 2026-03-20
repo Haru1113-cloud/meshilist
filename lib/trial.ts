@@ -122,7 +122,7 @@ export async function canGenerateImage(deviceId: string): Promise<boolean> {
 }
 
 export async function getImageQuality(deviceId: string): Promise<"low" | "medium" | "high"> {
-  if (isAdmin(deviceId)) return "high";
+  if (isAdmin(deviceId)) return "medium";
   const status = await getTrialStatus(deviceId);
   if (status.plan === "premium") return "medium";
   if (status.plan === "standard") return "medium";
