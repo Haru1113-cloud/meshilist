@@ -1264,9 +1264,11 @@ function AppContent() {
 
       {/* Nav */}
       <nav style={{ position: "sticky", top: 0, zIndex: 50, background: "rgba(245,243,238,0.92)", backdropFilter: "blur(12px)", borderBottom: "1px solid var(--border)", padding: "0 20px" }}>
-        <div style={{ maxWidth: 820, margin: "0 auto", height: 56, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+        <div style={{ maxWidth: 820, margin: "0 auto", height: 60, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+
+          {/* ロゴ */}
           <a href="/" style={{ display: "flex", alignItems: "center", gap: 7, textDecoration: "none" }}>
-            <KoocaBowlIcon size={34} />
+            <KoocaBowlIcon size={32} />
             <div style={{ display: "flex", flexDirection: "column", lineHeight: 1.1 }}>
               <span style={{ fontFamily: "var(--font-heading)", fontWeight: 800, fontSize: 15, color: "var(--text-primary)", letterSpacing: "-0.03em" }}>
                 メシ<span style={{ color: "var(--accent)" }}>リスト</span>
@@ -1276,48 +1278,63 @@ function AppContent() {
               </span>
             </div>
           </a>
-          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-            <a href="/recipes" style={{
-              padding: "5px 12px", borderRadius: 7, fontSize: 12,
-              fontFamily: "var(--font-heading)", fontWeight: 600,
-              color: "var(--text-secondary)", textDecoration: "none",
-              border: "1px solid var(--border)", background: "#fff",
-            }}>
-              📖 レシピ集
+
+          {/* 右側ナビ：アイコン上・ラベル下 */}
+          <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
+
+            {/* レシピ集 */}
+            <a href="/recipes" style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 2, padding: "6px 10px", borderRadius: 10, textDecoration: "none", color: "var(--text-secondary)", background: "none", minWidth: 44 }}>
+              <span style={{ fontSize: 20 }}>📖</span>
+              <span style={{ fontFamily: "var(--font-heading)", fontWeight: 600, fontSize: 10, whiteSpace: "nowrap" }}>レシピ集</span>
             </a>
-            <button onClick={() => setShowHistory(v => !v)} style={{
-              padding: "5px 12px", borderRadius: 7, fontSize: 12,
-              fontFamily: "var(--font-heading)", fontWeight: 600,
-              color: cookedRecords.length > 0 ? "var(--accent-dark)" : "var(--text-secondary)",
-              background: cookedRecords.length > 0 ? "var(--accent-light)" : "#fff",
-              border: `1px solid ${cookedRecords.length > 0 ? "rgba(230,149,26,0.3)" : "var(--border)"}`,
-              cursor: "pointer", position: "relative", display: "flex", alignItems: "center", gap: 4,
-            }}>
-              📓 記録
-              {cookedRecords.length > 0 && (
-                <span style={{ background: "var(--accent)", color: "#fff", borderRadius: 10, padding: "0px 5px", fontSize: 10, fontWeight: 700 }}>
-                  {cookedRecords.length}
-                </span>
-              )}
+
+            {/* 記録 */}
+            <button onClick={() => setShowHistory(v => !v)} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 2, padding: "6px 10px", borderRadius: 10, border: "none", background: "none", cursor: "pointer", color: cookedRecords.length > 0 ? "var(--accent-dark)" : "var(--text-secondary)", minWidth: 44, position: "relative" }}>
+              <span style={{ fontSize: 20, position: "relative" }}>
+                📓
+                {cookedRecords.length > 0 && (
+                  <span style={{ position: "absolute", top: -4, right: -6, background: "var(--accent)", color: "#fff", borderRadius: 10, padding: "0 4px", fontSize: 9, fontWeight: 700, lineHeight: "14px" }}>
+                    {cookedRecords.length}
+                  </span>
+                )}
+              </span>
+              <span style={{ fontFamily: "var(--font-heading)", fontWeight: 600, fontSize: 10, whiteSpace: "nowrap" }}>記録</span>
             </button>
+
+            {/* 連続記録（あるときだけ） */}
             {(() => { const s = calcStreak(cookedRecords); return s > 0 ? (
-              <div style={{ display: "flex", alignItems: "center", gap: 4, padding: "5px 10px", borderRadius: 7, background: s >= 3 ? "#fff7ed" : "var(--bg-subtle)", border: `1px solid ${s >= 3 ? "#fed7aa" : "var(--border)"}`, fontSize: 12, fontFamily: "var(--font-heading)", fontWeight: 700, color: s >= 3 ? "#ea580c" : "var(--text-secondary)" }}>
-                🔥 {s}日連続
+              <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 2, padding: "6px 10px", borderRadius: 10, minWidth: 44, color: s >= 3 ? "#ea580c" : "var(--text-secondary)" }}>
+                <span style={{ fontSize: 20 }}>🔥</span>
+                <span style={{ fontFamily: "var(--font-heading)", fontWeight: 700, fontSize: 10, whiteSpace: "nowrap" }}>{s}日連続</span>
               </div>
             ) : null; })()}
-          {trialStatus && (
-            trialStatus.subscribed ? (
-              <div style={{ background: "#deecd6", borderRadius: 8, padding: "4px 12px", fontSize: 12, color: "#2f5228", fontFamily: "var(--font-heading)", fontWeight: 700 }}>
-                ✓ {trialStatus.plan === "light" ? `ライト (残${trialStatus.generationsLeft ?? 0}回)` : trialStatus.plan === "premium" ? "プレミアム" : "スタンダード"}
+
+            {/* プランバッジ（サブスク済みのみ） */}
+            {trialStatus?.subscribed && (
+              <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 2, padding: "6px 10px", borderRadius: 10, minWidth: 44 }}>
+                <span style={{ fontSize: 20 }}>✅</span>
+                <span style={{ fontFamily: "var(--font-heading)", fontWeight: 700, fontSize: 10, color: "#2f5228", whiteSpace: "nowrap" }}>
+                  {trialStatus.plan === "light" ? `ライト` : trialStatus.plan === "premium" ? "プレミアム" : "スタンダード"}
+                </span>
               </div>
-            ) : null
-          )}
-          {user
-            ? <UserButton />
-            : (trialStatus?.subscribed || deviceId === process.env.NEXT_PUBLIC_ADMIN_DEVICE_ID)
-              ? <SignInButton mode="modal"><button style={{ padding: "5px 12px", borderRadius: 7, fontSize: 12, fontFamily: "var(--font-heading)", fontWeight: 600, color: "var(--accent-dark)", background: "var(--accent-light)", border: "1px solid rgba(230,149,26,0.3)", cursor: "pointer" }}>ログイン</button></SignInButton>
-              : null
-          }
+            )}
+
+            {/* ログイン / UserButton */}
+            {user
+              ? <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 2, padding: "6px 10px", minWidth: 44 }}>
+                  <UserButton />
+                  <span style={{ fontFamily: "var(--font-heading)", fontWeight: 600, fontSize: 10, color: "var(--text-muted)", whiteSpace: "nowrap" }}>アカウント</span>
+                </div>
+              : (trialStatus?.subscribed || deviceId === process.env.NEXT_PUBLIC_ADMIN_DEVICE_ID)
+                ? <SignInButton mode="modal">
+                    <button style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 2, padding: "6px 10px", borderRadius: 10, border: "none", background: "none", cursor: "pointer", color: "var(--accent-dark)", minWidth: 44 }}>
+                      <span style={{ fontSize: 20 }}>🔑</span>
+                      <span style={{ fontFamily: "var(--font-heading)", fontWeight: 600, fontSize: 10, whiteSpace: "nowrap" }}>ログイン</span>
+                    </button>
+                  </SignInButton>
+                : null
+            }
+
           </div>
         </div>
       </nav>
