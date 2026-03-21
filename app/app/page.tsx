@@ -625,14 +625,15 @@ function HistoryRecipeDetail({ body }: { body: string[] }) {
   );
 }
 
-function HistoryModal({ records, streak, earnedBadges, onClear, onClose }: {
+function HistoryModal({ records, streak, earnedBadges, onClear, onClose, isAdmin }: {
   records: CookedRecord[];
   streak: number;
   earnedBadges: typeof BADGES;
   onClear: () => void;
   onClose: () => void;
+  isAdmin?: boolean;
 }) {
-  const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [selectedRecord, setSelectedRecord] = useState<CookedRecord | null>(null);
   return (
     <div onClick={onClose}
       style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.55)", zIndex: 200, display: "flex", alignItems: "flex-end", justifyContent: "center" }}>
@@ -712,7 +713,9 @@ function HistoryModal({ records, streak, earnedBadges, onClear, onClose }: {
                   ? ingredientsLine.replace(/^材料:\s*/, "").split(/[・,、]/).map(s => s.trim()).filter(Boolean).slice(0, 4)
                   : [];
                 return (
-                  <div key={r.id} style={{ borderRadius: 14, overflow: "hidden", border: "1px solid var(--border)", background: "#fff", boxShadow: "0 2px 8px rgba(0,0,0,0.06)", display: "flex", flexDirection: "column" }}>
+                  <div key={r.id}
+                    onClick={isAdmin ? () => setSelectedRecord(r) : undefined}
+                    style={{ borderRadius: 14, overflow: "hidden", border: "1px solid var(--border)", background: "#fff", boxShadow: "0 2px 8px rgba(0,0,0,0.06)", display: "flex", flexDirection: "column", cursor: isAdmin ? "pointer" : "default" }}>
                     {/* 上半分: 写真 */}
                     <div style={{ height: 110, background: "#f0ebe0", flexShrink: 0, position: "relative", overflow: "hidden" }}>
                       {r.imageUrl ? (
@@ -750,6 +753,38 @@ function HistoryModal({ records, streak, earnedBadges, onClear, onClose }: {
           )}
         </div>
       </div>
+
+      {/* レシピ詳細シート（管理者のみ・カードタップ時） */}
+      {selectedRecord && (
+        <div onClick={() => setSelectedRecord(null)}
+          style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.6)", zIndex: 300, display: "flex", alignItems: "flex-end", justifyContent: "center" }}>
+          <div onClick={e => e.stopPropagation()}
+            style={{ background: "#f7f4ef", borderRadius: "24px 24px 0 0", width: "100%", maxWidth: 540, maxHeight: "92vh", display: "flex", flexDirection: "column", boxShadow: "0 -8px 40px rgba(0,0,0,0.18)" }}>
+            {/* ヘッダー */}
+            <div style={{ padding: "16px 20px 12px", flexShrink: 0, background: "#f7f4ef", borderRadius: "24px 24px 0 0" }}>
+              <div style={{ width: 36, height: 4, background: "var(--border)", borderRadius: 4, margin: "0 auto 12px" }} />
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                <div style={{ fontSize: 11, color: "var(--text-muted)", fontFamily: "var(--font-heading)", fontWeight: 700 }}>
+                  {(() => { const d = new Date(selectedRecord.cookedAt); return `${d.getMonth()+1}/${d.getDate()} 作成`; })()}
+                </div>
+                <button onClick={() => setSelectedRecord(null)}
+                  style={{ fontSize: 18, background: "none", border: "none", cursor: "pointer", color: "var(--text-muted)", padding: "0 4px" }}>✕</button>
+              </div>
+            </div>
+            {/* RecipeBlock をスクロール表示 */}
+            <div style={{ overflowY: "auto", paddingBottom: 40 }}>
+              <RecipeBlock
+                title={selectedRecord.dishName}
+                body={selectedRecord.recipeBody ?? []}
+                imageUrl={selectedRecord.imageUrl ?? null}
+                imageLoading={false}
+                savedRating={selectedRecord.rating}
+                canSave={false}
+              />
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -1931,6 +1966,7 @@ function AppContent() {
           earnedBadges={getEarnedBadges(cookedRecords)}
           onClear={() => { setCookedRecords([]); localStorage.removeItem("meshilist_cooked"); }}
           onClose={() => setShowHistory(false)}
+          isAdmin={!!trialStatus?.isAdmin}
         />
       )}
 
