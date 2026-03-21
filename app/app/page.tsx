@@ -1310,18 +1310,16 @@ function AppContent() {
 
   const saveCookedRecord = (dishName: string, stars: 1 | 2 | 3, recipeBody?: string[], imageUrl?: string | null) => {
     const record: CookedRecord = { id: crypto.randomUUID(), dishName, cookedAt: new Date().toISOString(), rating: stars, recipeBody, imageUrl: imageUrl ?? imageResults[dishName] ?? null };
-    setCookedRecords(prev => {
-      const next = [record, ...prev].slice(0, 50);
-      localStorage.setItem("meshilist_cooked", JSON.stringify(next));
-      // サブスク済み＋ログイン済みならRedisにも保存
-      if (user && trialStatus?.subscribed) {
-        fetch("/api/user-data", {
-          method: "POST", headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ cooked: next }),
-        }).catch(() => {});
-      }
-      return next;
-    });
+    const next = [record, ...cookedRecords].slice(0, 50);
+    setCookedRecords(next);
+    localStorage.setItem("meshilist_cooked", JSON.stringify(next));
+    // サブスク済み＋ログイン済みならRedisにも保存
+    if (user && trialStatus?.subscribed) {
+      fetch("/api/user-data", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ cooked: next }),
+      }).catch(() => {});
+    }
     setDishRatings(prev => ({ ...prev, [dishName]: stars }));
     if (stars === 3) {
       setShowCelebration({ dishName, imageUrl: imageResults[dishName] ?? null });
