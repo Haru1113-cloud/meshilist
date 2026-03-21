@@ -23,6 +23,23 @@ interface CookedRecord {
 }
 
 // ─── Constants ───────────────────────────────────────────────────
+const ALLERGY_CHIPS = [
+  { emoji: "🥚", label: "卵" },
+  { emoji: "🥛", label: "乳製品" },
+  { emoji: "🌾", label: "小麦" },
+  { emoji: "🦐", label: "えび" },
+  { emoji: "🦀", label: "かに" },
+  { emoji: "🍜", label: "そば" },
+  { emoji: "🥜", label: "落花生" },
+  { emoji: "🫘", label: "大豆" },
+  { emoji: "🐟", label: "魚介類" },
+  { emoji: "🐷", label: "豚肉" },
+  { emoji: "🐄", label: "牛肉" },
+  { emoji: "🍑", label: "果物類" },
+  { emoji: "⚪", label: "ごま" },
+  { emoji: "🌰", label: "ナッツ類" },
+];
+
 const INGREDIENT_CHIPS = [
   { category: "主食・麺", items: ["ご飯", "パスタ", "うどん", "そうめん", "そば", "食パン", "餅"] },
   { category: "肉・魚", items: ["鶏肉", "豚肉", "牛肉", "鮭", "ツナ缶", "サバ缶", "ちくわ", "ウインナー"] },
@@ -829,6 +846,10 @@ function AppContent() {
 
   const [ready, setReady] = useState(false);
   const [deviceId, setDeviceId] = useState("");
+  const [showOnboarding, setShowOnboarding] = useState(false);
+  const [onboardingStep, setOnboardingStep] = useState<1 | 2>(1);
+  const [onboardingAllergies, setOnboardingAllergies] = useState<string[]>([]);
+  const [onboardingFamilySize, setOnboardingFamilySize] = useState("4");
   const [trialStatus, setTrialStatus] = useState<{ trialActive: boolean; daysLeft: number; subscribed: boolean; plan: string | null; generationsLeft: number | null; imageGenerationsLeft: number | null; freeCreditsLeft: number; freeCreditsTotal: number } | null>(null);
 
   // Input state
@@ -944,6 +965,9 @@ function AppContent() {
 
     const hasVisited = localStorage.getItem("meshilist_visited");
     if (!hasVisited) { setShowTip(true); localStorage.setItem("meshilist_visited", "1"); }
+
+    const hasOnboarded = localStorage.getItem("meshilist_onboarded");
+    if (!hasOnboarded) { setShowOnboarding(true); }
 
     // 料理記録はlocalStorageから読み込み（RedisはtrialStatus確定後に上書き）
     const savedCooked = localStorage.getItem("meshilist_cooked");
@@ -1153,6 +1177,18 @@ function AppContent() {
   };
 
   const handleStop = () => { abortRef.current?.abort(); setGenerating(false); };
+
+  const completeOnboarding = () => {
+    setFamilySize(onboardingFamilySize);
+    if (onboardingAllergies.length > 0) {
+      setDisliked(prev => {
+        const base = prev ? prev + "、" : "";
+        return base + onboardingAllergies.join("、");
+      });
+    }
+    localStorage.setItem("meshilist_onboarded", "1");
+    setShowOnboarding(false);
+  };
 
   const saveCookedRecord = (dishName: string, stars: 1 | 2 | 3, recipeBody?: string[]) => {
     const record: CookedRecord = { id: crypto.randomUUID(), dishName, cookedAt: new Date().toISOString(), rating: stars, recipeBody };
@@ -1893,6 +1929,74 @@ function AppContent() {
               style={{ width: "100%", padding: "11px", borderRadius: 10, border: "1px solid var(--border)", background: "none", color: "var(--text-muted)", fontFamily: "var(--font-heading)", fontWeight: 600, fontSize: 13, cursor: "pointer" }}>
               結果だけ確認する
             </button>
+          </div>
+        </div>
+      )}
+
+      {/* Onboarding Modal */}
+      {showOnboarding && (
+        <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.6)", zIndex: 200, display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }}>
+          <div style={{ background: "#fff", borderRadius: 24, padding: "36px 28px", maxWidth: 420, width: "100%", boxShadow: "0 24px 60px rgba(0,0,0,0.2)" }}>
+
+            {/* ステップ1：家族人数 */}
+            {onboardingStep === 1 && (
+              <>
+                <div style={{ textAlign: "center", marginBottom: 28 }}>
+                  <div style={{ fontSize: 48, marginBottom: 12 }}>👨‍👩‍👧‍👦</div>
+                  <h2 style={{ fontFamily: "var(--font-heading)", fontWeight: 800, fontSize: 22, color: "var(--text-primary)", letterSpacing: "-0.03em", marginBottom: 8 }}>
+                    何人分の献立を作りますか？
+                  </h2>
+                  <p style={{ fontSize: 13, color: "var(--text-muted)" }}>あとから変更できます</p>
+                </div>
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 10, marginBottom: 28 }}>
+                  {["1", "2", "3", "4", "5以上"].map(n => (
+                    <button key={n} onClick={() => setOnboardingFamilySize(n)}
+                      style={{ padding: "16px 8px", borderRadius: 14, border: `2px solid ${onboardingFamilySize === n ? "var(--accent)" : "var(--border)"}`, background: onboardingFamilySize === n ? "var(--accent-light)" : "var(--bg-subtle)", color: onboardingFamilySize === n ? "var(--accent-dark)" : "var(--text-primary)", fontFamily: "var(--font-heading)", fontWeight: 700, fontSize: 16, cursor: "pointer", transition: "all 0.15s" }}>
+                      {n}人
+                    </button>
+                  ))}
+                </div>
+                <button onClick={() => setOnboardingStep(2)}
+                  style={{ width: "100%", padding: "15px", borderRadius: 12, border: "none", background: "var(--accent)", color: "#fff", fontFamily: "var(--font-heading)", fontWeight: 700, fontSize: 15, cursor: "pointer" }}>
+                  次へ →
+                </button>
+              </>
+            )}
+
+            {/* ステップ2：アレルギー */}
+            {onboardingStep === 2 && (
+              <>
+                <div style={{ textAlign: "center", marginBottom: 24 }}>
+                  <div style={{ fontSize: 48, marginBottom: 12 }}>⚠️</div>
+                  <h2 style={{ fontFamily: "var(--font-heading)", fontWeight: 800, fontSize: 22, color: "var(--text-primary)", letterSpacing: "-0.03em", marginBottom: 8 }}>
+                    アレルギーはありますか？
+                  </h2>
+                  <p style={{ fontSize: 13, color: "var(--text-muted)" }}>該当するものをタップしてください（複数選択可）</p>
+                </div>
+                <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 28, justifyContent: "center" }}>
+                  {ALLERGY_CHIPS.map(a => {
+                    const selected = onboardingAllergies.includes(a.label);
+                    return (
+                      <button key={a.label} onClick={() => setOnboardingAllergies(prev => selected ? prev.filter(x => x !== a.label) : [...prev, a.label])}
+                        style={{ display: "flex", alignItems: "center", gap: 6, padding: "8px 14px", borderRadius: 20, border: `1.5px solid ${selected ? "#ef4444" : "var(--border)"}`, background: selected ? "#fff1f1" : "var(--bg-subtle)", color: selected ? "#dc2626" : "var(--text-secondary)", fontFamily: "var(--font-heading)", fontWeight: selected ? 700 : 400, fontSize: 13, cursor: "pointer", transition: "all 0.15s" }}>
+                        <span>{a.emoji}</span>{a.label}
+                      </button>
+                    );
+                  })}
+                </div>
+                <div style={{ display: "flex", gap: 10 }}>
+                  <button onClick={() => setOnboardingStep(1)}
+                    style={{ flex: 1, padding: "14px", borderRadius: 12, border: "1px solid var(--border)", background: "#fff", color: "var(--text-secondary)", fontFamily: "var(--font-heading)", fontWeight: 600, fontSize: 14, cursor: "pointer" }}>
+                    ← 戻る
+                  </button>
+                  <button onClick={completeOnboarding}
+                    style={{ flex: 2, padding: "14px", borderRadius: 12, border: "none", background: "var(--accent)", color: "#fff", fontFamily: "var(--font-heading)", fontWeight: 700, fontSize: 15, cursor: "pointer" }}>
+                    {onboardingAllergies.length > 0 ? "設定して始める ✓" : "なし・始める →"}
+                  </button>
+                </div>
+              </>
+            )}
+
           </div>
         </div>
       )}
