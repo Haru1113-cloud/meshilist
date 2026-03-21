@@ -449,13 +449,13 @@ function RecipeBlock({ title, body, imageUrl, imageLoading, savedRating, onRate,
         {ingredients.length > 0 && (
           <div style={{ marginBottom: 20 }}>
             <div style={{ fontFamily: "var(--font-heading)", fontWeight: 800, fontSize: 13, color: "var(--text-primary)", letterSpacing: "0.04em", marginBottom: 12, paddingBottom: 8, borderBottom: "2px solid var(--accent)" }}>材料</div>
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0" }}>
+            <div style={{ display: "flex", flexDirection: "column" }}>
               {ingredients.map((ing, i) => {
                 const { name, amount } = parseIngredient(ing);
                 return (
-                  <div key={i} style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", padding: "9px 0", borderBottom: "1px solid var(--border)" }}>
+                  <div key={i} style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", padding: "10px 0", borderBottom: i < ingredients.length - 1 ? "1px solid var(--border)" : "none" }}>
                     <span style={{ fontSize: 13, color: "var(--text-primary)", lineHeight: 1.4 }}>{name}</span>
-                    {amount && <span style={{ fontSize: 12, color: "var(--text-muted)", fontFamily: "var(--font-heading)", fontWeight: 600, flexShrink: 0, marginLeft: 8 }}>{amount}</span>}
+                    {amount && <span style={{ fontSize: 13, color: "var(--text-muted)", fontFamily: "var(--font-heading)", fontWeight: 600, flexShrink: 0, marginLeft: 16 }}>{amount}</span>}
                   </div>
                 );
               })}
