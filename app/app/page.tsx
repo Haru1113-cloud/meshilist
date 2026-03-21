@@ -808,13 +808,16 @@ function ShoppingList({ text, checked, onToggle }: {
 }
 
 // ─── Celebration Modal ───────────────────────────────────────────
-function CelebrationModal({ dishName, imageUrl, onClose, onShare }: {
+function CelebrationModal({ dishName, imageUrl, onClose, onShare, isAdmin }: {
   dishName: string;
   imageUrl?: string | null;
   onClose: () => void;
   onShare: (text: string) => void;
+  isAdmin?: boolean;
 }) {
-  const shareText = `🍳 ${dishName} を作りました！\nメシリストのAI献立でチャレンジ✨\n#メシリスト #今日の夕食 #料理記録`;
+  const shareText = isAdmin
+    ? `🍳 ${dishName} を作りました！\nメシリストのAI献立でチャレンジ✨\n#メシリスト #今日の夕食 #料理記録`
+    : `🍳 ${dishName} を作りました！\n#今日のごはん #料理記録 #今日の夕食`;
   return (
     <div onClick={onClose}
       style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.65)", zIndex: 300, display: "flex", alignItems: "flex-end", justifyContent: "center" }}>
@@ -1238,7 +1241,10 @@ function AppContent() {
     const dishNames = parsedOutput.recipe
       .match(/\*\*(.+?)\*\*/g)?.map(s => s.replace(/\*\*/g, "")) ?? [];
     const menuLine = dishNames.slice(0, 3).join("・") + (dishNames.length > 3 ? "など" : "");
-    const text = `「今日何作ろう」をAIが即解決🤖\n\n${menuLine}\n\n食材を入れるだけで献立＋レシピ＋買い物リストが自動生成✨\n無料で試せます👇\nhttps://meshilist.com\n\n#今日の献立 #献立決め #時短料理 #共働き飯 #子育てごはん #AI献立`;
+    const isAdmin = deviceId === process.env.NEXT_PUBLIC_ADMIN_DEVICE_ID;
+    const text = isAdmin
+      ? `「今日何作ろう」をAIが即解決🤖\n\n${menuLine}\n\n食材を入れるだけで献立＋レシピ＋買い物リストが自動生成✨\n無料で試せます👇\nhttps://meshilist.com\n\n#今日の献立 #献立決め #時短料理 #共働き飯 #子育てごはん #AI献立`
+      : `${menuLine}\n\n#今日の献立 #今日のごはん #料理 #献立`;
     setShareMenuText(text);
     setShareImageDataUrl(null);
     setShareImageFile(null);
@@ -1890,6 +1896,7 @@ function AppContent() {
         <CelebrationModal
           dishName={showCelebration.dishName}
           imageUrl={showCelebration.imageUrl}
+          isAdmin={deviceId === process.env.NEXT_PUBLIC_ADMIN_DEVICE_ID}
           onClose={() => setShowCelebration(null)}
           onShare={async (text) => {
             try {
