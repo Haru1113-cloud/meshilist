@@ -378,6 +378,8 @@ function RecipeBlock({ title, body, imageUrl, imageLoading, savedRating, onRate,
 
   // 各セクションをパース
   const nutritionLine = body.find(l => l.trim().startsWith("📊")) ?? "";
+  const timeLine = body.find(l => l.trim().startsWith("⏱")) ?? "";
+  const cookingMinutes = timeLine.match(/(\d+)\s*分/)?.[1] ?? "";
   const ingredientsLine = body.find(l => l.trim().startsWith("材料:")) ?? "";
   const ingredients = ingredientsLine
     ? ingredientsLine.replace(/^材料:\s*/, "").split(/[・,、]/).map(s => s.trim()).filter(Boolean)
@@ -445,6 +447,14 @@ function RecipeBlock({ title, body, imageUrl, imageLoading, savedRating, onRate,
             </div>
           );
         })()}
+
+        {/* ③.5 調理時間 */}
+        {cookingMinutes && (
+          <div style={{ display: "inline-flex", alignItems: "center", gap: 5, background: "#f0f9ff", border: "1px solid #bae6fd", borderRadius: 20, padding: "5px 12px", marginBottom: 20, fontSize: 12, fontFamily: "var(--font-heading)", fontWeight: 700, color: "#0369a1" }}>
+            <span>⏱</span>
+            <span>調理時間 {cookingMinutes}分</span>
+          </div>
+        )}
 
         {/* ④ 材料（縦並び・フルwidth） */}
         {ingredients.length > 0 && (
@@ -1617,20 +1627,6 @@ function AppContent() {
                   <button key={opt.value} onClick={() => setStyle(opt.value)}
                     style={{ padding: "9px 20px", borderRadius: 10, border: `1px solid ${style === opt.value ? "var(--accent)" : "var(--border)"}`, background: style === opt.value ? "var(--accent-light)" : "var(--bg-subtle)", color: style === opt.value ? "var(--accent-dark)" : "var(--text-secondary)", fontFamily: "var(--font-body)", fontSize: 13, cursor: "pointer", transition: "all 0.15s", fontWeight: style === opt.value ? 700 : 400 }}>
                     {opt.label}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* Cook time */}
-            <div>
-              <label style={{ display: "block", fontFamily: "var(--font-heading)", fontWeight: 700, fontSize: 13, color: "var(--text-primary)", marginBottom: 10 }}>調理時間の目安</label>
-              <div style={{ display: "flex", gap: 8 }}>
-                {COOK_TIME_OPTIONS.map(opt => (
-                  <button key={opt.value} onClick={() => setCookTime(opt.value as "quick" | "normal" | "slow")}
-                    style={{ flex: 1, padding: "10px 8px", borderRadius: 10, border: `1px solid ${cookTime === opt.value ? "var(--accent)" : "var(--border)"}`, background: cookTime === opt.value ? "var(--accent-light)" : "var(--bg-subtle)", color: cookTime === opt.value ? "var(--accent-dark)" : "var(--text-secondary)", fontFamily: "var(--font-heading)", fontWeight: 700, fontSize: 13, cursor: "pointer", transition: "all 0.15s", display: "flex", flexDirection: "column", alignItems: "center", gap: 2 }}>
-                    <span>{opt.label}</span>
-                    <span style={{ fontSize: 10, fontWeight: 400, fontFamily: "var(--font-body)", opacity: 0.7 }}>{opt.sub}</span>
                   </button>
                 ))}
               </div>
