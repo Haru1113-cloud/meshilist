@@ -20,6 +20,7 @@ interface CookedRecord {
   cookedAt: string; // ISO
   rating: 1 | 2 | 3; // 😐 / 😊 / 🤩
   recipeBody?: string[]; // 材料・手順の生テキスト行
+  imageUrl?: string | null;
 }
 
 // ─── Constants ───────────────────────────────────────────────────
@@ -691,36 +692,47 @@ function HistoryModal({ records, streak, earnedBadges, onClear, onClose }: {
               <div style={{ fontSize: 12 }}>レシピの「作った！」ボタンで記録できます</div>
             </div>
           ) : (
-            <div style={{ display: "flex", flexDirection: "column" }}>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, paddingTop: 4 }}>
               {records.map(r => {
                 const opt = RATING_OPTIONS.find(o => o.value === r.rating);
                 const date = new Date(r.cookedAt);
                 const dateStr = `${date.getMonth() + 1}/${date.getDate()}`;
-                const isOpen = expandedId === r.id;
-                const hasRecipe = r.recipeBody && r.recipeBody.length > 0;
+                const ingredientsLine = r.recipeBody?.find(l => l.trim().startsWith("材料:")) ?? "";
+                const ingredients = ingredientsLine
+                  ? ingredientsLine.replace(/^材料:\s*/, "").split(/[・,、]/).map(s => s.trim()).filter(Boolean).slice(0, 4)
+                  : [];
                 return (
-                  <div key={r.id} style={{ borderBottom: "1px solid var(--border)", paddingBottom: isOpen ? 14 : 0 }}>
-                    <button
-                      onClick={() => setExpandedId(isOpen ? null : r.id)}
-                      style={{ width: "100%", display: "flex", alignItems: "center", gap: 12, padding: "13px 0", background: "none", border: "none", cursor: hasRecipe ? "pointer" : "default", textAlign: "left" }}
-                    >
-                      <span style={{ fontSize: 22, flexShrink: 0 }}>{opt?.emoji}</span>
-                      <div style={{ flex: 1, minWidth: 0 }}>
-                        <div style={{ fontFamily: "var(--font-heading)", fontWeight: 700, fontSize: 14, color: "var(--text-primary)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                          {r.dishName}
+                  <div key={r.id} style={{ borderRadius: 14, overflow: "hidden", border: "1px solid var(--border)", background: "#fff", boxShadow: "0 2px 8px rgba(0,0,0,0.06)", display: "flex", flexDirection: "column" }}>
+                    {/* 上半分: 写真 */}
+                    <div style={{ height: 110, background: "#f0ebe0", flexShrink: 0, position: "relative", overflow: "hidden" }}>
+                      {r.imageUrl ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img src={r.imageUrl} alt={r.dishName} style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
+                      ) : (
+                        <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 32 }}>🍽️</div>
+                      )}
+                      <div style={{ position: "absolute", top: 6, right: 6, background: "rgba(0,0,0,0.45)", borderRadius: 8, padding: "2px 6px", fontSize: 10, color: "#fff", fontFamily: "var(--font-heading)", fontWeight: 700 }}>
+                        {dateStr}
+                      </div>
+                      <div style={{ position: "absolute", top: 6, left: 6, fontSize: 16 }}>{opt?.emoji}</div>
+                    </div>
+                    {/* 下半分: タイトル＋材料 */}
+                    <div style={{ padding: "10px 10px 12px", flex: 1 }}>
+                      <div style={{ fontFamily: "var(--font-heading)", fontWeight: 800, fontSize: 12, color: "var(--text-primary)", lineHeight: 1.4, marginBottom: 6, display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>
+                        {r.dishName}
+                      </div>
+                      {ingredients.length > 0 && (
+                        <div style={{ display: "flex", flexWrap: "wrap", gap: 3 }}>
+                          {ingredients.map((ing, i) => (
+                            <span key={i} style={{ fontSize: 10, background: "var(--bg-subtle)", color: "var(--text-muted)", borderRadius: 6, padding: "2px 6px", fontFamily: "var(--font-body)" }}>{ing}</span>
+                          ))}
+                          {(r.recipeBody?.find(l => l.trim().startsWith("材料:")) ?? "")
+                            .replace(/^材料:\s*/, "").split(/[・,、]/).filter(Boolean).length > 4 && (
+                            <span style={{ fontSize: 10, color: "var(--text-muted)", padding: "2px 4px" }}>…</span>
+                          )}
                         </div>
-                        <div style={{ fontSize: 11, color: "var(--text-muted)", marginTop: 1 }}>{opt?.label}</div>
-                      </div>
-                      <div style={{ display: "flex", alignItems: "center", gap: 8, flexShrink: 0 }}>
-                        <div style={{ fontSize: 11, color: "var(--text-muted)" }}>{dateStr}</div>
-                        {hasRecipe && (
-                          <div style={{ fontSize: 11, color: "var(--accent-dark)", fontFamily: "var(--font-heading)", fontWeight: 700, background: "var(--accent-light)", borderRadius: 6, padding: "2px 8px", display: "flex", alignItems: "center", gap: 3 }}>
-                            {isOpen ? "▲" : "▼"} レシピ
-                          </div>
-                        )}
-                      </div>
-                    </button>
-                    {isOpen && hasRecipe && <HistoryRecipeDetail body={r.recipeBody!} />}
+                      )}
+                    </div>
                   </div>
                 );
               })}
@@ -935,6 +947,7 @@ function AppContent() {
   const [imageResults, setImageResults] = useState<Record<string, string | null>>({});
   const pendingImagesRef = useRef<Set<string>>(new Set());
   const imagePromisesRef = useRef<Promise<void>[]>([]);
+  const imageResultsRef = useRef<Record<string, string | null>>({});
 
   const triggerImageGen = (dish: string) => {
     if (pendingImagesRef.current.has(dish)) return;
@@ -947,9 +960,11 @@ function AppContent() {
       .then(r => r.json())
       .then(d => {
         const url = d.url || (d.b64 ? `data:image/png;base64,${d.b64}` : null) || null;
+        imageResultsRef.current[dish] = url;
         setImageResults(prev => ({ ...prev, [dish]: url }));
       })
       .catch(() => {
+        imageResultsRef.current[dish] = null;
         setImageResults(prev => ({ ...prev, [dish]: null }));
       });
     imagePromisesRef.current.push(p);
@@ -1133,6 +1148,7 @@ function AppContent() {
     setCheckedItems(new Set());
     setDishRatings({});
     setImageResults({});
+    imageResultsRef.current = {};
     pendingImagesRef.current = new Set();
     imagePromisesRef.current = [];
     localStorage.removeItem("meshilist_checked");
@@ -1187,6 +1203,30 @@ function AppContent() {
           return next;
         });
       }
+      // 管理者デバイスは生成した全レシピを自動保存
+      if (deviceId === process.env.NEXT_PUBLIC_ADMIN_DEVICE_ID && recipeSection) {
+        const blocks: { title: string; body: string[] }[] = [];
+        let cur: { title: string; body: string[] } | null = null;
+        for (const line of recipeSection[1].split("\n")) {
+          const t = line.trim();
+          if (t.startsWith("**") && t.endsWith("**") && t.length > 4) {
+            if (cur) blocks.push(cur);
+            cur = { title: t.slice(2, -2), body: [] };
+          } else if (cur) {
+            cur.body.push(line);
+          }
+        }
+        if (cur) blocks.push(cur);
+        for (const block of blocks) {
+          const imgUrl = imageResultsRef.current[block.title] ?? null;
+          const record: CookedRecord = { id: crypto.randomUUID(), dishName: block.title, cookedAt: new Date().toISOString(), rating: 3, recipeBody: block.body, imageUrl: imgUrl };
+          setCookedRecords(prev => {
+            const next = [record, ...prev].slice(0, 50);
+            localStorage.setItem("meshilist_cooked", JSON.stringify(next));
+            return next;
+          });
+        }
+      }
       setTimeout(() => outputRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }), 100);
       // trial status を再取得
       fetch("/api/trial", {
@@ -1216,8 +1256,8 @@ function AppContent() {
     setShowOnboarding(false);
   };
 
-  const saveCookedRecord = (dishName: string, stars: 1 | 2 | 3, recipeBody?: string[]) => {
-    const record: CookedRecord = { id: crypto.randomUUID(), dishName, cookedAt: new Date().toISOString(), rating: stars, recipeBody };
+  const saveCookedRecord = (dishName: string, stars: 1 | 2 | 3, recipeBody?: string[], imageUrl?: string | null) => {
+    const record: CookedRecord = { id: crypto.randomUUID(), dishName, cookedAt: new Date().toISOString(), rating: stars, recipeBody, imageUrl: imageUrl ?? imageResults[dishName] ?? null };
     setCookedRecords(prev => {
       const next = [record, ...prev].slice(0, 50);
       localStorage.setItem("meshilist_cooked", JSON.stringify(next));
