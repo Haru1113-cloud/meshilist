@@ -1142,7 +1142,8 @@ function AppContent() {
 
   const handleGenerate = async () => {
     if (!trialStatus) return;
-    if (!trialStatus.trialActive && !trialStatus.subscribed) { goToStripeFromApp(); return; }
+    const isAdminDevice = deviceId === process.env.NEXT_PUBLIC_ADMIN_DEVICE_ID;
+    if (!isAdminDevice && !trialStatus.trialActive && !trialStatus.subscribed) { goToStripeFromApp(); return; }
     // standard・premiumサブスク済みで未ログインならログインを促す
     if (trialStatus.subscribed && (trialStatus.plan === "standard" || trialStatus.plan === "premium") && !user) {
       setShowLoginPrompt(true); return;
@@ -1185,7 +1186,7 @@ function AppContent() {
           accumulated += decoder.decode(value, { stream: true });
           setRawOutput(accumulated);
           // Detect recipe titles in stream and start dish photo generation in parallel (all active users)
-          if (trialStatus?.trialActive) {
+          if (isAdminDevice || trialStatus?.trialActive) {
             const recipeMatch = accumulated.match(/###\s*🍳[^\n]*\n([\s\S]*?)(?=###\s*📅|###\s*🛒|$)/);
             if (recipeMatch) {
               for (const match of recipeMatch[1].matchAll(/\*\*(.+?)\*\*/g)) {
@@ -1213,8 +1214,8 @@ function AppContent() {
           return next;
         });
       }
-      // 管理者デバイスは生成した全レシピを自動保存
-      if (deviceId === process.env.NEXT_PUBLIC_ADMIN_DEVICE_ID && recipeSection) {
+      // 管理者デバイスは生成した全レシピを自動保存（一括でprevに追加）
+      if (isAdminDevice && recipeSection) {
         const blocks: { title: string; body: string[] }[] = [];
         let cur: { title: string; body: string[] } | null = null;
         for (const line of recipeSection[1].split("\n")) {
@@ -1227,11 +1228,17 @@ function AppContent() {
           }
         }
         if (cur) blocks.push(cur);
-        for (const block of blocks) {
-          const imgUrl = imageResultsRef.current[block.title] ?? null;
-          const record: CookedRecord = { id: crypto.randomUUID(), dishName: block.title, cookedAt: new Date().toISOString(), rating: 3, recipeBody: block.body, imageUrl: imgUrl };
+        const newRecords: CookedRecord[] = blocks.map(block => ({
+          id: crypto.randomUUID(),
+          dishName: block.title,
+          cookedAt: new Date().toISOString(),
+          rating: 3 as const,
+          recipeBody: block.body,
+          imageUrl: imageResultsRef.current[block.title] ?? null,
+        }));
+        if (newRecords.length > 0) {
           setCookedRecords(prev => {
-            const next = [record, ...prev].slice(0, 50);
+            const next = [...newRecords, ...prev].slice(0, 50);
             localStorage.setItem("meshilist_cooked", JSON.stringify(next));
             return next;
           });
