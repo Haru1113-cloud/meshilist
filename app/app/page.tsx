@@ -873,6 +873,7 @@ function AppContent() {
   // UI
   const [showSubscribeModal, setShowSubscribeModal] = useState(false);
   const [showPostGenModal, setShowPostGenModal] = useState(false);
+  const [showLoginPrompt, setShowLoginPrompt] = useState(false);
   const [selectedPlan, setSelectedPlan] = useState<"light" | "standard" | "premium">("standard");
   const [copied, setCopied] = useState(false);
   const [showTip, setShowTip] = useState(false);
@@ -1067,6 +1068,10 @@ function AppContent() {
   const handleGenerate = async () => {
     if (!trialStatus) return;
     if (!trialStatus.trialActive && !trialStatus.subscribed) { goToStripeFromApp(); return; }
+    // standard・premiumサブスク済みで未ログインならログインを促す
+    if (trialStatus.subscribed && (trialStatus.plan === "standard" || trialStatus.plan === "premium") && !user) {
+      setShowLoginPrompt(true); return;
+    }
     if (trialStatus.subscribed && trialStatus.plan === "light" && (trialStatus.generationsLeft ?? 0) <= 0) { setShowSubscribeModal(true); return; }
     if (!allIngredients.trim()) { alert("食材を入力してください"); return; }
 
@@ -1870,6 +1875,35 @@ function AppContent() {
             <button onClick={() => setShowPostGenModal(false)}
               style={{ width: "100%", padding: "11px", borderRadius: 10, border: "1px solid var(--border)", background: "none", color: "var(--text-muted)", fontFamily: "var(--font-heading)", fontWeight: 600, fontSize: 13, cursor: "pointer" }}>
               結果だけ確認する
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Login Prompt Modal */}
+      {showLoginPrompt && (
+        <div onClick={() => setShowLoginPrompt(false)}
+          style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.55)", zIndex: 100, display: "flex", alignItems: "center", justifyContent: "center", padding: 24 }}>
+          <div onClick={e => e.stopPropagation()}
+            style={{ background: "#fff", borderRadius: 20, padding: "36px 28px", maxWidth: 360, width: "100%", textAlign: "center", boxShadow: "0 24px 60px rgba(0,0,0,0.18)" }}>
+            <div style={{ fontSize: 44, marginBottom: 16 }}>🔐</div>
+            <h2 style={{ fontFamily: "var(--font-heading)", fontWeight: 800, fontSize: 20, color: "var(--text-primary)", letterSpacing: "-0.03em", marginBottom: 10 }}>
+              ログインしてください
+            </h2>
+            <p style={{ fontSize: 13, color: "var(--text-secondary)", lineHeight: 1.7, marginBottom: 24 }}>
+              サブスク会員は無料でアカウントを作成できます。<br />
+              ログインすると料理記録や設定がどのデバイスでも引き継がれます。
+            </p>
+            <SignInButton mode="modal">
+              <button
+                onClick={() => setShowLoginPrompt(false)}
+                style={{ width: "100%", padding: "14px", borderRadius: 12, border: "none", background: "var(--accent)", color: "#fff", fontFamily: "var(--font-heading)", fontWeight: 700, fontSize: 15, cursor: "pointer", marginBottom: 10 }}>
+                ログイン / 新規登録
+              </button>
+            </SignInButton>
+            <button onClick={() => { setShowLoginPrompt(false); handleGenerate(); }}
+              style={{ width: "100%", padding: "12px", borderRadius: 12, border: "1px solid var(--border)", background: "#fff", color: "var(--text-secondary)", fontFamily: "var(--font-heading)", fontWeight: 600, fontSize: 13, cursor: "pointer" }}>
+              今はしない（このまま生成）
             </button>
           </div>
         </div>
