@@ -1439,12 +1439,6 @@ function AppContent() {
           {/* 右側ナビ：アイコン上・ラベル下 */}
           <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
 
-            {/* レシピ集 */}
-            <a href="/recipes" style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 2, padding: "6px 10px", borderRadius: 10, textDecoration: "none", color: "var(--text-secondary)", background: "none", minWidth: 44 }}>
-              <span style={{ fontSize: 20 }}>📖</span>
-              <span style={{ fontFamily: "var(--font-heading)", fontWeight: 600, fontSize: 10, whiteSpace: "nowrap" }}>レシピ集</span>
-            </a>
-
             {/* 記録 */}
             <button onClick={() => setShowHistory(v => !v)} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 2, padding: "6px 10px", borderRadius: 10, border: "none", background: "none", cursor: "pointer", color: cookedRecords.length > 0 ? "var(--accent-dark)" : "var(--text-secondary)", minWidth: 44, position: "relative" }}>
               <span style={{ fontSize: 20, position: "relative" }}>
