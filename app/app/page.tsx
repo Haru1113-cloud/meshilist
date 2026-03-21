@@ -1004,7 +1004,7 @@ function AppContent() {
     })
       .then(r => r.json())
       .then(d => {
-        const url = d.url || (d.b64 ? `data:image/png;base64,${d.b64}` : null) || null;
+        const url = d.dataUrl || d.url || (d.b64 ? `data:image/jpeg;base64,${d.b64}` : null) || null;
         imageResultsRef.current[dish] = url;
         setImageResults(prev => ({ ...prev, [dish]: url }));
       })

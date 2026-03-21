@@ -33,29 +33,44 @@ export async function POST(request: NextRequest) {
   const { default: OpenAI } = await import("openai");
   const client = new OpenAI({ apiKey });
 
-  const prompt = quality === "high"
-    ? `Cinematic food photography of Japanese home-cooked "${dish}". Served in a handcrafted Japanese ceramic bowl on a dark wooden table. Soft natural window light from the left creating gentle highlights and realistic shadows. Thin wisps of steam rising. True-to-life food colors — vibrant and accurate, not warm-tinted or oversaturated. Bright green garnish. Ultra-sharp focus on the food, creamy bokeh background. 50mm f/1.8 lens. Editorial Japanese food magazine style. No text, no watermark.`
-    : `Professional food photography of Japanese home-cooked "${dish}". Beautifully plated in an artisan ceramic dish on a rustic wooden table. Warm golden-hour side lighting creating depth and highlights. Visible steam rising gently. Glossy sauce glistening. Vibrant fresh colors — golden-brown crust, rich caramelized tones, bright green garnish. Shallow depth of field with soft bokeh background. Shot with a 50mm lens, f/1.8. Michelin-quality food styling. Utterly mouth-watering and irresistible. No text, no watermark.`;
+  const prompt = `Professional food photography of Japanese home-cooked "${dish}". Beautifully plated in an artisan ceramic dish on a wooden table. Warm side lighting. Visible steam. Vibrant colors. Shallow depth of field. No text, no watermark.`;
 
-  try {
-    // output_format: "jpeg" + output_compression: 75 でレスポンスサイズをPNG比 1/5〜1/8 に削減
-    // モバイル回線でもタイムアウトしないようにする
-    const response = await client.images.generate({
-      model: "gpt-image-1",
-      prompt,
-      n: 1,
-      size: "1024x1024",
-      quality,
-    });
+  // JPEG + compression で PNG 比 1/5〜1/8 に削減 → Vercel 4.5MB 上限・タイムアウト対策
+  const genParams = {
+    model: "gpt-image-1",
+    prompt,
+    n: 1,
+    size: "1024x1024" as const,
+    quality: "low" as const, // 速度優先（low が最速）
+    output_format: "jpeg",
+    output_compression: 75,
+  };
 
-    await incrementImageGeneration(deviceId);
+  // 失敗時に1回リトライ
+  for (let attempt = 0; attempt < 2; attempt++) {
+    try {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const response = await (client.images.generate as (p: any) => Promise<any>)(genParams);
 
-    const url = response.data?.[0]?.url ?? "";
-    const b64 = (response.data?.[0] as { b64_json?: string })?.b64_json;
-    if (!url && b64) return Response.json({ b64 });
-    return Response.json({ url });
-  } catch (e) {
-    console.error("generate-image error:", e);
-    return Response.json({ error: "Image generation failed" }, { status: 500 });
+      const b64: string | undefined = response.data?.[0]?.b64_json;
+      const url: string = response.data?.[0]?.url ?? "";
+
+      await incrementImageGeneration(deviceId);
+
+      if (b64) {
+        // JPEG b64 → data URL（正しい MIME タイプ）
+        return Response.json({ dataUrl: `data:image/jpeg;base64,${b64}` });
+      }
+      return Response.json({ url });
+    } catch (e) {
+      console.error(`generate-image error (attempt ${attempt + 1}):`, e);
+      if (attempt === 1) {
+        return Response.json({ error: "Image generation failed" }, { status: 500 });
+      }
+      // 1秒待ってリトライ
+      await new Promise((r) => setTimeout(r, 1000));
+    }
   }
+
+  return Response.json({ error: "Image generation failed" }, { status: 500 });
 }
