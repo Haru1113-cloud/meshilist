@@ -898,7 +898,7 @@ function AppContent() {
   const [onboardingStep, setOnboardingStep] = useState<1 | 2>(1);
   const [onboardingAllergies, setOnboardingAllergies] = useState<string[]>([]);
   const [onboardingFamilySize, setOnboardingFamilySize] = useState("4");
-  const [trialStatus, setTrialStatus] = useState<{ trialActive: boolean; daysLeft: number; subscribed: boolean; plan: string | null; generationsLeft: number | null; imageGenerationsLeft: number | null; freeCreditsLeft: number; freeCreditsTotal: number } | null>(null);
+  const [trialStatus, setTrialStatus] = useState<{ trialActive: boolean; daysLeft: number; subscribed: boolean; plan: string | null; generationsLeft: number | null; imageGenerationsLeft: number | null; freeCreditsLeft: number; freeCreditsTotal: number; isAdmin?: boolean } | null>(null);
 
   // Input state
   const [ingredients, setIngredients] = useState("");
@@ -1142,7 +1142,7 @@ function AppContent() {
 
   const handleGenerate = async () => {
     if (!trialStatus) return;
-    const isAdminDevice = deviceId === process.env.NEXT_PUBLIC_ADMIN_DEVICE_ID;
+    const isAdminDevice = !!trialStatus.isAdmin;
     if (!isAdminDevice && !trialStatus.trialActive && !trialStatus.subscribed) { goToStripeFromApp(); return; }
     // standard・premiumサブスク済みで未ログインならログインを促す
     if (trialStatus.subscribed && (trialStatus.plan === "standard" || trialStatus.plan === "premium") && !user) {
@@ -1298,7 +1298,7 @@ function AppContent() {
     const dishNames = parsedOutput.recipe
       .match(/\*\*(.+?)\*\*/g)?.map(s => s.replace(/\*\*/g, "")) ?? [];
     const menuLine = dishNames.slice(0, 3).join("・") + (dishNames.length > 3 ? "など" : "");
-    const isAdmin = deviceId === process.env.NEXT_PUBLIC_ADMIN_DEVICE_ID;
+    const isAdmin = !!trialStatus?.isAdmin;
     const text = isAdmin
       ? `「今日何作ろう」をAIが即解決🤖\n\n${menuLine}\n\n食材を入れるだけで献立＋レシピ＋買い物リストが自動生成✨\n無料で試せます👇\nhttps://meshilist.com\n\n#今日の献立 #献立決め #時短料理 #共働き飯 #子育てごはん #AI献立`
       : `${menuLine}\n\n#今日の献立 #今日のごはん #料理 #献立`;
@@ -1447,7 +1447,7 @@ function AppContent() {
                   <UserButton />
                   <span style={{ fontFamily: "var(--font-heading)", fontWeight: 600, fontSize: 10, color: "var(--text-muted)", whiteSpace: "nowrap" }}>アカウント</span>
                 </div>
-              : (trialStatus?.subscribed || deviceId === process.env.NEXT_PUBLIC_ADMIN_DEVICE_ID)
+              : (trialStatus?.subscribed || trialStatus?.isAdmin)
                 ? <SignInButton mode="modal">
                     <button style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 2, padding: "6px 10px", borderRadius: 10, border: "none", background: "none", cursor: "pointer", color: "var(--accent-dark)", minWidth: 44 }}>
                       <span style={{ fontSize: 20 }}>🔑</span>
@@ -1809,7 +1809,7 @@ function AppContent() {
                           <span style={{ width: 12, height: 12, borderRadius: "50%", background: "#fff", transform: wakeLockOn ? "translateX(12px)" : "translateX(0)", transition: "transform 0.2s", display: "block" }} />
                         </span>
                       </button>
-                      <RecipeSection text={parsedOutput.recipe} imageResults={imageResults} ratings={dishRatings} onRate={(dish, stars, body) => saveCookedRecord(dish, stars, body)} canSave={deviceId === process.env.NEXT_PUBLIC_ADMIN_DEVICE_ID || (trialStatus ? (trialStatus.subscribed ? trialStatus.plan !== "light" : trialStatus.trialActive) : false)} onUpgrade={() => setShowSubscribeModal(true)} />
+                      <RecipeSection text={parsedOutput.recipe} imageResults={imageResults} ratings={dishRatings} onRate={(dish, stars, body) => saveCookedRecord(dish, stars, body)} canSave={!!(trialStatus?.isAdmin) || (trialStatus ? (trialStatus.subscribed ? trialStatus.plan !== "light" : trialStatus.trialActive) : false)} onUpgrade={() => setShowSubscribeModal(true)} />
                     </>
                   )}
                   {activeTab === "shopping" && parsedOutput.shopping && (
@@ -1939,7 +1939,7 @@ function AppContent() {
         <CelebrationModal
           dishName={showCelebration.dishName}
           imageUrl={showCelebration.imageUrl}
-          isAdmin={deviceId === process.env.NEXT_PUBLIC_ADMIN_DEVICE_ID}
+          isAdmin={!!trialStatus?.isAdmin}
           onClose={() => setShowCelebration(null)}
           onShare={async (text) => {
             try {
