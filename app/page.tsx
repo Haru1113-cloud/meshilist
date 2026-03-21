@@ -474,39 +474,27 @@ export default function LandingPage() {
       </section>
 
       {/* ── Pricing ── */}
-      <section id="pricing" style={{ padding: "80px 24px", background: "#0A0A0A" }}>
-        <style>{`
-          @keyframes pricingBadgePulse { 0%, 100% { transform: translateX(-50%) scale(1); } 50% { transform: translateX(-50%) scale(1.06); } }
-          @keyframes priceIn { from { opacity: 0; transform: scale(0.9) translateY(10px); } to { opacity: 1; transform: scale(1) translateY(0); } }
-          @keyframes priceInPro { from { opacity: 0; transform: scale(0.9) translateY(-4px); } to { opacity: 1; transform: scale(1) translateY(-4px); } }
-          @keyframes pricingFloat1 { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-3px); } }
-          @keyframes pricingFloat2 { 0%, 100% { transform: translateY(-4px); } 50% { transform: translateY(-7px); } }
-          @keyframes pricingFloat3 { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-3px); } }
-          .pc-card { opacity: 0; animation: priceIn 0.5s cubic-bezier(0.16,1,0.3,1) forwards, pricingFloat1 4s ease-in-out 0.8s infinite; }
-          .pc-card-1 { animation-delay: 0s, 0.8s; }
-          .pc-card-3 { animation-delay: 0.2s, 1.2s; }
-          .pc-card-pro { opacity: 0; animation: priceInPro 0.5s cubic-bezier(0.16,1,0.3,1) 0.1s forwards, pricingFloat2 3.5s ease-in-out 1s infinite; }
-          .pc-cta { width: 100%; padding: 12px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.12); background: transparent; color: #FAFAFA; font-family: var(--font-heading); font-size: 14px; font-weight: 600; cursor: pointer; transition: background 0.2s, border-color 0.2s; }
-          .pc-cta:hover { background: rgba(255,255,255,0.06); border-color: rgba(255,255,255,0.22); }
-          .pc-cta-pro { width: 100%; padding: 12px; border-radius: 8px; border: none; background: #FAFAFA; color: #0A0A0A; font-family: var(--font-heading); font-size: 14px; font-weight: 700; cursor: pointer; transition: opacity 0.2s; }
-          .pc-cta-pro:hover { opacity: 0.85; }
-        `}</style>
+      <section id="pricing" style={{ padding: "80px 24px", background: "#fff" }}>
         <div style={{ maxWidth: 960, margin: "0 auto", textAlign: "center" }}>
-          <p className="label" style={{ marginBottom: 12, color: "rgba(255,255,255,0.35)" }}>Pricing</p>
-          <h2 style={{ fontFamily: "var(--font-heading)", fontWeight: 800, fontSize: "clamp(22px, 4vw, 34px)", color: "#FAFAFA", letterSpacing: "-0.03em", marginBottom: 12 }}>
+          <p className="label" style={{ marginBottom: 12 }}>Pricing</p>
+          <h2 style={{ fontFamily: "var(--font-heading)", fontWeight: 800, fontSize: "clamp(22px, 4vw, 34px)", color: "var(--text-primary)", letterSpacing: "-0.03em", marginBottom: 12 }}>
             あなたに合ったプランを
           </h2>
-          <p style={{ fontSize: 13, color: "rgba(255,255,255,0.4)", marginBottom: 48 }}>まず3回無料でお試しいただけます。気に入ったらプランへ。いつでも解約OK。</p>
+          <p style={{ fontSize: 13, color: "var(--text-muted)", marginBottom: 48 }}>まず3回無料でお試しいただけます。気に入ったらプランへ。いつでも解約OK。</p>
 
-          <div className="lp-grid-3-20" style={{ alignItems: "start" }}>
+          <div className="lp-grid-3-20">
             {/* ライト */}
-            <div className="pc-card pc-card-1" style={{ background: "#1A1A1A", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 16, padding: "28px 24px", textAlign: "left", display: "flex", flexDirection: "column" }}>
-              <div style={{ fontFamily: "var(--font-heading)", fontWeight: 700, fontSize: 13, color: "rgba(255,255,255,0.4)", letterSpacing: "0.06em", marginBottom: 12 }}>LIGHT</div>
-              <div style={{ fontFamily: "var(--font-heading)", fontWeight: 800, fontSize: 36, color: "#FAFAFA", lineHeight: 1, marginBottom: 4 }}>
-                ¥280<span style={{ fontSize: 14, fontWeight: 400, color: "rgba(255,255,255,0.35)" }}>/月</span>
+            <div style={{ background: "var(--bg-subtle)", borderRadius: 20, padding: "32px 28px", border: "1.5px solid var(--border)", textAlign: "left", display: "flex", flexDirection: "column" }}>
+              <div style={{ display: "inline-flex", alignItems: "center", gap: 6, marginBottom: 16 }}>
+                <span style={{ fontFamily: "var(--font-heading)", fontWeight: 700, fontSize: 13, color: "var(--text-muted)", letterSpacing: "0.06em" }}>LIGHT</span>
+                <span style={{ fontSize: 11, background: "#e8f4e8", color: "#4a7840", borderRadius: 6, padding: "2px 8px", fontFamily: "var(--font-heading)", fontWeight: 700 }}>お試し向け</span>
               </div>
-              <p style={{ fontSize: 12, color: "rgba(255,255,255,0.3)", marginBottom: 20 }}>月10回まで · 1日あたり約9円</p>
-              <ul style={{ listStyle: "none", margin: "0 0 24px", padding: 0, display: "flex", flexDirection: "column", gap: 10, flex: 1 }}>
+              <div style={{ fontFamily: "var(--font-heading)", fontWeight: 800, fontSize: 40, color: "var(--text-primary)", lineHeight: 1, marginBottom: 4 }}>
+                ¥280<span style={{ fontSize: 14, fontWeight: 400, color: "var(--text-muted)" }}>/月</span>
+              </div>
+              <p style={{ fontSize: 12, color: "var(--text-muted)", marginBottom: 6 }}>月10回まで · 1日あたり約9円</p>
+              <p style={{ fontSize: 12, color: "var(--text-secondary)", marginBottom: 24, lineHeight: 1.6 }}>週2〜3回ペースで使いたい方に。まず安く始めたい方向け。</p>
+              <ul style={{ listStyle: "none", margin: "0 0 28px", padding: 0, display: "flex", flexDirection: "column", gap: 8, flex: 1 }}>
                 {[
                   { text: "献立生成 月10回", ok: true },
                   { text: "料理写真つき生成", ok: true },
@@ -516,67 +504,90 @@ export default function LandingPage() {
                   { text: "まとめ買いリスト", ok: false },
                   { text: "レシピ保存・評価", ok: false },
                 ].map(f => (
-                  <li key={f.text} style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 13, color: f.ok ? "rgba(255,255,255,0.65)" : "rgba(255,255,255,0.2)" }}>
-                    <span style={{ fontWeight: 700, fontSize: 12, flexShrink: 0 }}>{f.ok ? "✓" : "✕"}</span>
+                  <li key={f.text} style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 13, color: f.ok ? "var(--text-secondary)" : "var(--text-muted)" }}>
+                    <span style={{ color: f.ok ? "#4a7840" : "#ccc", fontWeight: 700, fontSize: 14, flexShrink: 0 }}>{f.ok ? "✓" : "✕"}</span>
                     <span style={{ textDecoration: f.ok ? "none" : "line-through" }}>{f.text}</span>
                   </li>
                 ))}
               </ul>
-              <button onClick={() => goToStripe("light")} className="pc-cta">¥280/月で始める →</button>
+              <button onClick={() => goToStripe("light")}
+                style={{ width: "100%", padding: "13px", borderRadius: 12, border: "1.5px solid var(--accent)", background: "#fff", color: "var(--accent)", fontFamily: "var(--font-heading)", fontWeight: 700, fontSize: 14, cursor: "pointer", transition: "background 0.15s" }}
+                onMouseEnter={e => { e.currentTarget.style.background = "var(--accent-light)"; }}
+                onMouseLeave={e => { e.currentTarget.style.background = "#fff"; }}>
+                ¥280/月で使い始める →
+              </button>
             </div>
 
             {/* スタンダード */}
-            <div style={{ position: "relative", paddingTop: 14 }}>
-              <span style={{ position: "absolute", top: 0, left: "50%", transform: "translateX(-50%)", background: "#FAFAFA", color: "#0A0A0A", fontFamily: "var(--font-heading)", fontSize: 11, fontWeight: 700, letterSpacing: "0.04em", padding: "4px 14px", borderRadius: 50, whiteSpace: "nowrap", animation: "pricingBadgePulse 2s ease-in-out infinite", zIndex: 1 }}>
+            <div style={{ position: "relative", paddingTop: 18, display: "flex", flexDirection: "column" }}>
+              <div style={{ position: "absolute", top: 0, left: "50%", transform: "translateX(-50%)", zIndex: 1, background: "#4a7840", color: "#fff", fontFamily: "var(--font-heading)", fontWeight: 700, fontSize: 11, letterSpacing: "0.08em", padding: "5px 18px", borderRadius: 20, whiteSpace: "nowrap" }}>
                 👑 いちばん人気
-              </span>
-              <div className="pc-card-pro" style={{ background: "#1A1A1A", border: "1px solid rgba(255,255,255,0.18)", borderRadius: 16, padding: "28px 24px", textAlign: "left", display: "flex", flexDirection: "column" }}>
-                <div style={{ fontFamily: "var(--font-heading)", fontWeight: 700, fontSize: 13, color: "rgba(255,255,255,0.4)", letterSpacing: "0.06em", marginBottom: 12 }}>STANDARD</div>
-                <div style={{ fontFamily: "var(--font-heading)", fontWeight: 800, fontSize: 36, color: "#FAFAFA", lineHeight: 1, marginBottom: 4 }}>
-                  ¥480<span style={{ fontSize: 14, fontWeight: 400, color: "rgba(255,255,255,0.35)" }}>/月</span>
+              </div>
+              <div style={{ background: "#fff", borderRadius: 20, padding: "32px 28px", border: "2px solid var(--accent)", borderTop: "4px solid #4a7840", boxShadow: "0 8px 40px rgba(230,149,26,0.15)", textAlign: "left", display: "flex", flexDirection: "column", flex: 1 }}>
+                <div style={{ display: "inline-flex", alignItems: "center", gap: 6, marginBottom: 16 }}>
+                  <span style={{ fontFamily: "var(--font-heading)", fontWeight: 700, fontSize: 13, color: "var(--accent)", letterSpacing: "0.06em" }}>STANDARD</span>
+                  <span style={{ fontSize: 11, background: "#fff3d6", color: "#a07010", borderRadius: 6, padding: "2px 8px", fontFamily: "var(--font-heading)", fontWeight: 700 }}>ヘビーユーザー向け</span>
                 </div>
-                <p style={{ fontSize: 12, color: "rgba(255,255,255,0.3)", marginBottom: 20 }}>月30回 · 1日あたり約16円</p>
-                <ul style={{ listStyle: "none", margin: "0 0 24px", padding: 0, display: "flex", flexDirection: "column", gap: 10, flex: 1 }}>
+                <div style={{ fontFamily: "var(--font-heading)", fontWeight: 800, fontSize: 40, color: "var(--text-primary)", lineHeight: 1, marginBottom: 4 }}>
+                  ¥480<span style={{ fontSize: 14, fontWeight: 400, color: "var(--text-muted)" }}>/月</span>
+                </div>
+                <p style={{ fontSize: 12, color: "var(--text-muted)", marginBottom: 6 }}>月30回 · 1日あたり約16円</p>
+                <p style={{ fontSize: 12, color: "var(--text-secondary)", marginBottom: 24, lineHeight: 1.6 }}>毎日使いたい方に。作った料理を保存して自分だけのレシピ帳に。</p>
+                <ul style={{ listStyle: "none", margin: "0 0 28px", padding: 0, display: "flex", flexDirection: "column", gap: 8, flex: 1 }}>
                   {["献立生成 月30回", "料理写真つき生成", "1週間分プランニング", "レシピ概要・手順つき", "まとめ買いリスト", "レシピ保存・評価 ★"].map(f => (
-                    <li key={f} style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 13, color: "rgba(255,255,255,0.75)" }}>
-                      <span style={{ fontWeight: 700, fontSize: 12, flexShrink: 0 }}>✓</span>{f}
+                    <li key={f} style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 13, color: "var(--text-secondary)" }}>
+                      <span style={{ color: "#4a7840", fontWeight: 700, fontSize: 14, flexShrink: 0 }}>✓</span>{f}
                     </li>
                   ))}
                 </ul>
-                <button onClick={() => goToStripe("standard")} className="pc-cta-pro">スタンダードで始める →</button>
+                <button onClick={() => goToStripe("standard")}
+                  style={{ width: "100%", padding: "14px", borderRadius: 12, border: "none", background: "var(--accent)", color: "#fff", fontFamily: "var(--font-heading)", fontWeight: 700, fontSize: 14, cursor: "pointer", boxShadow: "0 4px 20px rgba(230,149,26,0.35)", transition: "transform 0.15s" }}
+                  onMouseEnter={e => e.currentTarget.style.transform = "translateY(-2px)"}
+                  onMouseLeave={e => e.currentTarget.style.transform = ""}>
+                  スタンダードで始める →
+                </button>
               </div>
             </div>
 
             {/* プレミアム */}
-            <div className="pc-card pc-card-3" style={{ background: "#1A1A1A", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 16, padding: "28px 24px", textAlign: "left", display: "flex", flexDirection: "column" }}>
-              <div style={{ fontFamily: "var(--font-heading)", fontWeight: 700, fontSize: 13, color: "rgba(255,255,255,0.4)", letterSpacing: "0.06em", marginBottom: 12 }}>PREMIUM</div>
-              <div style={{ fontFamily: "var(--font-heading)", fontWeight: 800, fontSize: 36, color: "#FAFAFA", lineHeight: 1, marginBottom: 4 }}>
-                ¥980<span style={{ fontSize: 14, fontWeight: 400, color: "rgba(255,255,255,0.35)" }}>/月</span>
+            <div style={{ background: "var(--bg-subtle)", borderRadius: 20, padding: "32px 28px", border: "1.5px solid var(--border)", textAlign: "left", display: "flex", flexDirection: "column" }}>
+              <div style={{ display: "inline-flex", alignItems: "center", gap: 6, marginBottom: 16 }}>
+                <span style={{ fontFamily: "var(--font-heading)", fontWeight: 700, fontSize: 13, color: "var(--text-muted)", letterSpacing: "0.06em" }}>PREMIUM</span>
+                <span style={{ fontSize: 11, background: "#f3e8ff", color: "#7c3aed", borderRadius: 6, padding: "2px 8px", fontFamily: "var(--font-heading)", fontWeight: 700 }}>こだわり派向け</span>
               </div>
-              <p style={{ fontSize: 12, color: "rgba(255,255,255,0.3)", marginBottom: 20 }}>無制限 · 1日あたり約33円</p>
-              <ul style={{ listStyle: "none", margin: "0 0 24px", padding: 0, display: "flex", flexDirection: "column", gap: 10, flex: 1 }}>
+              <div style={{ fontFamily: "var(--font-heading)", fontWeight: 800, fontSize: 40, color: "var(--text-primary)", lineHeight: 1, marginBottom: 4 }}>
+                ¥980<span style={{ fontSize: 14, fontWeight: 400, color: "var(--text-muted)" }}>/月</span>
+              </div>
+              <p style={{ fontSize: 12, color: "var(--text-muted)", marginBottom: 6 }}>無制限 · 1日あたり約33円</p>
+              <p style={{ fontSize: 12, color: "var(--text-secondary)", marginBottom: 24, lineHeight: 1.6 }}>毎日使い込みたい方に。家族の好みを記憶し、栄養まで管理できる上位体験。</p>
+              <ul style={{ listStyle: "none", margin: "0 0 28px", padding: 0, display: "flex", flexDirection: "column", gap: 8, flex: 1 }}>
                 {[
-                  { text: "献立生成 無制限", accent: false },
-                  { text: "料理写真つき生成（高画質）✨", accent: false },
-                  { text: "1週間分プランニング", accent: false },
-                  { text: "レシピ保存・評価 ★", accent: false },
-                  { text: "まとめ買いリスト", accent: false },
-                  { text: "家族の好み・アレルギーを記憶 🧠", accent: true },
-                  { text: "週次栄養バランスレポート 📊", accent: true },
-                  { text: "月別献立カレンダー表示 📆", accent: true },
+                  { text: "献立生成 無制限", highlight: false },
+                  { text: "料理写真つき生成（高画質）✨", highlight: false },
+                  { text: "1週間分プランニング", highlight: false },
+                  { text: "レシピ保存・評価 ★", highlight: false },
+                  { text: "まとめ買いリスト", highlight: false },
+                  { text: "家族の好み・アレルギーを記憶 🧠", highlight: true },
+                  { text: "週次栄養バランスレポート 📊", highlight: true },
+                  { text: "月別献立カレンダー表示 📆", highlight: true },
                 ].map(f => (
-                  <li key={f.text} style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 13, color: f.accent ? "#e6951a" : "rgba(255,255,255,0.65)", fontWeight: f.accent ? 600 : 400 }}>
-                    <span style={{ fontWeight: 700, fontSize: 12, flexShrink: 0 }}>✓</span>{f.text}
+                  <li key={f.text} style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 13, color: f.highlight ? "#7c3aed" : "var(--text-secondary)", fontWeight: f.highlight ? 600 : 400 }}>
+                    <span style={{ color: f.highlight ? "#7c3aed" : "#4a7840", fontWeight: 700, fontSize: 14, flexShrink: 0 }}>✓</span>{f.text}
                   </li>
                 ))}
               </ul>
-              <button onClick={() => goToStripe("premium")} className="pc-cta">プレミアムを試してみる →</button>
+              <button onClick={() => goToStripe("premium")}
+                style={{ width: "100%", padding: "13px", borderRadius: 12, border: "1.5px solid var(--accent)", background: "#fff", color: "var(--accent)", fontFamily: "var(--font-heading)", fontWeight: 700, fontSize: 14, cursor: "pointer", transition: "background 0.15s" }}
+                onMouseEnter={e => { e.currentTarget.style.background = "var(--accent-light)"; }}
+                onMouseLeave={e => { e.currentTarget.style.background = "#fff"; }}>
+                プレミアムを試してみる →
+              </button>
             </div>
           </div>
 
           {/* 比較表 */}
-          <div style={{ marginTop: 40, background: "#1A1A1A", borderRadius: 16, padding: "20px 24px", border: "1px solid rgba(255,255,255,0.08)", textAlign: "left" }}>
-            <p style={{ fontFamily: "var(--font-heading)", fontWeight: 700, fontSize: 13, color: "rgba(255,255,255,0.6)", marginBottom: 12 }}>📊 プランの主な違い</p>
+          <div style={{ marginTop: 40, background: "var(--bg-subtle)", borderRadius: 16, padding: "20px 24px", border: "1px solid var(--border)", textAlign: "left" }}>
+            <p style={{ fontFamily: "var(--font-heading)", fontWeight: 700, fontSize: 13, color: "var(--text-primary)", marginBottom: 12 }}>📊 プランの主な違い</p>
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr 1fr", gap: 0, fontSize: 12 }}>
               {[
                 ["", "LIGHT", "STANDARD", "PREMIUM"],
@@ -592,12 +603,12 @@ export default function LandingPage() {
                 row.map((cell, j) => (
                   <div key={`${i}-${j}`} style={{
                     padding: "10px 12px",
-                    borderBottom: i < 8 ? "1px solid rgba(255,255,255,0.06)" : "none",
-                    borderRight: j < 3 ? "1px solid rgba(255,255,255,0.06)" : "none",
-                    background: j === 2 && i > 0 ? "rgba(255,255,255,0.03)" : "transparent",
+                    borderBottom: i < 8 ? "1px solid var(--border)" : "none",
+                    borderRight: j < 3 ? "1px solid var(--border)" : "none",
+                    background: i === 0 ? "#fff" : j === 2 ? "rgba(230,149,26,0.05)" : "transparent",
                     fontFamily: i === 0 || j === 0 ? "var(--font-heading)" : "inherit",
                     fontWeight: i === 0 || j === 0 ? 700 : 400,
-                    color: i === 0 ? "rgba(255,255,255,0.35)" : j === 0 ? "rgba(255,255,255,0.6)" : "rgba(255,255,255,0.5)",
+                    color: i === 0 ? "var(--text-muted)" : j === 0 ? "var(--text-primary)" : "var(--text-secondary)",
                     fontSize: i === 0 ? 11 : 12,
                     letterSpacing: i === 0 ? "0.06em" : "normal",
                   }}>
@@ -607,7 +618,7 @@ export default function LandingPage() {
               ))}
             </div>
           </div>
-          <p style={{ marginTop: 16, fontSize: 12, color: "rgba(255,255,255,0.25)" }}>いつでも解約OK · 解約後も当月末まで利用可能</p>
+          <p style={{ marginTop: 16, fontSize: 12, color: "var(--text-muted)" }}>いつでも解約OK · 解約後も当月末まで利用可能</p>
         </div>
       </section>
 
