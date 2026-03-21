@@ -395,80 +395,103 @@ function RecipeBlock({ title, body, imageUrl, imageLoading, savedRating, onRate,
   return (
     <div style={{ background: "#fff", borderRadius: 16, overflow: "hidden", border: "1px solid var(--border)", boxShadow: "0 2px 12px rgba(0,0,0,0.06)" }}>
 
-      {/* 料理写真 */}
+      {/* ① 料理写真（大きくトップに） */}
       {imageLoading && (
-        <div style={{ height: 180, background: "#f0ebe0", display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}>
-          <span className="animate-spin-sm" style={{ width: 16, height: 16, borderRadius: "50%", border: "2px solid rgba(0,0,0,0.1)", borderTopColor: "var(--accent)", display: "inline-block" }} />
-          <span style={{ fontSize: 12, color: "var(--text-muted)", fontFamily: "var(--font-heading)", fontWeight: 600 }}>写真生成中...</span>
+        <div style={{ height: 240, background: "#f0ebe0", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 10 }}>
+          <span className="animate-spin-sm" style={{ width: 20, height: 20, borderRadius: "50%", border: "2px solid rgba(0,0,0,0.1)", borderTopColor: "var(--accent)", display: "inline-block" }} />
+          <span style={{ fontSize: 12, color: "var(--text-muted)", fontFamily: "var(--font-heading)", fontWeight: 600 }}>写真を生成中...</span>
         </div>
       )}
       {imageUrl && !imageLoading && (
         // eslint-disable-next-line @next/next/no-img-element
-        <img src={imageUrl} alt={title} style={{ width: "100%", height: 200, objectFit: "cover", display: "block" }} />
+        <img src={imageUrl} alt={title} style={{ width: "100%", height: 240, objectFit: "cover", display: "block" }} />
       )}
 
-      {/* タイトル */}
-      <div style={{ padding: "14px 18px 12px", borderBottom: "1px solid var(--border)" }}>
-        <h3 style={{ fontFamily: "var(--font-heading)", fontWeight: 800, fontSize: 16, color: "var(--text-primary)", margin: 0, lineHeight: 1.4 }}>
+      <div style={{ padding: "20px 18px 0" }}>
+
+        {/* ② タイトル */}
+        <h3 style={{ fontFamily: "var(--font-heading)", fontWeight: 800, fontSize: 18, color: "var(--text-primary)", margin: "0 0 6px", lineHeight: 1.4 }}>
           {title}
         </h3>
         {specialFound.length > 0 && (
-          <div style={{ display: "flex", flexWrap: "wrap", gap: 5, marginTop: 8 }}>
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 5, marginBottom: 12 }}>
             <span style={{ fontSize: 10, color: "#92400e", fontFamily: "var(--font-heading)", fontWeight: 700, flexShrink: 0 }}>💡 特殊調味料:</span>
             {specialFound.map(s => (
               <span key={s} style={{ fontSize: 11, background: "#fef3c7", color: "#92400e", borderRadius: 20, padding: "2px 9px", border: "1px solid #f5d060", fontFamily: "var(--font-body)", fontWeight: 600 }}>{s}</span>
             ))}
           </div>
         )}
-      </div>
 
-      {/* 栄養情報 */}
-      {nutritionLine && <RecipeNutritionPanel line={nutritionLine} />}
-
-      {/* 材料 ｜ 作り方 2カラム */}
-      <div style={{ display: "flex", alignItems: "stretch", borderBottom: "1px solid var(--border)" }}>
-        {/* 材料 */}
-        <div style={{ flex: "0 0 42%", padding: "14px 14px 16px", borderRight: "1px solid var(--border)" }}>
-          <div style={{ fontFamily: "var(--font-heading)", fontWeight: 800, fontSize: 11, color: "var(--accent-dark)", letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 10 }}>材料</div>
-          <div style={{ display: "flex", flexDirection: "column", gap: 7 }}>
-            {ingredients.map((ing, i) => {
-              const { name, amount } = parseIngredient(ing);
-              return (
-                <div key={i} style={{ display: "flex", alignItems: "baseline", gap: 4, paddingBottom: 7, borderBottom: i < ingredients.length - 1 ? "1px dotted #e0d8cc" : "none" }}>
-                  <span style={{ fontSize: 12, color: "var(--text-primary)", flex: 1, lineHeight: 1.3 }}>{name}</span>
-                  {amount && <span style={{ fontSize: 11, color: "var(--text-muted)", fontFamily: "var(--font-heading)", fontWeight: 600, flexShrink: 0 }}>{amount}</span>}
+        {/* ③ 栄養情報（コンパクトな横並び） */}
+        {nutritionLine && (() => {
+          const m = nutritionLine.match(/📊\s*(\d+)kcal\s*\/\s*P:([\d.]+)[gG]\s*\/\s*F:([\d.]+)[gG]\s*\/\s*C:([\d.]+)[gG]\s*\/\s*塩:([\d.]+)[gG]/i);
+          if (!m) return null;
+          const [, kcal, protein, fat, carbs, salt] = m;
+          return (
+            <div style={{ display: "flex", gap: 8, marginBottom: 20, flexWrap: "wrap" }}>
+              {[
+                { label: "カロリー", value: `${kcal}kcal`, highlight: true },
+                { label: "たんぱく質", value: `${protein}g` },
+                { label: "脂質", value: `${fat}g` },
+                { label: "炭水化物", value: `${carbs}g` },
+                { label: "塩分", value: `${salt}g` },
+              ].map(n => (
+                <div key={n.label} style={{ flex: 1, minWidth: 54, textAlign: "center", background: n.highlight ? "var(--accent-light)" : "var(--bg-subtle)", borderRadius: 10, padding: "8px 4px", border: n.highlight ? "1.5px solid rgba(230,149,26,0.3)" : "1px solid var(--border)" }}>
+                  <div style={{ fontFamily: "var(--font-heading)", fontWeight: 800, fontSize: 13, color: n.highlight ? "var(--accent-dark)" : "var(--text-primary)", lineHeight: 1.2 }}>{n.value}</div>
+                  <div style={{ fontSize: 9, color: "var(--text-muted)", fontFamily: "var(--font-heading)", fontWeight: 600, marginTop: 2 }}>{n.label}</div>
                 </div>
-              );
-            })}
-          </div>
-        </div>
+              ))}
+            </div>
+          );
+        })()}
 
-        {/* 作り方 */}
-        <div style={{ flex: 1, padding: "14px 14px 16px" }}>
-          <div style={{ fontFamily: "var(--font-heading)", fontWeight: 800, fontSize: 11, color: "var(--accent-dark)", letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 10 }}>作り方</div>
-          <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-            {steps.map((step, i) => (
-              <div key={i} style={{ display: "flex", gap: 8, alignItems: "flex-start" }}>
-                <span style={{ width: 20, height: 20, borderRadius: "50%", background: "var(--accent)", color: "#fff", fontFamily: "var(--font-heading)", fontWeight: 800, fontSize: 11, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, marginTop: 1 }}>
-                  {i + 1}
-                </span>
-                <span style={{ fontSize: 12, color: "var(--text-secondary)", lineHeight: 1.65, flex: 1 }}>{step}</span>
-              </div>
-            ))}
+        {/* ④ 材料（縦並び・フルwidth） */}
+        {ingredients.length > 0 && (
+          <div style={{ marginBottom: 20 }}>
+            <div style={{ fontFamily: "var(--font-heading)", fontWeight: 800, fontSize: 13, color: "var(--text-primary)", letterSpacing: "0.04em", marginBottom: 12, paddingBottom: 8, borderBottom: "2px solid var(--accent)" }}>材料</div>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0" }}>
+              {ingredients.map((ing, i) => {
+                const { name, amount } = parseIngredient(ing);
+                return (
+                  <div key={i} style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", padding: "9px 0", borderBottom: "1px solid var(--border)" }}>
+                    <span style={{ fontSize: 13, color: "var(--text-primary)", lineHeight: 1.4 }}>{name}</span>
+                    {amount && <span style={{ fontSize: 12, color: "var(--text-muted)", fontFamily: "var(--font-heading)", fontWeight: 600, flexShrink: 0, marginLeft: 8 }}>{amount}</span>}
+                  </div>
+                );
+              })}
+            </div>
           </div>
-        </div>
+        )}
+
+        {/* ⑤ 作り方（縦並び・フルwidth・写真なし） */}
+        {steps.length > 0 && (
+          <div style={{ marginBottom: 20 }}>
+            <div style={{ fontFamily: "var(--font-heading)", fontWeight: 800, fontSize: 13, color: "var(--text-primary)", letterSpacing: "0.04em", marginBottom: 12, paddingBottom: 8, borderBottom: "2px solid var(--accent)" }}>作り方</div>
+            <div style={{ display: "flex", flexDirection: "column", gap: 0 }}>
+              {steps.map((step, i) => (
+                <div key={i} style={{ display: "flex", gap: 14, alignItems: "flex-start", padding: "14px 0", borderBottom: i < steps.length - 1 ? "1px solid var(--border)" : "none" }}>
+                  <span style={{ width: 26, height: 26, borderRadius: "50%", background: "var(--accent)", color: "#fff", fontFamily: "var(--font-heading)", fontWeight: 800, fontSize: 12, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                    {i + 1}
+                  </span>
+                  <span style={{ fontSize: 13, color: "var(--text-secondary)", lineHeight: 1.75, flex: 1, paddingTop: 3 }}>{step}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* ⑥ ポイント */}
+        {tipLine && (
+          <div style={{ background: "#fffbf0", borderRadius: 12, padding: "12px 16px", marginBottom: 16, border: "1px solid #f0e0a0" }}>
+            <div style={{ fontFamily: "var(--font-heading)", fontWeight: 800, fontSize: 11, color: "#92400e", letterSpacing: "0.08em", marginBottom: 4 }}>💡 ポイント</div>
+            <div style={{ fontSize: 13, color: "#78350f", lineHeight: 1.75 }}>{tipLine}</div>
+          </div>
+        )}
+
       </div>
 
-      {/* ポイント */}
-      {tipLine && (
-        <div style={{ padding: "12px 18px", background: "#fffbf0", borderBottom: "1px solid #f0e0a0" }}>
-          <div style={{ fontFamily: "var(--font-heading)", fontWeight: 800, fontSize: 11, color: "#92400e", letterSpacing: "0.08em", marginBottom: 5 }}>💡 ポイント</div>
-          <div style={{ fontSize: 12, color: "#78350f", lineHeight: 1.75 }}>{tipLine}</div>
-        </div>
-      )}
-
-      {/* 作った！評価エリア */}
-      <div style={{ padding: "12px 18px", display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 10 }}>
+      {/* ⑦ 作った！評価エリア */}
+      <div style={{ padding: "12px 18px 16px", display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 10 }}>
         {canSave === false ? (
           <button onClick={onUpgrade}
             style={{ display: "flex", alignItems: "center", gap: 6, padding: "8px 16px", borderRadius: 20, border: "1px dashed #d4a017", background: "#fffbf0", color: "#a07010", fontFamily: "var(--font-heading)", fontWeight: 700, fontSize: 12, cursor: "pointer" }}>
