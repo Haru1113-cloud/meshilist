@@ -1,10 +1,10 @@
 export default function TokushoPage() {
   const rows = [
-    { label: "販売業者", value: "（運営者名をここに入力）" },
-    { label: "代表者", value: "（代表者名をここに入力）" },
-    { label: "所在地", value: "（住所をここに入力）" },
-    { label: "電話番号", value: "お問い合わせフォームよりご連絡ください" },
-    { label: "メールアドレス", value: "（メールアドレスをここに入力）" },
+    { label: "販売業者", value: "林 治哉" },
+    { label: "代表者", value: "林 治哉" },
+    { label: "所在地", value: "請求があり次第、遅滞なく開示します" },
+    { label: "電話番号", value: "請求があり次第、遅滞なく開示します" },
+    { label: "メールアドレス", value: "haruya.h@icloud.com" },
     { label: "サービス名", value: "メシリスト" },
     { label: "販売価格", value: "月額480円（税込）" },
     { label: "支払い時期", value: "毎月自動更新" },
