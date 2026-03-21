@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useUser, UserButton } from "@clerk/nextjs";
+import { useUser, UserButton, SignInButton } from "@clerk/nextjs";
 
 // ─── Brand image components ───────────────────────────────────────
 function KoocaBowlIcon({ size = 28 }: { size?: number }) {
@@ -1307,7 +1307,12 @@ function AppContent() {
               </div>
             ) : null
           )}
-          {trialStatus?.subscribed && <UserButton />}
+          {user
+            ? <UserButton />
+            : (trialStatus?.subscribed || deviceId === process.env.NEXT_PUBLIC_ADMIN_DEVICE_ID)
+              ? <SignInButton mode="modal"><button style={{ padding: "5px 12px", borderRadius: 7, fontSize: 12, fontFamily: "var(--font-heading)", fontWeight: 600, color: "var(--accent-dark)", background: "var(--accent-light)", border: "1px solid rgba(230,149,26,0.3)", cursor: "pointer" }}>ログイン</button></SignInButton>
+              : null
+          }
           </div>
         </div>
       </nav>
