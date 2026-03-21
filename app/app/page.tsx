@@ -1806,7 +1806,7 @@ function AppContent() {
                           <span style={{ width: 12, height: 12, borderRadius: "50%", background: "#fff", transform: wakeLockOn ? "translateX(12px)" : "translateX(0)", transition: "transform 0.2s", display: "block" }} />
                         </span>
                       </button>
-                      <RecipeSection text={parsedOutput.recipe} imageResults={imageResults} ratings={dishRatings} onRate={(dish, stars, body) => saveCookedRecord(dish, stars, body)} canSave={trialStatus ? (trialStatus.subscribed ? trialStatus.plan !== "light" : trialStatus.trialActive) : false} onUpgrade={() => setShowSubscribeModal(true)} />
+                      <RecipeSection text={parsedOutput.recipe} imageResults={imageResults} ratings={dishRatings} onRate={(dish, stars, body) => saveCookedRecord(dish, stars, body)} canSave={deviceId === process.env.NEXT_PUBLIC_ADMIN_DEVICE_ID || (trialStatus ? (trialStatus.subscribed ? trialStatus.plan !== "light" : trialStatus.trialActive) : false)} onUpgrade={() => setShowSubscribeModal(true)} />
                     </>
                   )}
                   {activeTab === "shopping" && parsedOutput.shopping && (
