@@ -1,12 +1,7 @@
-import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
+import { clerkMiddleware } from "@clerk/nextjs/server";
 
-const isProtectedRoute = createRouteMatcher(["/app(.*)"]);
-
-export default clerkMiddleware(async (auth, req) => {
-  if (isProtectedRoute(req)) {
-    await auth.protect();
-  }
-});
+// /app は誰でもアクセス可能（ログインはサブスク済みユーザーのオプション機能）
+export default clerkMiddleware();
 
 export const config = {
   matcher: ["/((?!_next|.*\\..*).*)"],

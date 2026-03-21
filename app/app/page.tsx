@@ -944,32 +944,9 @@ function AppContent() {
     const hasVisited = localStorage.getItem("meshilist_visited");
     if (!hasVisited) { setShowTip(true); localStorage.setItem("meshilist_visited", "1"); }
 
-    // ログイン済みならRedisからユーザーデータを取得
-    if (user) {
-      fetch("/api/user-data")
-        .then(r => r.json())
-        .then(data => {
-          if (data.cooked && data.cooked.length > 0) setCookedRecords(data.cooked);
-          else {
-            // fallback: localStorageから移行
-            const savedCooked = localStorage.getItem("meshilist_cooked");
-            if (savedCooked) setCookedRecords(JSON.parse(savedCooked));
-          }
-          if (data.prefs && Object.keys(data.prefs).length > 0) {
-            const p = data.prefs;
-            if (p.familySize) setFamilySize(p.familySize);
-            if (p.disliked !== undefined) setDisliked(p.disliked);
-            if (p.style) setStyle(p.style);
-            if (p.noKnife !== undefined) setNoKnife(p.noKnife);
-            if (p.cookTime) setCookTime(p.cookTime);
-            if (p.dishCount) setDishCount(p.dishCount);
-          }
-        })
-        .catch(() => {});
-    } else {
-      const savedCooked = localStorage.getItem("meshilist_cooked");
-      if (savedCooked) setCookedRecords(JSON.parse(savedCooked));
-    }
+    // 料理記録はlocalStorageから読み込み（RedisはtrialStatus確定後に上書き）
+    const savedCooked = localStorage.getItem("meshilist_cooked");
+    if (savedCooked) setCookedRecords(JSON.parse(savedCooked));
 
     setReady(true);
 
@@ -995,17 +972,37 @@ function AppContent() {
     localStorage.setItem("meshilist_inputs", JSON.stringify({ ingredients, selectedChips, familySize, disliked, style, noKnife, cookTime, dishCount, condition }));
   }, [ready, ingredients, selectedChips, familySize, disliked, style, days, noKnife]);
 
-  // ログイン済みならユーザー設定をRedisに保存
+  // サブスク済み＋ログイン済みになったらRedisからデータを読み込む
   useEffect(() => {
-    if (!ready || !user) return;
+    if (!user || !trialStatus?.subscribed) return;
+    fetch("/api/user-data")
+      .then(r => r.json())
+      .then(data => {
+        if (data.cooked && data.cooked.length > 0) setCookedRecords(data.cooked);
+        if (data.prefs && Object.keys(data.prefs).length > 0) {
+          const p = data.prefs;
+          if (p.familySize) setFamilySize(p.familySize);
+          if (p.disliked !== undefined) setDisliked(p.disliked);
+          if (p.style) setStyle(p.style);
+          if (p.noKnife !== undefined) setNoKnife(p.noKnife);
+          if (p.cookTime) setCookTime(p.cookTime);
+          if (p.dishCount) setDishCount(p.dishCount);
+        }
+      })
+      .catch(() => {});
+  }, [user, trialStatus]);
+
+  // サブスク済み＋ログイン済みならユーザー設定をRedisに保存
+  useEffect(() => {
+    if (!ready || !user || !trialStatus?.subscribed) return;
     const timer = setTimeout(() => {
       fetch("/api/user-data", {
         method: "POST", headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ prefs: { familySize, disliked, style, noKnife, cookTime, dishCount } }),
       }).catch(() => {});
-    }, 1000); // 1秒デバウンス
+    }, 1000);
     return () => clearTimeout(timer);
-  }, [ready, user, familySize, disliked, style, noKnife, cookTime, dishCount]);
+  }, [ready, user, trialStatus, familySize, disliked, style, noKnife, cookTime, dishCount]);
 
   // Parse output when generation finishes
   useEffect(() => {
@@ -1157,8 +1154,8 @@ function AppContent() {
     setCookedRecords(prev => {
       const next = [record, ...prev].slice(0, 50);
       localStorage.setItem("meshilist_cooked", JSON.stringify(next));
-      // ログイン済みならRedisにも保存
-      if (user) {
+      // サブスク済み＋ログイン済みならRedisにも保存
+      if (user && trialStatus?.subscribed) {
         fetch("/api/user-data", {
           method: "POST", headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ cooked: next }),
@@ -1310,7 +1307,7 @@ function AppContent() {
               </div>
             ) : null
           )}
-          <UserButton />
+          {trialStatus?.subscribed && <UserButton />}
           </div>
         </div>
       </nav>
