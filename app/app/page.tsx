@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import { useUser, UserButton } from "@clerk/nextjs";
 
 // ─── Brand image components ───────────────────────────────────────
 function KoocaBowlIcon({ size = 28 }: { size?: number }) {
@@ -821,6 +822,7 @@ function CelebrationModal({ dishName, imageUrl, onClose, onShare }: {
 // ─── Main App ────────────────────────────────────────────────────
 function AppContent() {
   const router = useRouter();
+  const { user, isLoaded: isUserLoaded } = useUser();
   const searchParams = useSearchParams();
   const checkoutSuccess = searchParams.get("checkout") === "success";
   const planParam = searchParams.get("plan") as "light" | "standard" | "premium" | null;
@@ -906,8 +908,9 @@ function AppContent() {
   };
 
 
-  // Initialize from localStorage
+  // Initialize from localStorage + Redisユーザーデータ
   useEffect(() => {
+    if (!isUserLoaded) return;
     const id = getOrCreateDeviceId();
     setDeviceId(id);
 
@@ -927,14 +930,11 @@ function AppContent() {
       }
       const savedChecked = localStorage.getItem("meshilist_checked");
       if (savedChecked) setCheckedItems(new Set(JSON.parse(savedChecked)));
-      const savedCooked = localStorage.getItem("meshilist_cooked");
-      if (savedCooked) setCookedRecords(JSON.parse(savedCooked));
       // リフレッシュ後に生成済み献立を復元
       const savedOutput = localStorage.getItem("meshilist_raw_output");
       if (savedOutput) {
         setRawOutput(savedOutput);
         setView("result");
-        // ローディングスピナーが永久に出ないよう全dish名をnullで初期化
         const nullResults: Record<string, null> = {};
         for (const m of savedOutput.matchAll(/\*\*(.+?)\*\*/g)) nullResults[m[1]] = null;
         setImageResults(nullResults);
@@ -944,13 +944,40 @@ function AppContent() {
     const hasVisited = localStorage.getItem("meshilist_visited");
     if (!hasVisited) { setShowTip(true); localStorage.setItem("meshilist_visited", "1"); }
 
+    // ログイン済みならRedisからユーザーデータを取得
+    if (user) {
+      fetch("/api/user-data")
+        .then(r => r.json())
+        .then(data => {
+          if (data.cooked && data.cooked.length > 0) setCookedRecords(data.cooked);
+          else {
+            // fallback: localStorageから移行
+            const savedCooked = localStorage.getItem("meshilist_cooked");
+            if (savedCooked) setCookedRecords(JSON.parse(savedCooked));
+          }
+          if (data.prefs && Object.keys(data.prefs).length > 0) {
+            const p = data.prefs;
+            if (p.familySize) setFamilySize(p.familySize);
+            if (p.disliked !== undefined) setDisliked(p.disliked);
+            if (p.style) setStyle(p.style);
+            if (p.noKnife !== undefined) setNoKnife(p.noKnife);
+            if (p.cookTime) setCookTime(p.cookTime);
+            if (p.dishCount) setDishCount(p.dishCount);
+          }
+        })
+        .catch(() => {});
+    } else {
+      const savedCooked = localStorage.getItem("meshilist_cooked");
+      if (savedCooked) setCookedRecords(JSON.parse(savedCooked));
+    }
+
     setReady(true);
 
     fetch("/api/trial", {
       method: "POST", headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ deviceId: id }),
     }).then(r => r.json()).then(setTrialStatus).catch(() => {});
-  }, []);
+  }, [isUserLoaded, user]);
 
   // Auto-redirect to Stripe when coming from pricing page (?plan=xxx)
   useEffect(() => {
@@ -962,11 +989,23 @@ function AppContent() {
     }).then(r => r.json()).then(d => { if (d.url) window.location.href = d.url; }).catch(() => {});
   }, [planParam, deviceId, trialStatus]);
 
-  // Persist inputs
+  // Persist inputs to localStorage
   useEffect(() => {
     if (!ready) return;
     localStorage.setItem("meshilist_inputs", JSON.stringify({ ingredients, selectedChips, familySize, disliked, style, noKnife, cookTime, dishCount, condition }));
   }, [ready, ingredients, selectedChips, familySize, disliked, style, days, noKnife]);
+
+  // ログイン済みならユーザー設定をRedisに保存
+  useEffect(() => {
+    if (!ready || !user) return;
+    const timer = setTimeout(() => {
+      fetch("/api/user-data", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ prefs: { familySize, disliked, style, noKnife, cookTime, dishCount } }),
+      }).catch(() => {});
+    }, 1000); // 1秒デバウンス
+    return () => clearTimeout(timer);
+  }, [ready, user, familySize, disliked, style, noKnife, cookTime, dishCount]);
 
   // Parse output when generation finishes
   useEffect(() => {
@@ -1116,8 +1155,15 @@ function AppContent() {
   const saveCookedRecord = (dishName: string, stars: 1 | 2 | 3, recipeBody?: string[]) => {
     const record: CookedRecord = { id: crypto.randomUUID(), dishName, cookedAt: new Date().toISOString(), rating: stars, recipeBody };
     setCookedRecords(prev => {
-      const next = [record, ...prev].slice(0, 50); // 最大50件
+      const next = [record, ...prev].slice(0, 50);
       localStorage.setItem("meshilist_cooked", JSON.stringify(next));
+      // ログイン済みならRedisにも保存
+      if (user) {
+        fetch("/api/user-data", {
+          method: "POST", headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ cooked: next }),
+        }).catch(() => {});
+      }
       return next;
     });
     setDishRatings(prev => ({ ...prev, [dishName]: stars }));
@@ -1264,6 +1310,7 @@ function AppContent() {
               </div>
             ) : null
           )}
+          <UserButton />
           </div>
         </div>
       </nav>

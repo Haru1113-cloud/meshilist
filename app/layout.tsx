@@ -1,6 +1,8 @@
 import type { Metadata, Viewport } from "next";
 import { Montserrat, Noto_Sans_JP, Pacifico } from "next/font/google";
 import Script from "next/script";
+import { ClerkProvider } from "@clerk/nextjs";
+import { jaJP } from "@clerk/localizations";
 import "./globals.css";
 
 const montserrat = Montserrat({
@@ -37,19 +39,21 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="ja">
-      <head>
-        <Script src="https://www.googletagmanager.com/gtag/js?id=G-11KCD8NZVD" strategy="afterInteractive" />
-        <Script id="ga4-init" strategy="afterInteractive">{`
-          window.dataLayer = window.dataLayer || [];
-          function gtag(){dataLayer.push(arguments);}
-          gtag('js', new Date());
-          gtag('config', 'G-11KCD8NZVD');
-        `}</Script>
-      </head>
-      <body className={`${montserrat.variable} ${notoSansJP.variable} ${pacifico.variable} antialiased`}>
-        {children}
-      </body>
-    </html>
+    <ClerkProvider localization={jaJP}>
+      <html lang="ja">
+        <head>
+          <Script src="https://www.googletagmanager.com/gtag/js?id=G-11KCD8NZVD" strategy="afterInteractive" />
+          <Script id="ga4-init" strategy="afterInteractive">{`
+            window.dataLayer = window.dataLayer || [];
+            function gtag(){dataLayer.push(arguments);}
+            gtag('js', new Date());
+            gtag('config', 'G-11KCD8NZVD');
+          `}</Script>
+        </head>
+        <body className={`${montserrat.variable} ${notoSansJP.variable} ${pacifico.variable} antialiased`}>
+          {children}
+        </body>
+      </html>
+    </ClerkProvider>
   );
 }

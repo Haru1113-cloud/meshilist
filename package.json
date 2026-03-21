@@ -9,6 +9,8 @@
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.78.0",
+    "@clerk/localizations": "^4.2.3",
+    "@clerk/nextjs": "^7.0.6",
     "@google/genai": "^1.43.0",
     "@upstash/ratelimit": "^2.0.8",
     "@upstash/redis": "^1.37.0",
